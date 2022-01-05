@@ -21,4 +21,4 @@ class bot_related(commands.Cog):
         print(error)
 
 def setup(client):
-    client.add_cog(bot_related(client))
+    client.add_cog(error(client))
