@@ -102,7 +102,7 @@ class cf(commands.Cog):
             text = ctx.author,
             icon_url = ctx.message.author.avatar_url
         )
-        file = discord.File("D:/Lmao/potato.png", filename="potato.png")
+        file = discord.File("./potato.png", filename="potato.png")
         embed.set_image(url = "attachment://potato.png")
 
         await ctx.send(file = file, embed = embed)
