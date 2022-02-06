@@ -106,7 +106,7 @@ class cf(commands.Cog):
         embed.set_image(url = "attachment://potato.png")
 
         await ctx.send(file = file, embed = embed)
-        os.remove(r'D:\lmao\potato.png')
+        os.remove(r'./potato.png')
 
 
 
