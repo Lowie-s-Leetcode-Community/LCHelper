@@ -72,6 +72,8 @@ class cf(commands.Cog):
             minPerformanceDelta = min(minPerformanceDelta, min(performanceDelta))
             colorCnt += 1
 
+        if (maxPerformanceDelta == 0):
+            return
         if (maxPerformanceDelta >= 0): plt.axhspan(min(900, minPerformanceDelta), 1195, facecolor = '#cccccc', alpha = 1, zorder = -100)
         if (maxPerformanceDelta >= 1200): plt.axhspan(1200, 1395, facecolor = '#77ff77', alpha = 1, zorder = -100)
         if (maxPerformanceDelta >= 1400): plt.axhspan(1400, 1595, facecolor = '#77ddbb', alpha = 1, zorder = -100)
