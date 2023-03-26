@@ -40,10 +40,49 @@ class tools(commands.Cog):
             )
             embed.set_footer(
                 text = ctx.author,
-                icon_url = ctx.author.avatar_url
+                icon_url = ctx.author.avatar.url
             )
             await ctx.send(embed=embed)
 
+
+    def perms(ctx):
+        return ctx.author.id in [382534096427024385, 535811480629542921, 683328026943160464]
+
+    """
+    @commands.command(name = "cpp", aliases = ["compile", "amongus"])
+    @commands.check(perms)
+    async def _cpp(self, ctx, *, code):
+        if "system" in code:
+            await ctx.send("What you t")
+        if "`" in code:
+            code = "\n".join(code.split("\n")[1:-1])
+        if "include" not in code: 
+            code = "#include <bits/stdc++.h>\nusing namespace std;\nsigned main() {\n" + code + "\n}"
+
+        with open("amongus.cpp", "w") as f:
+            f.write(code)
+
+        data = ""
+        try:   
+            os.system("g++ amongus.cpp -o amongus 2>error.txt && amongus >amongus.txt ")
+
+            with open("error.txt", "r") as f:
+                data = f.read()
+                if (data != ""):
+                    raise TypeError("Compile Error")
+
+            with open("amongus.txt", "r") as f:
+                data = f.read()
+                await ctx.send(f"```\n{data}\n```")
+
+        except TypeError:
+            with open("error.txt", "r") as f:
+                await ctx.send(f"```\n{data[:min(len(data), 1900)]}\n```")
+
+        except:
+            await ctx.send("Something went wrong. You still suck.")
+    
+    """
     @commands.group(name = "emote", aliases = ["emoji", "yoink"])
     async def _emote(self, ctx):
         if ctx.invoked_subcommand is None:
@@ -64,7 +103,7 @@ class tools(commands.Cog):
             )
             embed.set_footer(
                 text = ctx.author,
-                icon_url = ctx.message.author.avatar_url
+                icon_url = ctx.message.author.avatar.url
             )
             await ctx.send(embed = embed)
 
@@ -141,5 +180,5 @@ class tools(commands.Cog):
             await ctx.send(f"{Assets.green_tick} **Emote Renamed: {guild_emoji} - `:{old_name}:` -> `:{emoji_name}:`**")
         else: await ctx.send(f"{Assets.red_tick} **Emote Not Found**")
 
-def setup(client):
-    client.add_cog(tools(client))
+async def setup(client):
+    await client.add_cog(tools(client))

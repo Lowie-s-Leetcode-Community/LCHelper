@@ -58,7 +58,7 @@ class info(commands.Cog):
 
             embed.add_field(
                 name = "Avatar URL:",
-                value = f"[Here]({member.avatar_url})",
+                value = f"[Here]({member.avatar.url})",
                 inline = True
             )
             """Line Break"""
@@ -105,12 +105,12 @@ class info(commands.Cog):
             )
 
             embed.set_thumbnail(
-                url = member.avatar_url
+                url = member.avatar.url
             )
             embed.set_footer(
                 #text = f"Requested by {ctx.message.author} - Today at {ctx.message.created_at.today().strftime('%H:%M')}",
                 text = ctx.author,
-                icon_url = ctx.message.author.avatar_url
+                icon_url = ctx.message.author.avatar.url
             )
             await ctx.send(embed=embed)
         elif isinstance(member, discord.User):
@@ -134,7 +134,7 @@ class info(commands.Cog):
 
             embed.add_field(
                 name = "Avatar URL:",
-                value = f"[Here]({user.avatar_url})",
+                value = f"[Here]({user.avatar.url})",
                 inline = True
             )
 
@@ -150,12 +150,12 @@ class info(commands.Cog):
             )
 
             embed.set_thumbnail(
-                url = user.avatar_url
+                url = user.avatar.url
             )
             embed.set_footer(
                 #text = f"Requested by {ctx.message.author} - Today at {ctx.message.created_at.today().strftime('%H:%M')}",
                 text = ctx.author,
-                icon_url = ctx.message.author.avatar_url
+                icon_url = ctx.message.author.avatar.url
             )
             await ctx.send(embed=embed)
         else: await ctx.send(f"{Assets.red_tick} **Invalid Arguments Passed**")
@@ -267,7 +267,7 @@ class info(commands.Cog):
         embed.set_footer(
             #text = f"Requested by {ctx.message.author} - Today at {ctx.message.created_at.today().strftime('%H:%M')}",
             text = ctx.author,
-            icon_url = ctx.message.author.avatar_url
+            icon_url = ctx.message.author.avatar.url
         )
         await ctx.send(embed = embed)
 
@@ -276,7 +276,7 @@ class info(commands.Cog):
         bot_member = await ctx.guild.fetch_member(self.client.user.id)
         embed = discord.Embed(
             title = "My Info!",
-            descrition = "",
+            description = "",
             color = 0x03cffc,
             timestamp = ctx.message.created_at,
             author = ctx.message.author
@@ -295,7 +295,7 @@ class info(commands.Cog):
         )
         embed.add_field(
             name = "Avatar URL:",
-            value = f"[Here]({bot_member.avatar_url})",
+            value = f"[Here]({bot_member.avatar.url})",
             inline = True
         )
         joined_at_time = str(time.mktime(bot_member.joined_at.timetuple()))[:-2]
@@ -343,12 +343,12 @@ class info(commands.Cog):
             inline = True
         )
         embed.set_thumbnail(
-            url = bot_member.avatar_url
+            url = bot_member.avatar.url
         )
 
         embed.set_footer(
             text = ctx.author,
-            icon_url = ctx.author.avatar_url
+            icon_url = ctx.author.avatar.url
         )
         await ctx.send(embed = embed)
 
@@ -440,11 +440,11 @@ class info(commands.Cog):
             color = 0x03cffc,
             timestamp = ctx.message.created_at
         )
-        embed.set_image(url = obj.avatar_url)
+        embed.set_image(url = obj.avatar.url)
         embed.set_footer(
             text = ctx.author,
-            icon_url = ctx.author.avatar_url
+            icon_url = ctx.author.avatar.url
         )
         await ctx.send(embed = embed)
-def setup(client):
-    client.add_cog(info(client))
+async def setup(client):
+    await client.add_cog(info(client))

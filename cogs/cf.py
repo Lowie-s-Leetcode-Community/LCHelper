@@ -102,9 +102,9 @@ class cf(commands.Cog):
         )
         embed.set_footer(
             text = ctx.author,
-            icon_url = ctx.message.author.avatar_url
+            icon_url = ctx.message.author.avatar.url
         )
-        file = discord.File("./potato.png", filename="potato.png")
+        file = discord.File("./potato.png", filename = "potato.png")
         embed.set_image(url = "attachment://potato.png")
 
         await ctx.send(file = file, embed = embed)
@@ -112,5 +112,5 @@ class cf(commands.Cog):
 
 
 
-def setup(client):
-    client.add_cog(cf(client))
+async def setup(client):
+    await client.add_cog(cf(client))

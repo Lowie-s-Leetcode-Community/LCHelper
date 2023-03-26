@@ -6,3 +6,7 @@ class Assets:
     dnd = "<:dndicon:837032477414916136>"
     offline = "<:offlineicon:837032476802154538>"
     clock = "<:clock:791225730498428929>"
+    easy = 0x00b8a3
+    medium = 0xffc01e
+    hard = 0xef4743
+

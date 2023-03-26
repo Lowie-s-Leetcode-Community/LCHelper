@@ -9,6 +9,8 @@ class bot_related(commands.Cog):
 
     @commands.command(name = "ping", aliases = ["pong"])
     async def _ping(self, ctx):
+        bot_avatar_url = ctx.me.guild_avatar.url if ctx.me.guild_avatar else ctx.me.display_avatar.url
+        author_avatar_url = ctx.author.guild_avatar.url if ctx.author.guild_avatar else ctx.author.display_avatar.url
         embed = discord.Embed(
             title = "Pong!",
             description = "Calculating...",
@@ -16,19 +18,20 @@ class bot_related(commands.Cog):
             timestamp = ctx.message.created_at
         )
         embed.set_author(
-            icon_url = ctx.me.avatar_url,
+            icon_url = bot_avatar_url,
             name = "Pong!"
         )
         embed.set_footer(
             text = ctx.author,
-            icon_url = ctx.author.avatar_url
+            icon_url = author_avatar_url
         )
         response = await ctx.send(embed = embed)
         embed = discord.Embed(
             #title = "Pong!",
             #description = "Here is my ping :)",
             color = 0x03cffc,
-            timestamp = ctx.message.created_at)
+            timestamp = ctx.message.created_at
+        )
 
         diff = response.created_at - ctx.message.created_at
         embed.add_field(
@@ -40,14 +43,14 @@ class bot_related(commands.Cog):
             value = f"**{round(self.client.latency*1000, 2)}** ms"
         )
         embed.set_author(
-            icon_url = ctx.me.avatar_url,
+            icon_url = bot_avatar_url,
             name = "Pong!"
         )
         embed.set_footer(
             text = ctx.author,
-            icon_url = ctx.author.avatar_url
+            icon_url = author_avatar_url
         )
         await response.edit(embed = embed)
 
-def setup(client):
-    client.add_cog(bot_related(client))
+async def setup(client):
+    await client.add_cog(bot_related(client))
