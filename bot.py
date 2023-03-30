@@ -11,7 +11,7 @@ from pymongo import MongoClient
 
 load_dotenv()
 intent = discord.Intents.all()
-client = commands.Bot(command_prefix = "$", case_insensitive = True, intents = intent)
+client = commands.Bot(command_prefix = "*", case_insensitive = True, intents = intent)
 activity = discord.Activity(name = 'Lowie', type = discord.ActivityType.playing)
 token = os.getenv('BOT_TOKEN')
 tree = client.tree

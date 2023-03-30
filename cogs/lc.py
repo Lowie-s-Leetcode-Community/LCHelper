@@ -239,5 +239,5 @@ class lc(commands.Cog):
         await interaction.followup.send("owo", view = TestView())
 
 async def setup(client):
-    #await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(lc(client))
+    await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(lc(client))

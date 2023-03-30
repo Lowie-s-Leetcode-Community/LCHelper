@@ -160,7 +160,7 @@ class LC_utils:
         return {
             'title': info['title'],
             'title_slug': info['titleSlug'],
-            'link': LC_URL + info['titleSlug'],
+            'link': LC_URL + 'problems/' + info['titleSlug'],
             'id': info['questionFrontendId'],
             'difficulty': info['difficulty'],
             'ac_rate': info['acRate'],
@@ -178,7 +178,7 @@ class LC_utils:
         info = tmp['data']['activeDailyCodingChallengeQuestion']
         return {
             'date': info['date'],
-            'link': LC_URL[:-1] + info['link'],
+            'link': LC_URL + "problems/" + info['link'],
             'title': info['question']['title'],
             'title_slug': info['question']['titleSlug']
         }
