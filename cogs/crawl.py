@@ -17,7 +17,10 @@ class crawl(commands.Cog):
         
     @tasks.loop(seconds = 30)
     async def api_request(self):
-        print("bruh")
+        # Waiting for internal cache, I suppose
+        await self.client.wait_until_ready()
+        await asyncio.sleep(5)
+
         lc_db = self.client.DBClient['LC_db']
         lc_col_user = lc_db['LC_users']
         lc_col_server = lc_db['LC_tracking']
@@ -27,7 +30,6 @@ class crawl(commands.Cog):
         for user in user_list:
             # Getting the 5 most recent submissions
             lc_username = user['lc_username']
-            print(f"{lc_username}")
             recent_info = LC_utils.get_recent_ac(lc_username)
             """
             if lc_username == "leanhduy0206":
@@ -100,7 +102,7 @@ class crawl(commands.Cog):
                                 url = lc_user_info['profile']['avatar']
                             )
                             
-                            await channel.send("hi", embed = embed)
+                            await channel.send(embed = embed)
             if untracked_new_submission:
                 lc_update = {'$set': {'recent_ac': recent_info[0]}}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
@@ -117,5 +119,12 @@ class crawl(commands.Cog):
         self.api_request.stop()
         await ctx.send(f"{Assets.green_tick} **Submission crawling task stopped.**")
 
+    @commands.command()
+    @commands.is_owner()
+    async def start_request(self, ctx):
+        self.api_request.start()
+        await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
+
 async def setup(client):
+    #await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
     await client.add_cog(crawl(client))
