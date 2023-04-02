@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from typing import Optional
+from typing import Optional, Union
 import random
 import string
 import asyncio
@@ -48,18 +48,34 @@ class ConfirmView(discord.ui.View):
             else:
                 lc_col.insert_one({'discord_id': interaction.user.id, 'lc_username': self.username})
 
-            # Also update the most recent AC submission so it does not necropost submissions prior to linking
+            # Also updating the necessary info
             recent_info = LC_utils.get_recent_ac(self.username)
             if len(recent_info) == 0:
-                lc_update = {'$set': {'recent_ac': {
-                    "id": None,
-                    "title": None,
-                    "titleSlug": None,
-                    "timestamp": None
-                }}}
+                lc_update = {'$set': {
+                    'recent_ac': {
+                        "id": None,
+                        "title": None,
+                        "titleSlug": None,
+                        "timestamp": None
+                    },
+                    'daily': {
+                        'max_daily_streak': 0, 
+                        'current_daily_streak': 0,
+                        'finished_today_daily': False
+                    },
+                    'score': 0
+                }}
                 lc_col.update_one(lc_query, lc_update)
             else:
-                lc_update = {'$set': {'recent_ac': recent_info[0]}}
+                lc_update = {'$set': {
+                    'recent_ac': recent_info[0],
+                    'daily': {
+                        'max_daily_streak': 0, 
+                        'current_daily_streak': 0,
+                        'finished_today_daily': False
+                    },
+                    'score': 0
+                }}
                 lc_col.update_one(lc_query, lc_update)
             
             try:
@@ -146,22 +162,40 @@ class lc(commands.Cog):
         await interaction.followup.send(f"Daily Challenge - {daily_info['date']}", embed = embed)
 
     @app_commands.command(name = 'profile', description = "Returns a Leetcode profile")
-    @app_commands.describe(username = "Specify a username")
-    async def _profile(self, interaction: discord.Interaction, username: Optional[str] = None):
+    @app_commands.describe(username = "Specify a username. Left empty if you want to check yours")
+    @app_commands.describe(member = "Specify a member. Left empty if you want to check yours")
+    async def _profile(self, interaction: discord.Interaction, username: Optional[str] = None, member: Optional[discord.Member] = None):
         await interaction.response.defer(thinking = True)
-        
-        if username == None:
-            lc_db = self.client.DBClient['LC_db']
-            lc_col = lc_db['LC_users']
+
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        max_streak = 0
+        current_streak = 0
+        score = 0
+        if username == None and member == None:
             lc_query = {'discord_id': interaction.user.id}
             lc_result = lc_col.find_one(lc_query)
             if lc_result:
                 username = lc_result['lc_username']
+                max_streak = lc_result['daily']['max_daily_streak']
+                current_streak = lc_result['daily']['current_daily_streak']
+                score = lc_result['score']
             else:
-                await interaction.followup.send(f"{Assets.red_tick} **Please specify an username, or link your account with `/link`**")
+                await interaction.followup.send(f"{Assets.red_tick} **Please specify an username, a member, or link your account with `/link`**")
                 return
-                
-        print(username)
+        elif username and member:
+            await interaction.followup.send(f"{Assets.red_tick} **Choose either not both :woozy_face:**")
+        elif member:
+            lc_query = {'discord_id': member.id}
+            lc_result = lc_col.find_one(lc_query)
+            if lc_result:
+                username = lc_result['lc_username']
+                max_streak = lc_result['daily']['max_daily_streak']
+                current_streak = lc_result['daily']['current_daily_streak']
+                score = lc_result['score']
+            else:
+                await interaction.followup.send(f"{Assets.red_tick} **This member hasn't linked an account yet**")
+                return
+
         info = LC_utils.get_user_profile(username)
         embed = discord.Embed(
             description = f"""
@@ -191,7 +225,17 @@ class lc(commands.Cog):
             ▸ **Rating:** {info['contest']['rating'] if info['contest']['rating'] else "N/A"}
             ▸ **Top:** {str(info['contest']['top_percentage']) + '%' if info['contest']['top_percentage'] else "N/A"}
             ▸ **Attended:** {info['contest']['contest_count'] if info['contest']['contest_count'] else 0}
-            """
+            """,
+            inline = False
+        )
+        embed.add_field(
+            name = "🏡 In-server (beta)",
+            value = f"""
+            ▸ **Max daily streak:** {max_streak}
+            ▸ **Current daily streak:** {current_streak}
+            ▸ **Score:** {score}
+            """,
+            inline = False
         )
         embed.set_author(
             name = f"LeetCode profile for {username}",
