@@ -8,7 +8,7 @@ import asyncio
 import datetime 
 
 utc = datetime.timezone.utc
-time = datetime.time(hour=7, minute=0, tzinfo=utc)
+time = datetime.time(hour=0, minute=0, tzinfo=utc)
 
 class daily(commands.Cog):
     def __init__(self, client):
