@@ -15,7 +15,7 @@ class error(commands.Cog):
             return
 
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You don't have the permission to execute this command")
+            await ctx.send(f"{Assets.red_tick} **You don't have the permission to execute this command.**")
         elif isinstance(error, commands.CommandNotFound):
             return
         else: await ctx.send(f"{Assets.red_tick} **`{error}` ({ctx.command})**")

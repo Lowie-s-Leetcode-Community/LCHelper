@@ -103,7 +103,9 @@ class lc(commands.Cog):
         await interaction.response.defer(thinking = True)
         
         # Getting the daily challenge
-        daily_info = LC_utils.get_daily_challenge_info()
+
+        # daily_info = LC_utils.get_daily_challenge_info()
+        daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
         info = LC_utils.get_question_info(daily_info['title_slug'])
 
         embed = discord.Embed(
@@ -166,7 +168,7 @@ class lc(commands.Cog):
             ▸ **Name:** {info['profile']['name'] if info['profile']['name'] != "" else "N/A"}
             ▸ **Location:** {info['profile']['country']}
             ▸ **Total active days:** {info['calendar']['total_active_days']}
-            ▸ **Max solving problem streak:** {info['calendar']['streak']}
+            ▸ **Max active days streak:** {info['calendar']['streak']}
             """,
             color = 0xffffff
         )
@@ -201,22 +203,6 @@ class lc(commands.Cog):
         )
         await interaction.followup.send(embed = embed)
 
-    @app_commands.command(name = 'track', description = "Sets a channel to track recent AC submissions")
-    @app_commands.describe(channel = "Choose a channel")
-    async def _track(self, interaction: discord.Interaction, channel: discord.channel.TextChannel):
-        await interaction.response.defer(thinking = True)
-
-        lc_db = self.client.DBClient['LC_db']
-        lc_col = lc_db['LC_tracking']
-        lc_query = {'server_id': interaction.guild_id}
-        lc_result = lc_col.find_one(lc_query)
-        if lc_result:
-            lc_update = {'$set': {'tracking_channel_id': channel.id}}
-            lc_col.update_one(lc_query, lc_update)
-        else:
-            lc_col.insert_one({'server_id': interaction.guild_id, 'tracking_channel_id': channel.id})
-        await interaction.followup.send(f"{Assets.green_tick} **Tracking channel has been set to {channel.mention}**")
-
     @app_commands.command(name = 'verify', description = "Sets a role for verified members")
     @app_commands.describe(role = "Choose a role")
     async def _verify(self, interaction: discord.Interaction, role: discord.Role):
@@ -237,6 +223,42 @@ class lc(commands.Cog):
     async def _test(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         await interaction.followup.send("owo", view = TestView())
+
+    ranklist = app_commands.Group(name = 'ranklist', description = 'Ranking of all kinds')
+    @ranklist.command(name = 'streak', description = "Views the daily streak ranking")
+    async def _ranklist_streak(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        users = list(lc_col.find())
+        users.sort(key = lambda x: -x['daily']['max_daily_streak'])
+        response = ""
+        idx = 1
+        for user in users:
+            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Max: {user['daily']['max_daily_streak']} - Current: {user['daily']['current_daily_streak']}\n"
+            idx += 1
+        embed = discord.Embed(
+            title = "Daily streak ranking",
+            description = response
+        )
+        await interaction.followup.send(embed = embed)
+
+    @ranklist.command(name = 'score', description = "Views the score ranking")
+    async def _ranklist_score(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        users = list(lc_col.find())
+        users.sort(key = lambda x: -x['score'])
+        response = ""
+        idx = 1
+        for user in users:
+            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['score']}\n"
+            idx += 1
+        embed = discord.Embed(
+            title = "Score ranking",
+            description = response
+        )
+        await interaction.followup.send(embed = embed)
+
 
 async def setup(client):
     #await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])

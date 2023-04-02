@@ -3,20 +3,20 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
+from .daily import daily
 from typing import Optional
 import asyncio
 
 class crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.api_request.start()
+        self.crawling.start()
 
     def cog_unload(self):
-        self.api_request.cancel()
+        self.crawling.cancel()
 
-        
-    @tasks.loop(seconds = 30)
-    async def api_request(self):
+    @tasks.loop(seconds = 60)
+    async def crawling(self):
         # Waiting for internal cache, I suppose
         await self.client.wait_until_ready()
         await asyncio.sleep(5)
@@ -30,21 +30,29 @@ class crawl(commands.Cog):
         for user in user_list:
             # Getting the 5 most recent submissions
             lc_username = user['lc_username']
+            print(lc_username)
             recent_info = LC_utils.get_recent_ac(lc_username)
+            
+            # For debugging
             """
             if lc_username == "leanhduy0206":
                 recent_info = [{
-                    "id": "757122191",
-                    "title": "Maximal Rectangle",
-                    "titleSlug": "maximal-rectangle",
-                    "timestamp": "4000000000000"
+                    'id': '926059124', 
+                    'title': 'Binary Search', 
+                    'titleSlug': 'binary-search', 
+                    'timestamp': '4680366541'
                 }]
             """
             # Tracking the most recent submissions
             untracked_new_submission = False
             for submission in reversed(recent_info):
                 if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
-                    # New AC submissions found, now posting update log in every mutual guild with the user
+                    # New AC submissions found
+                    # Checking if daily challenge
+                    daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
+                    is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
+
+                    # Posting update log in every mutual guild with the user
                     untracked_new_submission = True
                     discord_user = await self.client.fetch_user(user['discord_id'])
                     server_list = [guild.id for guild in discord_user.mutual_guilds]
@@ -57,9 +65,14 @@ class crawl(commands.Cog):
                             
                             lc_user_info = LC_utils.get_user_profile(lc_username)
                             problem_info = LC_utils.get_question_info(submission['titleSlug'])
+                            desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
+                            if is_daily_challenge: 
+                                desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
+                                daily.complete_daily(daily(self.client), discord_user)
+
                             embed = discord.Embed(
                                 title = f"**Solved: {problem_info['title']}**",
-                                description = f"▸ **Submitted:** <t:{submission['timestamp']}:R>",
+                                description = desc_str,
                                 url = f"{problem_info['link']}",
                                 color = Assets.easy if problem_info['difficulty'] == 'Easy' else Assets.medium if problem_info['difficulty'] == 'Medium' else Assets.hard
                             )
@@ -109,22 +122,24 @@ class crawl(commands.Cog):
             
             await asyncio.sleep(5)
 
-    @api_request.error
+    @crawling.error
     async def on_error(self, exception):
-        print(exception)
+        guild = await self.client.fetch_guild(1085444549125611530)
+        channel = await guild.fetch_channel(1091763595777409025)
+        await channel.send(exception)
 
     @commands.command()
     @commands.is_owner()
-    async def stop_request(self, ctx):
-        self.api_request.stop()
+    async def stop_crawling(self, ctx):
+        self.crawling.cancel()
         await ctx.send(f"{Assets.green_tick} **Submission crawling task stopped.**")
 
     @commands.command()
     @commands.is_owner()
-    async def start_request(self, ctx):
-        self.api_request.start()
+    async def start_crawling(self, ctx):
+        self.crawling.start()
         await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
 
 async def setup(client):
-    #await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(crawl(client))
+    await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(crawl(client))

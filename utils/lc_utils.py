@@ -178,7 +178,7 @@ class LC_utils:
         info = tmp['data']['activeDailyCodingChallengeQuestion']
         return {
             'date': info['date'],
-            'link': LC_URL + "problems/" + info['link'],
+            'link': LC_URL[:-1] + info['link'],
             'title': info['question']['title'],
             'title_slug': info['question']['titleSlug']
         }
