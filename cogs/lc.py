@@ -144,12 +144,12 @@ class lc(commands.Cog):
             value = str(info['ac_rate'])[0:5] + "%",
             inline = True,
         )
-
         tag_list = ""
         for name, link in info['topics'].items():
             tag_list += f"[``{name}``]({link}), "
         
         tag_list = tag_list[:-2]
+        tag_list = "||" + tag_list + "||"
         embed.add_field(
             name = "Topics",
             value = tag_list,

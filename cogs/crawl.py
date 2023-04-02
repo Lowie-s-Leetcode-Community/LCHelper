@@ -141,5 +141,5 @@ class crawl(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
 
 async def setup(client):
-    await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(crawl(client))
+    #await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(crawl(client))
