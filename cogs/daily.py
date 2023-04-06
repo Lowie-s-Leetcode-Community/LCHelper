@@ -6,6 +6,7 @@ from utils.lc_utils import LC_utils
 from typing import Optional
 import asyncio
 import datetime 
+from .logging import logging
 
 utc = datetime.timezone.utc
 time = datetime.time(hour=0, minute=0, tzinfo=utc)
@@ -65,11 +66,13 @@ class daily(commands.Cog):
         self.daily.start()
         await ctx.send(f"{Assets.green_tick} **Submission daily task started.**")
 
-    def complete_daily(self, user: discord.User):
+    async def complete_daily(self, member: discord.Member):
         lc_col = self.client.DBClient['LC_db']['LC_users']
-        lc_user = lc_col.find_one({'discord_id': user.id})
+        lc_user = lc_col.find_one({'discord_id': member.id})
         if lc_user['daily']['finished_today_daily']: 
             return
+    
+        # Updating streak
         current_streak = lc_user['daily']['current_daily_streak'] + 1
         max_streak = max(lc_user['daily']['max_daily_streak'], current_streak)
         lc_query = {'$set': {
@@ -81,6 +84,14 @@ class daily(commands.Cog):
         }}
 
         lc_col.update_one(lc_user, lc_query)
+
+        # Updating score
+        new_score = lc_user['score'] + 2
+        lc_query = {'$set': {'score': new_score}}
+        lc_col.update_one(lc_user, lc_query)
+        await logging.on_score_add(logging(self.client), member = member, score = 2, reason = "Daily AC")
+
+
 
 
 async def setup(client):

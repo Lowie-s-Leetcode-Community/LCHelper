@@ -68,7 +68,8 @@ class crawl(commands.Cog):
                             desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
                             if is_daily_challenge: 
                                 desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
-                                daily.complete_daily(daily(self.client), discord_user)
+                                discord_member = await guild.fetch_member(discord_user.id)
+                                await daily.complete_daily(daily(self.client), discord_member)
 
                             embed = discord.Embed(
                                 title = f"**Solved: {problem_info['title']}**",
@@ -127,6 +128,8 @@ class crawl(commands.Cog):
         guild = await self.client.fetch_guild(1085444549125611530)
         channel = await guild.fetch_channel(1091763595777409025)
         await channel.send(exception)
+        
+        self.crawling.start()
 
     @commands.command()
     @commands.is_owner()
