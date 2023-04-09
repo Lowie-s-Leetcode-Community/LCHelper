@@ -180,7 +180,8 @@ class LC_utils:
             'date': info['date'],
             'link': LC_URL[:-1] + info['link'],
             'title': info['question']['title'],
-            'title_slug': info['question']['titleSlug']
+            'title_slug': info['question']['titleSlug'],
+            'id': info['question']['frontendQuestionId'],
         }
     
     def get_user_profile(username: str):

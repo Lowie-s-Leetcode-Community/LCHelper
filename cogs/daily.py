@@ -9,7 +9,7 @@ import datetime
 from .logging import logging
 
 utc = datetime.timezone.utc
-time = datetime.time(hour=0, minute=0, tzinfo=utc)
+time = datetime.time(hour=15-7, minute=27, tzinfo=utc)
 
 class daily(commands.Cog):
     def __init__(self, client):
@@ -25,6 +25,7 @@ class daily(commands.Cog):
         await self.client.wait_until_ready()
         await asyncio.sleep(5)
 
+        
         # Fetching daily problem
         daily_challenge_info = LC_utils.get_daily_challenge_info()
         lc_col_daily = self.client.DBClient['LC_db']['LC_daily']
@@ -47,6 +48,15 @@ class daily(commands.Cog):
             }}
             lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
             await asyncio.sleep(5)
+
+        # Creating daily thread
+        lc_col_tracking = self.client.DBClient['LC_db']['LC_tracking']
+        lc_result = lc_col_tracking.find_one({'server_id': 1085444549125611530})
+
+        guild = await self.client.fetch_guild(1085444549125611530)
+        channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
+        name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
+        await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
 
     @daily.error
     async def on_error(self, exception):
@@ -94,5 +104,5 @@ class daily(commands.Cog):
         await logging.on_score_add(logging(self.client), member = member, score = 2, reason = "Daily AC")
 
 async def setup(client):
-    await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
     await client.add_cog(daily(client))
