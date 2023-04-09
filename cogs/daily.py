@@ -55,13 +55,13 @@ class daily(commands.Cog):
         await channel.send(exception)
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator = True)
     async def stop_daily(self, ctx):
         self.daily.stop()
         await ctx.send(f"{Assets.green_tick} **Submission daily task stopped.**")
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator = True)
     async def start_daily(self, ctx):
         self.daily.start()
         await ctx.send(f"{Assets.green_tick} **Submission daily task started.**")
@@ -83,17 +83,16 @@ class daily(commands.Cog):
             }
         }}
 
-        lc_col.update_one(lc_user, lc_query)
+        lc_col.update_one({'discord_id': member.id}, lc_query)
 
         # Updating score
         new_score = lc_user['score'] + 2
-        lc_query = {'$set': {'score': new_score}}
-        lc_col.update_one(lc_user, lc_query)
+        lc_query = {'$set': {
+            'score': new_score
+        }}
+        lc_col.update_one({'discord_id': member.id}, lc_query)
         await logging.on_score_add(logging(self.client), member = member, score = 2, reason = "Daily AC")
 
-
-
-
 async def setup(client):
-    #await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
     await client.add_cog(daily(client))

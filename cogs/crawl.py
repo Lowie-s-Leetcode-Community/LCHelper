@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from .daily import daily
+from cogs.daily import daily
 from typing import Optional
 import asyncio
 
@@ -30,7 +30,6 @@ class crawl(commands.Cog):
         for user in user_list:
             # Getting the 5 most recent submissions
             lc_username = user['lc_username']
-            print(lc_username)
             recent_info = LC_utils.get_recent_ac(lc_username)
             
             # For debugging
@@ -97,7 +96,7 @@ class crawl(commands.Cog):
                             for name, link in problem_info['topics'].items():
                                 tag_list += f"[``{name}``]({link}), "
 
-                            tag_list = tag_list[:-2]
+                            tag_list = f"||{tag_list[:-2]}||"
                             embed.add_field(
                                 name = "Topics",
                                 value = tag_list,
@@ -129,16 +128,16 @@ class crawl(commands.Cog):
         channel = await guild.fetch_channel(1091763595777409025)
         await channel.send(exception)
         
-        self.crawling.start()
+        self.crawling.restart()
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator = True)
     async def stop_crawling(self, ctx):
         self.crawling.cancel()
         await ctx.send(f"{Assets.green_tick} **Submission crawling task stopped.**")
 
     @commands.command()
-    @commands.is_owner()
+    @commands.has_permissions(administrator = True)
     async def start_crawling(self, ctx):
         self.crawling.start()
         await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
