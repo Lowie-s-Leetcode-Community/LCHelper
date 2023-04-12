@@ -10,7 +10,7 @@ import asyncio
 class crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.crawling.start()
+        #self.crawling.start()
 
     def cog_unload(self):
         self.crawling.cancel()

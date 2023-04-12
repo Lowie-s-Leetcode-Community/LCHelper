@@ -25,12 +25,25 @@ class daily(commands.Cog):
         await self.client.wait_until_ready()
         await asyncio.sleep(5)
 
-        
+        guild = await self.client.fetch_guild(1085444549125611530)
+        channel = await guild.fetch_channel(1091763595777409025)
+        await channel.send("Daily task started.")
+    
         # Fetching daily problem
         daily_challenge_info = LC_utils.get_daily_challenge_info()
         lc_col_daily = self.client.DBClient['LC_db']['LC_daily']
         lc_update = {'$set': {'daily_challenge': daily_challenge_info}}
         lc_col_daily.update_one({'_id': 1}, lc_update)
+
+        # Creating daily thread
+        lc_col_tracking = self.client.DBClient['LC_db']['LC_tracking']
+        lc_result = lc_col_tracking.find_one({'server_id': 1085444549125611530})
+
+        guild = await self.client.fetch_guild(1085444549125611530)
+        channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
+        #channel = await guild.fetch_channel(1089769159807733831)
+        name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
+        await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
 
         # Checking daily streak of everyone
         lc_col = self.client.DBClient['LC_db']['LC_users']
@@ -48,15 +61,6 @@ class daily(commands.Cog):
             }}
             lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
             await asyncio.sleep(5)
-
-        # Creating daily thread
-        lc_col_tracking = self.client.DBClient['LC_db']['LC_tracking']
-        lc_result = lc_col_tracking.find_one({'server_id': 1085444549125611530})
-
-        guild = await self.client.fetch_guild(1085444549125611530)
-        channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
-        name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
-        await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
 
     @daily.error
     async def on_error(self, exception):
