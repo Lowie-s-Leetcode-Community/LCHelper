@@ -7,6 +7,7 @@ from typing import Optional, Union
 import random
 import string
 import asyncio
+import datetime
 class TestView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout = 30)
@@ -61,7 +62,8 @@ class ConfirmView(discord.ui.View):
                     'daily': {
                         'max_daily_streak': 0, 
                         'current_daily_streak': 0,
-                        'finished_today_daily': False
+                        'finished_today_daily': False,
+                        'last_daily_check': datetime.datetime.now()
                     },
                     'score': 0
                 }}
@@ -72,7 +74,8 @@ class ConfirmView(discord.ui.View):
                     'daily': {
                         'max_daily_streak': 0, 
                         'current_daily_streak': 0,
-                        'finished_today_daily': False
+                        'finished_today_daily': False,
+                        'last_daily_check': datetime.datetime.now()
                     },
                     'score': 0
                 }}
