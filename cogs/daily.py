@@ -9,7 +9,7 @@ import datetime
 from .logging import logging
 
 utc = datetime.timezone.utc
-time = datetime.time(hour=22-7, minute=25, tzinfo=utc)
+time = datetime.time(hour=22-7, minute=30, tzinfo=utc)
 
 class daily(commands.Cog):
     def __init__(self, client):
@@ -26,8 +26,8 @@ class daily(commands.Cog):
         await asyncio.sleep(5)
 
         guild = await self.client.fetch_guild(1085444549125611530)
-        channel = await guild.fetch_channel(1091763595777409025)
-        await channel.send("Daily task started.")
+        log_channel = await guild.fetch_channel(1091763595777409025)
+        await log_channel.send("Daily task started.")
     
         # Fetching daily problem
         daily_challenge_info = LC_utils.get_daily_challenge_info()
@@ -40,7 +40,7 @@ class daily(commands.Cog):
         lc_result = lc_col_tracking.find_one({'server_id': 1085444549125611530})
 
         # This is to prevent this event unintendedly gets triggered multiple times
-        if (datetime.datetime.now() - lc_result['last_daily_check']).seconds < 500: 
+        if (datetime.datetime.now() - lc_result['last_daily_check']).seconds > 500: 
             guild = await self.client.fetch_guild(1085444549125611530)
             #channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
             channel = await guild.fetch_channel(1089769159807733831)
@@ -67,6 +67,7 @@ class daily(commands.Cog):
             }}
             lc_col.update_one({'discord_id': user['discord_id'], 'daily.last_daily_check': tmp['daily']['last_daily_check']}, lc_query)
             await asyncio.sleep(5)
+        await log_channel.send('Daily task completed')
 
     @daily.error
     async def on_error(self, exception):
