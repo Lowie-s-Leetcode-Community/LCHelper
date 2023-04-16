@@ -9,7 +9,7 @@ import datetime
 from .logging import logging
 
 utc = datetime.timezone.utc
-time = datetime.time(hour=22-7, minute=30, tzinfo=utc)
+time = datetime.time(hour=22-7, minute=35, tzinfo=utc)
 
 class daily(commands.Cog):
     def __init__(self, client):
