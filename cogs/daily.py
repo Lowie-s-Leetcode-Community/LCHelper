@@ -9,7 +9,7 @@ import datetime
 from .logging import logging
 
 utc = datetime.timezone.utc
-time = datetime.time(hour=22-7, minute=35, tzinfo=utc)
+time = datetime.time(hour=0, minute=0, second=0, microsecond=0, tzinfo=utc)
 
 class daily(commands.Cog):
     def __init__(self, client):
@@ -39,21 +39,19 @@ class daily(commands.Cog):
         lc_col_tracking = self.client.DBClient['LC_db']['LC_tracking']
         lc_result = lc_col_tracking.find_one({'server_id': 1085444549125611530})
 
-        # This is to prevent this event unintendedly gets triggered multiple times
-        if (datetime.datetime.now() - lc_result['last_daily_check']).seconds > 500: 
-            guild = await self.client.fetch_guild(1085444549125611530)
-            #channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
-            channel = await guild.fetch_channel(1089769159807733831)
-            name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
-            await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
+        guild = await self.client.fetch_guild(1085444549125611530)
+        channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
+        #channel = await guild.fetch_channel(1089769159807733831)
+        name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
+        await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
+            
 
         # Checking daily streak of everyone
-        lc_col = self.client.DBClient['LC_db']['LC_tmp']
+        lc_col = self.client.DBClient['LC_db']['LC_users']
         users = list(lc_col.find())
         for user in users:
             tmp = user
-            # This is to prevent this event unintendedly gets triggered multiple times
-            if (datetime.datetime.now() - tmp['daily']['last_daily_check']).seconds < 500: continue
+            
             if tmp['daily']['finished_today_daily'] == False:
                 tmp['daily']['current_daily_streak'] = 0
 
@@ -67,7 +65,7 @@ class daily(commands.Cog):
             }}
             lc_col.update_one({'discord_id': user['discord_id'], 'daily.last_daily_check': tmp['daily']['last_daily_check']}, lc_query)
             await asyncio.sleep(5)
-        await log_channel.send('Daily task completed')
+        await log_channel.send('Daily task completed.')
 
     @daily.error
     async def on_error(self, exception):
