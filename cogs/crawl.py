@@ -6,6 +6,7 @@ from utils.lc_utils import LC_utils
 from cogs.daily import daily
 from typing import Optional
 import asyncio
+import traceback
 
 class crawl(commands.Cog):
     def __init__(self, client):
@@ -15,7 +16,7 @@ class crawl(commands.Cog):
     def cog_unload(self):
         self.crawling.cancel()
 
-    @tasks.loop(seconds = 60)
+    @tasks.loop(seconds = 120)
     async def crawling(self):
         # Waiting for internal cache, I suppose
         await self.client.wait_until_ready()
@@ -91,7 +92,6 @@ class crawl(commands.Cog):
                                 value = str(problem_info['ac_rate'])[0:5] + "%",
                                 inline = True,
                             )
-
                             tag_list = ""
                             for name, link in problem_info['topics'].items():
                                 tag_list += f"[``{name}``]({link}), "
@@ -126,8 +126,8 @@ class crawl(commands.Cog):
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(1085444549125611530)
         channel = await guild.fetch_channel(1091763595777409025)
-        await channel.send(exception)
-        
+        await channel.send(f"```py\n{traceback.format_exc()}```")
+
         self.crawling.restart()
 
     @commands.command()

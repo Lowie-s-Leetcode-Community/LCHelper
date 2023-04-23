@@ -57,13 +57,12 @@ class ConfirmView(discord.ui.View):
                         "id": None,
                         "title": None,
                         "titleSlug": None,
-                        "timestamp": None
+                        "timestamp": str(int(datetime.datetime.timestamp(datetime.datetime.now())))
                     },
                     'daily': {
                         'max_daily_streak': 0, 
                         'current_daily_streak': 0,
                         'finished_today_daily': False,
-                        'last_daily_check': datetime.datetime.now()
                     },
                     'score': 0
                 }}
