@@ -142,6 +142,38 @@ query recentAcSubmissions($username: String!, $limit: Int!) {
 }
 """
 
+QUERY_QUESTION_LIST = """
+query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
+    problemsetQuestionList: questionList(    
+        categorySlug: $categorySlug
+        limit: $limit
+        skip: $skip    
+        filters: $filters
+    ) 
+    {
+        total: totalNum
+        questions: data {
+            acRate      
+            difficulty      
+            freqBar     
+            frontendQuestionId: questionFrontendId
+            isFavor      
+            paidOnly: isPaidOnly
+            status
+            title      
+            titleSlug      
+            topicTags {        
+                name        
+                id        
+                slug      
+            }
+            hasSolution
+            hasVideoSolution
+        }
+    }
+}
+"""
+
 LC_URL = "https://leetcode.com/"
 API_URL = "https://leetcode.com/graphql"
 LC_LOGO_URL = ""
@@ -264,8 +296,8 @@ class LC_utils:
             'contest': contest_json
         }
     
-    def get_recent_ac(username: str):
-        payload = {"query": QUERY_RECENT_AC, "variables": {"username": username, "limit": 5}}
+    def get_recent_ac(username: str, limit: int):
+        payload = {"query": QUERY_RECENT_AC, "variables": {"username": username, "limit": limit}}
         response = requests.post(API_URL, json = payload)
         recent_tmp = json.loads(response.content)
         recent_list = recent_tmp['data']['recentAcSubmissionList']

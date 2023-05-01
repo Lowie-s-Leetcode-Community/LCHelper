@@ -31,7 +31,8 @@ class crawl(commands.Cog):
         for user in user_list:
             # Getting the 5 most recent submissions
             lc_username = user['lc_username']
-            recent_info = LC_utils.get_recent_ac(lc_username)
+            recent_solved = []
+            recent_info = LC_utils.get_recent_ac(lc_username, 5)
             
             # For debugging
             """
@@ -52,72 +53,76 @@ class crawl(commands.Cog):
                     daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
-                    # Posting update log in every mutual guild with the user
+                    # Posting update log in LLC
                     untracked_new_submission = True
                     discord_user = await self.client.fetch_user(user['discord_id'])
-                    server_list = [guild.id for guild in discord_user.mutual_guilds]
-                    for server_id in server_list:
-                        lc_query = {'server_id': server_id}
-                        lc_result = lc_col_server.find_one(lc_query)
-                        if lc_result:
-                            guild = await self.client.fetch_guild(server_id)
-                            channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
-                            
-                            lc_user_info = LC_utils.get_user_profile(lc_username)
-                            problem_info = LC_utils.get_question_info(submission['titleSlug'])
-                            desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
-                            if is_daily_challenge: 
-                                desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
-                                discord_member = await guild.fetch_member(discord_user.id)
-                                await daily.complete_daily(daily(self.client), discord_member)
+                    server_id = 1085444549125611530
+                    lc_result = lc_col_server.find_one({'server_id': 1085444549125611530})
+                    guild = await self.client.fetch_guild(server_id)
+                    channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
+                    
+                    lc_user_info = LC_utils.get_user_profile(lc_username)
+                    problem_info = LC_utils.get_question_info(submission['titleSlug'])
+                    desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
+                    if is_daily_challenge: 
+                        desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
+                        discord_member = await guild.fetch_member(discord_user.id)
+                        await daily.complete_daily(daily(self.client), discord_member)
 
-                            embed = discord.Embed(
-                                title = f"**Solved: {problem_info['title']}**",
-                                description = desc_str,
-                                url = f"{problem_info['link']}",
-                                color = Assets.easy if problem_info['difficulty'] == 'Easy' else Assets.medium if problem_info['difficulty'] == 'Medium' else Assets.hard
-                            )
-                            embed.add_field(
-                                name = "Difficulty",
-                                value = problem_info['difficulty'],
-                                inline = True
-                            )
-                            embed.add_field(
-                                name = "AC Count", 
-                                value = f"{problem_info['total_AC']}/{problem_info['total_submissions']}",
-                                inline = True,
-                            )
-                            embed.add_field(
-                                name = "AC Rate",
-                                value = str(problem_info['ac_rate'])[0:5] + "%",
-                                inline = True,
-                            )
-                            tag_list = ""
-                            for name, link in problem_info['topics'].items():
-                                tag_list += f"[``{name}``]({link}), "
+                    embed = discord.Embed(
+                        title = f"**Solved: {problem_info['title']}**",
+                        description = desc_str,
+                        url = f"{problem_info['link']}",
+                        color = Assets.easy if problem_info['difficulty'] == 'Easy' else Assets.medium if problem_info['difficulty'] == 'Medium' else Assets.hard
+                    )
+                    embed.add_field(
+                        name = "Difficulty",
+                        value = problem_info['difficulty'],
+                        inline = True
+                    )
+                    embed.add_field(
+                        name = "AC Count", 
+                        value = f"{problem_info['total_AC']}/{problem_info['total_submissions']}",
+                        inline = True,
+                    )
+                    embed.add_field(
+                        name = "AC Rate",
+                        value = str(problem_info['ac_rate'])[0:5] + "%",
+                        inline = True,
+                    )
+                    tag_list = ""
+                    for name, link in problem_info['topics'].items():
+                        tag_list += f"[``{name}``]({link}), "
 
-                            tag_list = f"||{tag_list[:-2]}||"
-                            embed.add_field(
-                                name = "Topics",
-                                value = tag_list,
-                                inline = False
-                            )
-                            embed.set_footer(
-                                text = f"{problem_info['likes']} 👍 • {problem_info['dislikes']} 👎"
-                            )
-                                                
-                            embed.set_author(
-                                name = f"{lc_username}: {lc_user_info['problem']['solved']['all']}/{lc_user_info['problem']['total_problem']['all']} ({lc_user_info['problem']['percentage']['all']}%)",
-                                icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
-                                url = lc_user_info['profile']['link']
-                            )
-                            embed.set_thumbnail(
-                                url = lc_user_info['profile']['avatar']
-                            )
-                            
-                            await channel.send(embed = embed)
+                    tag_list = f"||{tag_list[:-2]}||"
+                    embed.add_field(
+                        name = "Topics",
+                        value = tag_list,
+                        inline = False
+                    )
+                    embed.set_footer(
+                        text = f"{problem_info['likes']} 👍 • {problem_info['dislikes']} 👎"
+                    )
+                                        
+                    embed.set_author(
+                        name = f"{lc_username}: {lc_user_info['problem']['solved']['all']}/{lc_user_info['problem']['total_problem']['all']} ({lc_user_info['problem']['percentage']['all']}%)",
+                        icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
+                        url = lc_user_info['profile']['link']
+                    )
+                    embed.set_thumbnail(
+                        url = lc_user_info['profile']['avatar']
+                    )
+                    
+                    await channel.send(embed = embed)
+                    recent_solved.append(submission['titleSlug'])
+
+            # Updating solved list and most recent solved in database
             if untracked_new_submission:
-                lc_update = {'$set': {'recent_ac': recent_info[0]}}
+                solved_list = list(set(user['solved'] + recent_solved))
+                lc_update = {'$set': {
+                    'recent_ac': recent_info[0],
+                    'solved': solved_list
+                }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
             
             await asyncio.sleep(5)

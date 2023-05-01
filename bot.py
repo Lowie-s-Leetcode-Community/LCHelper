@@ -8,6 +8,7 @@ import asyncio
 from dotenv import load_dotenv
 from utils.asset import Assets
 from pymongo import MongoClient
+import traceback
 
 load_dotenv()
 intent = discord.Intents.all()
@@ -40,7 +41,7 @@ async def on_app_command_error(interaction: Interaction, error: AppCommandError)
     elif isinstance(error, app_commands.CommandNotFound):
         return
     else: 
-        await interaction.followup.send(f"{Assets.red_tick} **`{error}` ({Interaction.command})**")
+        await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
     print(error)
 
 asyncio.run(main())

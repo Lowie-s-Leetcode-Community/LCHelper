@@ -8,6 +8,7 @@ import random
 import string
 import asyncio
 import datetime
+
 class TestView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout = 30)
@@ -304,7 +305,6 @@ class lc(commands.Cog):
             description = response
         )
         await interaction.followup.send(embed = embed)
-
 
 async def setup(client):
     #await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
