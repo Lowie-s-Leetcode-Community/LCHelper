@@ -57,7 +57,7 @@ class problem(commands.Cog):
         lc_query = {}
 
         # Status
-        if status == None or status.name == "Unsolved": lc_query['status'] = {'$not': {'$all': lc_user['solved']}}
+        if status == None or status.name == "Unsolved": lc_query['title_slug'] = {'$not': {'$all': lc_user['solved']}}
         
         # Difficulty
         if difficulty: lc_query['difficulty'] = difficulty.name
@@ -91,9 +91,7 @@ class problem(commands.Cog):
 
         # Finds and returns the problem
 
-        print(lc_query)
         lc_result = list(lc_col.find(lc_query))
-        #print(lc_result)
         if len(lc_result) == 0:
             await interaction.followup.send(f"{Assets.red_tick} **No problem matched your query.**")
             return
