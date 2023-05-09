@@ -16,10 +16,6 @@ class problem(commands.Cog):
 
     @app_commands.command(name = 'gimme', description = "[BETA] Provides a problem to your likings")
     @app_commands.choices(
-        status = [
-            app_commands.Choice(name = "Any", value = "any"),
-            app_commands.Choice(name = "Unsolved", value = "unsolved"),
-        ],
         difficulty = [
             app_commands.Choice(name = "Easy", value = "easy"),
             app_commands.Choice(name = "Medium", value = "medium"),
@@ -32,7 +28,6 @@ class problem(commands.Cog):
         ]
     )
     @app_commands.describe(
-        status = 'Choose if the problem was solved before (default: Unsolved)',
         difficulty = 'Choose a diffculty (default: Any)',
         included_tag_1 = 'Choose a topic tag to include',
         included_tag_2 = 'Choose a topic tag to include',
@@ -43,7 +38,6 @@ class problem(commands.Cog):
     async def _gimme(
         self, 
         interaction: discord.Interaction, 
-        status: app_commands.Choice[str] = None,
         difficulty: app_commands.Choice[str] = None,
         included_tag_1: Optional[str] = None,
         included_tag_2: Optional[str] = None,
@@ -56,9 +50,6 @@ class problem(commands.Cog):
         lc_col = self.client.DBClient['LC_db']['LC_problems']
         lc_query = {}
 
-        # Status
-        if status == None or status.name == "Unsolved": lc_query['title_slug'] = {'$not': {'$all': lc_user['solved']}}
-        
         # Difficulty
         if difficulty: lc_query['difficulty'] = difficulty.name
 

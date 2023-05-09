@@ -51,7 +51,7 @@ class ConfirmView(discord.ui.View):
                 lc_col.insert_one({'discord_id': interaction.user.id, 'lc_username': self.username})
 
             # Also updating the necessary info
-            recent_info = LC_utils.get_recent_ac(self.username)
+            recent_info = LC_utils.get_recent_ac(self.username, 20)
             if len(recent_info) == 0:
                 lc_update = {'$set': {
                     'recent_ac': {

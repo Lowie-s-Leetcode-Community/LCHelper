@@ -29,10 +29,10 @@ class crawl(commands.Cog):
 
         # Checking every user in DB
         for user in user_list:
-            # Getting the 5 most recent submissions
+            # Getting the most recent submissions
             lc_username = user['lc_username']
             recent_solved = []
-            recent_info = LC_utils.get_recent_ac(lc_username, 5)
+            recent_info = LC_utils.get_recent_ac(lc_username, 20)
             
             # For debugging
             """
@@ -53,14 +53,15 @@ class crawl(commands.Cog):
                     daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
-                    # Posting update log in LLC
-                    untracked_new_submission = True
-                    discord_user = await self.client.fetch_user(user['discord_id'])
+                    # Getting channel log
                     server_id = 1085444549125611530
                     lc_result = lc_col_server.find_one({'server_id': 1085444549125611530})
                     guild = await self.client.fetch_guild(server_id)
                     channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
-                    
+
+                    # Posting update log in LLC
+                    untracked_new_submission = True
+                    discord_user = await self.client.fetch_user(user['discord_id'])
                     lc_user_info = LC_utils.get_user_profile(lc_username)
                     problem_info = LC_utils.get_question_info(submission['titleSlug'])
                     desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"

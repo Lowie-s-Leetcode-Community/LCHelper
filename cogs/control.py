@@ -25,7 +25,7 @@ class control(commands.Cog):
                 if filename.endswith('.py'):
                     try:
                         await self.client.load_extension(f'cogs.{filename[:-3]}')
-                        msg += f"🔁 **cogs.{filename[:-3]}**\n"
+                        msg += f"{Assets.reload} **cogs.{filename[:-3]}**\n"
                     except Exception as e:
                         msg += f"{Assets.red_tick} **cogs.{filename[:-3]}: `{e}`**\n"
             await ctx.send(msg)
@@ -37,7 +37,7 @@ class control(commands.Cog):
                 except: msg = msg
                 try:
                     await self.client.load_extension(f'cogs.{i}')
-                    msg += f"🔁 **cogs.{i}**\n"
+                    msg += f"{Assets.reload} **cogs.{i}**\n"
                 except Exception as e:
                     msg += f"{Assets.red_tick} **cogs.{i}: `{e}`**\n"
             await ctx.send(msg)
