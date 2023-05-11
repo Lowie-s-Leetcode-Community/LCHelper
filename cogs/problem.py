@@ -87,7 +87,7 @@ class problem(commands.Cog):
             await interaction.followup.send(f"{Assets.red_tick} **No problem matched your query.**")
             return
         gacha_result = random.choice(lc_result)
-        info = LC_utils.get_question_info(gacha_result['title_slug'])
+        info = LC_utils.get_problem_info(gacha_result['title_slug'])
 
         embed = discord.Embed(
             title = f"**{info['title']}**",
@@ -138,5 +138,5 @@ class problem(commands.Cog):
         ][:25]
     
 async def setup(client):
-    #await client.add_cog(problem(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(problem(client))
+    await client.add_cog(problem(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(problem(client))

@@ -178,7 +178,7 @@ LC_URL = "https://leetcode.com/"
 API_URL = "https://leetcode.com/graphql"
 LC_LOGO_URL = ""
 class LC_utils:
-    def get_question_info(title_slug: str):
+    def get_problem_info(title_slug: str):
         payload = {"query": QUERY_QUESTION_INFO, "variables": {"titleSlug": title_slug}}
         response = requests.post(API_URL, json = payload)
         tmp = json.loads(response.content)

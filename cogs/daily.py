@@ -54,20 +54,38 @@ class daily(commands.Cog):
         for user in users:
             tmp = user
             
-            if tmp['daily']['finished_today_daily'] == False:
-                tmp['daily']['current_daily_streak'] = 0
+            if tmp['daily_task']['finished_today_daily'] == False:
+                tmp['current_month']['current_daily_streak'] = 0
 
             lc_query = {'$set': {
-                'daily':{
-                    'max_daily_streak': tmp['daily']['max_daily_streak'], 
-                    'current_daily_streak': tmp['daily']['current_daily_streak'],
+                'daily_task':{
                     'finished_today_daily': False,
-                    'last_daily_check': datetime.datetime.now()
-                }
+                    'scores_earned_excluding_daily': 0,
+                    'easy_solved': 0,
+                    'medium_solved': 0,
+                    'hard_solved': 0
+                },
+                'current_month': tmp['current_month']
             }}
-            lc_col.update_one({'discord_id': user['discord_id'], 'daily.last_daily_check': tmp['daily']['last_daily_check']}, lc_query)
+            lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
             await asyncio.sleep(5)
         await log_channel.send('Daily task completed.')
+
+        # Checking (and starting monthly task)
+        if datetime.datetime.now().day == 1:
+            lc_col = self.client.DBClient['LC_db']['LC_users']
+            await log_channel.send('Monthly task started.')
+            users = list(lc_col.find())
+            for user in users:
+                user['previous_month'] = user['current_month']
+                user['current_month']['max_daily_streak'] = 0
+                user['current_month']['current_daily_streak'] = 0
+                user['current_month']['score'] = 0
+
+                lc_query = {'$set': user}
+                lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
+                await asyncio.sleep(5)
+            await log_channel.send('Monthly task completed.')
 
     @daily.error
     async def on_error(self, exception):
@@ -89,34 +107,6 @@ class daily(commands.Cog):
         self.daily.start()
         await ctx.send(f"{Assets.green_tick} **Daily task started.**")
 
-    async def complete_daily(self, member: discord.Member):
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        lc_user = lc_col.find_one({'discord_id': member.id})
-        if lc_user['daily']['finished_today_daily']: 
-            return
-    
-        # Updating streak
-        current_streak = lc_user['daily']['current_daily_streak'] + 1
-        max_streak = max(lc_user['daily']['max_daily_streak'], current_streak)
-        lc_query = {'$set': {
-            'daily':{
-                'max_daily_streak': max_streak, 
-                'current_daily_streak': current_streak,
-                'finished_today_daily': True,
-                'last_daily_check': lc_user['daily']['last_daily_check']
-            }
-        }}
-
-        lc_col.update_one({'discord_id': member.id}, lc_query)
-
-        # Updating score
-        new_score = lc_user['score'] + 2
-        lc_query = {'$set': {
-            'score': new_score
-        }}
-        lc_col.update_one({'discord_id': member.id}, lc_query)
-        await logging.on_score_add(logging(self.client), member = member, score = 2, reason = "Daily AC")
-
 async def setup(client):
-    #await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(daily(client))
+    await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(daily(client))

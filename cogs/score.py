@@ -24,9 +24,10 @@ class score(commands.Cog):
 
         lc_col = self.client.DBClient['LC_db']['LC_users']
         lc_user = lc_col.find_one({'discord_id': member.id})
-        new_score = lc_user['score'] + score
-        lc_query = {'$set': {'score': new_score}}
-        lc_col.update_one(lc_user, lc_query)
+        lc_user['current_month']['score'] += score
+        lc_user['all_time']['score'] += score
+        lc_query = {'$set': lc_user}
+        lc_col.update_one({'discord_id': member.id}, lc_query)
         await logging.on_score_add(logging(self.client), member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
         
@@ -40,14 +41,15 @@ class score(commands.Cog):
 
         lc_col = self.client.DBClient['LC_db']['LC_users']
         lc_user = lc_col.find_one({'discord_id': member.id})
-        new_score = lc_user['score'] - score
-        lc_query = {'$set': {'score': new_score}}
-        lc_col.update_one(lc_user, lc_query)
+        lc_user['current_month']['score'] -= score
+        lc_user['all_time']['score'] -= score
+        lc_query = {'$set': lc_user}
+        lc_col.update_one({'discord_id': member.id}, lc_query)
         await logging.on_score_deduct(logging(self.client), member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score deducted.**")
 
             
 
 async def setup(client):
-    #await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(score(client))
+    await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(score(client))

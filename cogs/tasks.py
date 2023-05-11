@@ -4,6 +4,7 @@ from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from typing import Optional, Union
+from .logging import logging
 import random
 import string
 import asyncio
@@ -75,8 +76,57 @@ class task(commands.Cog):
         
         await interaction.followup.send(embed = embed)
     
-    
-    
+    async def on_problem_completed(self, member: discord.Member, lc_user: dict, problem_title_slug: str, is_daily: bool):
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        lc_problem = LC_utils.get_problem_info(problem_title_slug)
+
+        # Updating daily status
+        if is_daily:
+            lc_user['daily_task']['finished_today_daily'] = True
+            lc_query = {'$set': {
+                'daily_task': lc_user['daily_task']
+            }}
+            lc_col.update({'discord_id': member.id}, lc_query)
+        
+        # (Non-daily challange) Updating Daily earnable scores + monthly and all-time scores
+        cur_score_without_daily = lc_user['daily_task']['scores_earned_excluding_daily']
+        earned_score = 0
+
+        if lc_problem['difficulty'] == "Easy": 
+            earned_score = min(1, 6 - cur_score_without_daily)
+            lc_user['daily_task']['easy_solved'] += 1
+        if lc_problem['difficulty'] == "Medium": 
+            earned_score = min(2, 6 - cur_score_without_daily)
+            lc_user['daily_task']['medium_solved'] += 1
+        if lc_problem['difficulty'] == "Hard":
+            earned_score = min(3, 6 - cur_score_without_daily)
+            lc_user['daily_task']['hard_solved'] += 1 
+
+        cur_score_without_daily += earned_score
+        lc_user['daily_task']['scores_earned_excluding_daily'] += earned_score
+        lc_user['current_month']['score'] += earned_score
+        lc_user['all_time']['score'] += earned_score
+
+        # Logging
+        if earned_score:
+            await logging.on_score_add(logging(self.client), member = member, score = earned_score, reason = f"Self-practice: {lc_problem['difficulty']} problem")
+
+        # (Daily challenge) Updating streaks and scores
+        if is_daily and not lc_user['daily_task']['finished_today_daily']:
+            lc_user['current_month']['current_daily_streak'] += 1
+            lc_user['current_month']['max_daily_streak'] = max(lc_user['current_month']['max_daily_streak'], lc_user['current_month']['current_daily_streak'])
+            lc_user['current_month']['score'] += 2
+            
+            lc_user['all_time']['current_daily_streak'] += 1
+            lc_user['all_time']['max_daily_streak'] = max(lc_user['all_time']['max_daily_streak'], lc_user['all_time']['current_daily_streak'])
+            lc_user['all_time']['score'] += 2
+            
+            # Updating score
+            await logging.on_score_add(logging(self.client), member = member, score = 2, reason = "Daily AC")
+        
+        lc_query = {'$set': lc_user}
+        lc_col.update({'discord_id': member.id}, lc_query)
+        
 async def setup(client):
     await client.add_cog(task(client), guilds=[discord.Object(id=1085444549125611530)])
     #await client.add_cog(task(client))

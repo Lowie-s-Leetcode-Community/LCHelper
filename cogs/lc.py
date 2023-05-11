@@ -52,34 +52,41 @@ class ConfirmView(discord.ui.View):
 
             # Also updating the necessary info
             recent_info = LC_utils.get_recent_ac(self.username, 20)
+            tmp_query = {
+                'all_time': {
+                    'max_daily_streak': 0,
+                    'current_daily_streak': 0,
+                    'score': 0
+                },
+                'current_month': {
+                    'max_daily_streak': 0,
+                    'current_daily_streak': 0,
+                    'score': 0
+                },
+                'previous_month': {
+                    'max_daily_streak': 0,
+                    'current_daily_streak': 0,
+                    'score': 0
+                },
+                'daily_task': {
+                    'finished_today_daily': False,
+                    'scores_earned_excluding_daily': 0,
+                    'easy_solved': 0,
+                    'medium_solved': 0,
+                    'hard_solved': 0
+                }
+            }
             if len(recent_info) == 0:
-                lc_update = {'$set': {
-                    'recent_ac': {
-                        "id": None,
-                        "title": None,
-                        "titleSlug": None,
-                        "timestamp": str(int(datetime.datetime.timestamp(datetime.datetime.now())))
-                    },
-                    'daily': {
-                        'max_daily_streak': 0, 
-                        'current_daily_streak': 0,
-                        'finished_today_daily': False,
-                    },
-                    'score': 0
-                }}
-                lc_col.update_one(lc_query, lc_update)
-            else:
-                lc_update = {'$set': {
-                    'recent_ac': recent_info[0],
-                    'daily': {
-                        'max_daily_streak': 0, 
-                        'current_daily_streak': 0,
-                        'finished_today_daily': False,
-                        'last_daily_check': datetime.datetime.now()
-                    },
-                    'score': 0
-                }}
-                lc_col.update_one(lc_query, lc_update)
+                tmp_query['recent_ac'] = {
+                    "id": None,
+                    "title": None,
+                    "titleSlug": None,
+                    "timestamp": str(int(datetime.datetime.timestamp(datetime.datetime.now())))
+                }
+            else: tmp_query['recent_ac'] = recent_info[0]
+        
+            lc_update = {'$set': tmp_query}
+            lc_col.update_one(lc_query, lc_update)
             
             try:
                 lc_query = {'server_id': interaction.guild_id}
@@ -125,7 +132,7 @@ class lc(commands.Cog):
 
         # daily_info = LC_utils.get_daily_challenge_info()
         daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
-        info = LC_utils.get_question_info(daily_info['title_slug'])
+        info = LC_utils.get_problem_info(daily_info['title_slug'])
 
         embed = discord.Embed(
             title = f"**{info['title']}**",
@@ -171,34 +178,28 @@ class lc(commands.Cog):
         await interaction.response.defer(thinking = True)
 
         lc_col = self.client.DBClient['LC_db']['LC_users']
-        max_streak = 0
-        current_streak = 0
-        score = 0
+        lc_result = None
         if username == None and member == None:
             lc_query = {'discord_id': interaction.user.id}
             lc_result = lc_col.find_one(lc_query)
-            if lc_result:
-                username = lc_result['lc_username']
-                max_streak = lc_result['daily']['max_daily_streak']
-                current_streak = lc_result['daily']['current_daily_streak']
-                score = lc_result['score']
-            else:
+            if not lc_result:
                 await interaction.followup.send(f"{Assets.red_tick} **Please specify an username, a member, or link your account with `/link`**")
                 return
+            else: username = lc_result['lc_username']
         elif username and member:
             await interaction.followup.send(f"{Assets.red_tick} **Choose either not both :woozy_face:**")
+            return
         elif member:
             lc_query = {'discord_id': member.id}
             lc_result = lc_col.find_one(lc_query)
-            if lc_result:
-                username = lc_result['lc_username']
-                max_streak = lc_result['daily']['max_daily_streak']
-                current_streak = lc_result['daily']['current_daily_streak']
-                score = lc_result['score']
-            else:
+            if not lc_result:
                 await interaction.followup.send(f"{Assets.red_tick} **This member hasn't linked an account yet**")
                 return
-
+            else: username = lc_result['lc_username']
+        else:
+            lc_query = {'lc_username': username}
+            lc_result = lc_col.find_one(lc_query)
+        
         info = LC_utils.get_user_profile(username)
         embed = discord.Embed(
             description = f"""
@@ -214,11 +215,11 @@ class lc(commands.Cog):
             value = f"""
             ▸ **Rank:** #{info['profile']['rank'] if info['profile']['rank'] != "" else "N/A"}
             ▸ **Solved:** {info['problem']['solved']['all']}/{info['problem']['total_problem']['all']} ({info['problem']['percentage']['all']}%)
-            ㅤ▸ **Easy:** {info['problem']['solved']['easy']}/{info['problem']['total_problem']['easy']} ({info['problem']['percentage']['easy']}%)
-            ㅤ▸ **Medium:** {info['problem']['solved']['medium']}/{info['problem']['total_problem']['medium']} ({info['problem']['percentage']['medium']}%)
-            ㅤ▸ **Hard:** {info['problem']['solved']['hard']}/{info['problem']['total_problem']['hard']} ({info['problem']['percentage']['hard']}%)
+            {Assets.blank} ▸ **Easy:** {info['problem']['solved']['easy']}/{info['problem']['total_problem']['easy']} ({info['problem']['percentage']['easy']}%)
+            {Assets.blank} ▸ **Medium:** {info['problem']['solved']['medium']}/{info['problem']['total_problem']['medium']} ({info['problem']['percentage']['medium']}%)
+            {Assets.blank} ▸ **Hard:** {info['problem']['solved']['hard']}/{info['problem']['total_problem']['hard']} ({info['problem']['percentage']['hard']}%)
             """,
-            inline = False
+            inline = True
             # Special space characters
         )
         embed.add_field(
@@ -227,19 +228,26 @@ class lc(commands.Cog):
             ▸ **Rank:** {'#' + str(info['contest']['global_rank']) if info['contest']['global_rank'] else "N/A"}
             ▸ **Rating:** {info['contest']['rating'] if info['contest']['rating'] else "N/A"}
             ▸ **Top:** {str(info['contest']['top_percentage']) + '%' if info['contest']['top_percentage'] else "N/A"}
-            ▸ **Attended:** {info['contest']['contest_count'] if info['contest']['contest_count'] else 0}
+            ▸ **Attended contest:** {info['contest']['contest_count'] if info['contest']['contest_count'] else 0}
             """,
-            inline = False
+            inline = True
         )
-        embed.add_field(
-            name = "🏡 In-server (beta)",
-            value = f"""
-            ▸ **Max daily streak:** {max_streak}
-            ▸ **Current daily streak:** {current_streak}
-            ▸ **Score:** {score}
-            """,
-            inline = False
-        )
+        if lc_result:   
+            embed.add_field(
+                name = "🏡 In-server (beta)",
+                value = f"""
+                ▸ **All-time**:
+                {Assets.blank} ▸ **Max daily streak:** {lc_result['all_time']['max_daily_streak']}
+                {Assets.blank} ▸ **Current daily streak:** {lc_result['all_time']['current_daily_streak']}
+                {Assets.blank} ▸ **Score:** {lc_result['all_time']['score']}
+
+                ▸ **Current month**:
+                {Assets.blank} ▸ **Max daily streak:** {lc_result['current_month']['max_daily_streak']}
+                {Assets.blank} ▸ **Current daily streak:** {lc_result['current_month']['current_daily_streak']}
+                {Assets.blank} ▸ **Score:** {lc_result['current_month']['score']}
+                """,
+                inline = False
+            )
         embed.set_author(
             name = f"LeetCode profile for {username}",
             icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
@@ -277,11 +285,11 @@ class lc(commands.Cog):
         await interaction.response.defer(thinking = True)
         lc_col = self.client.DBClient['LC_db']['LC_users']
         users = list(lc_col.find())
-        users.sort(key = lambda x: -x['daily']['max_daily_streak'])
+        users.sort(key = lambda x: -x['current_month']['max_daily_streak'])
         response = ""
         idx = 1
         for user in users:
-            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Max: {user['daily']['max_daily_streak']} - Current: {user['daily']['current_daily_streak']}\n"
+            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Max: {user['current_month']['max_daily_streak']} - Current: {user['current_month']['current_daily_streak']}\n"
             idx += 1
         embed = discord.Embed(
             title = "Daily streak ranking",
@@ -289,23 +297,40 @@ class lc(commands.Cog):
         )
         await interaction.followup.send(embed = embed)
 
-    @ranklist.command(name = 'score', description = "Views the score ranking")
+    @ranklist.command(name = 'score', description = "Views the score ranking of this month")
     async def _ranklist_score(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         lc_col = self.client.DBClient['LC_db']['LC_users']
         users = list(lc_col.find())
-        users.sort(key = lambda x: -x['score'])
+        users.sort(key = lambda x: -x['current_month']['score'])
         response = ""
         idx = 1
         for user in users:
-            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['score']}\n"
+            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['current_month']['score']}\n"
             idx += 1
         embed = discord.Embed(
-            title = "Score ranking",
+            title = "Current month's score ranking",
+            description = response
+        )
+        await interaction.followup.send(embed = embed)
+    
+    @ranklist.command(name = 'prev_month_score', description = "Views the score ranking of previous month")
+    async def _ranklist_prevscore(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        users = list(lc_col.find())
+        users.sort(key = lambda x: -x['previous_month']['score'])
+        response = ""
+        idx = 1
+        for user in users:
+            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['previous_month']['score']}\n"
+            idx += 1
+        embed = discord.Embed(
+            title = "Previous month's score ranking",
             description = response
         )
         await interaction.followup.send(embed = embed)
 
 async def setup(client):
-    #await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(lc(client))
+    await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(lc(client))

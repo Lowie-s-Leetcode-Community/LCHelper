@@ -11,7 +11,7 @@ import traceback
 class crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.crawling.start()
+        #self.crawling.start()
 
     def cog_unload(self):
         self.crawling.cancel()
@@ -61,14 +61,12 @@ class crawl(commands.Cog):
 
                     # Posting update log in LLC
                     untracked_new_submission = True
-                    discord_user = await self.client.fetch_user(user['discord_id'])
+                    discord_member = await guild.fetch_member(user['discord_id'])
                     lc_user_info = LC_utils.get_user_profile(lc_username)
-                    problem_info = LC_utils.get_question_info(submission['titleSlug'])
+                    problem_info = LC_utils.get_problem_info(submission['titleSlug'])
                     desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
-                    if is_daily_challenge: 
-                        desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
-                        discord_member = await guild.fetch_member(discord_user.id)
-                        await daily.complete_daily(daily(self.client), discord_member)
+
+                    if is_daily_challenge: desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
 
                     embed = discord.Embed(
                         title = f"**Solved: {problem_info['title']}**",
@@ -117,6 +115,10 @@ class crawl(commands.Cog):
                     await channel.send(embed = embed)
                     recent_solved.append(submission['titleSlug'])
 
+                    # Updating daily earnable scores
+                    await tasks.on_problem_completed(daily(self.client), member = discord_member, lc_user = lc_user_info, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
+
+
             # Updating solved list and most recent solved in database
             if untracked_new_submission:
                 solved_list = list(set(user['solved'] + recent_solved))
@@ -149,5 +151,5 @@ class crawl(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
 
 async def setup(client):
-    #await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(crawl(client))
+    await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(crawl(client))
