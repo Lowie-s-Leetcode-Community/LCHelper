@@ -67,7 +67,7 @@ class crawl(commands.Cog):
                     desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
 
                     if is_daily_challenge: desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str
-
+                    
                     embed = discord.Embed(
                         title = f"**Solved: {problem_info['title']}**",
                         description = desc_str,

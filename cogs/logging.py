@@ -74,5 +74,5 @@ class logging(commands.Cog):
         await log_channel.send(embed = embed)
 
 async def setup(client):
-    #await client.add_cog(logging(client), guilds=[discord.Object(id=1085444549125611530)])
-    await client.add_cog(logging(client))
+    await client.add_cog(logging(client), guilds=[discord.Object(id=1085444549125611530)])
+    #await client.add_cog(logging(client))
