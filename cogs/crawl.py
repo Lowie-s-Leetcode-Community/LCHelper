@@ -4,6 +4,7 @@ from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from cogs.daily import daily
+from cogs.tasks import task
 from typing import Optional
 import asyncio
 import traceback
@@ -34,6 +35,8 @@ class crawl(commands.Cog):
             recent_solved = []
             recent_info = LC_utils.get_recent_ac(lc_username, 20)
             
+            print(lc_username)
+
             # For debugging
             """
             if lc_username == "leanhduy0206":
@@ -47,7 +50,7 @@ class crawl(commands.Cog):
             # Tracking the most recent submissions
             untracked_new_submission = False
             for submission in reversed(recent_info):
-                if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
+                if int(submission['timestamp']) > int(user['recent_ac']['timestamp']) and submission['titleSlug'] not in user['solved']:
                     # New AC submissions found
                     # Checking if daily challenge
                     daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
@@ -116,7 +119,7 @@ class crawl(commands.Cog):
                     recent_solved.append(submission['titleSlug'])
 
                     # Updating daily earnable scores
-                    await tasks.on_problem_completed(daily(self.client), member = discord_member, lc_user = lc_user_info, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
+                    await task.on_problem_completed(task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
 
 
             # Updating solved list and most recent solved in database

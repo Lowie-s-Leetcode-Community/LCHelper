@@ -47,15 +47,19 @@ class daily(commands.Cog):
         #channel = await guild.fetch_channel(1089769159807733831)
         name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
         await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
-            
+    
         # Checking daily streak of everyone 
         lc_col = self.client.DBClient['LC_db']['LC_users']
         users = list(lc_col.find())
+
+        await log_channel.send(users)
+    
         for user in users:
             tmp = user
             
             if tmp['daily_task']['finished_today_daily'] == False:
                 tmp['current_month']['current_daily_streak'] = 0
+                tmp['all_time']['current_daily_streak'] = 0
 
             lc_query = {'$set': {
                 'daily_task':{
