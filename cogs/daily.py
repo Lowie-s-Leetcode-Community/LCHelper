@@ -52,8 +52,6 @@ class daily(commands.Cog):
         lc_col = self.client.DBClient['LC_db']['LC_users']
         users = list(lc_col.find())
 
-        await log_channel.send(users)
-    
         for user in users:
             tmp = user
             
