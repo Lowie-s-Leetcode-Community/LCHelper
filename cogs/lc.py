@@ -75,6 +75,7 @@ class ConfirmView(discord.ui.View):
                     'medium_solved': 0,
                     'hard_solved': 0
                 }
+                'solved': []
             }
             if len(recent_info) == 0:
                 tmp_query['recent_ac'] = {

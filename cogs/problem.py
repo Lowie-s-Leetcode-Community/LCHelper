@@ -14,7 +14,7 @@ class problem(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @app_commands.command(name = 'gimme', description = "[BETA] Provides a problem to your likings")
+    @app_commands.command(name = 'gimme', description = "Provides a problem to your likings")
     @app_commands.choices(
         difficulty = [
             app_commands.Choice(name = "Easy", value = "easy"),
