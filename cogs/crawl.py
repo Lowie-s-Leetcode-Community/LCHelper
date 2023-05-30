@@ -34,8 +34,6 @@ class crawl(commands.Cog):
             lc_username = user['lc_username']
             recent_solved = []
             recent_info = LC_utils.get_recent_ac(lc_username, 20)
-            
-            print(lc_username)
 
             # For debugging
             """
