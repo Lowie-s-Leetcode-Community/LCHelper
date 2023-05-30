@@ -74,7 +74,7 @@ class ConfirmView(discord.ui.View):
                     'easy_solved': 0,
                     'medium_solved': 0,
                     'hard_solved': 0
-                }
+                },
                 'solved': []
             }
             if len(recent_info) == 0:

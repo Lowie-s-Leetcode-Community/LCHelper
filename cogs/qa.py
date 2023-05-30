@@ -41,8 +41,9 @@ class QModal(discord.ui.Modal):
         
         fb_channel = await interaction.guild.fetch_channel(1107851817347461120)
         msg = await fb_channel.send(embed = embed)
-        await interaction.followup.send(f'Your question has been sent, thank you for your contribution, {interaction.user.display_name}!', ephemeral = True)
+        await interaction.followup.send(f'Your question has been sent, check back frequently for answers, {interaction.user.display_name}!', ephemeral = True)
         await msg.create_thread(name = f"Question #{qa_id}")
+        await msg.add_reaction("<:pepe_love:1087411917603221627>")
         self.DBClient['LC_db']['LC_tracking'].update_one({'qa_id': qa_id - 1}, {'$set': {'qa_id': qa_id}})
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
@@ -89,6 +90,8 @@ class FBModal(discord.ui.Modal):
         msg = await fb_channel.send(embed = embed)
         await interaction.followup.send(f'Your feedback has been sent, thank you for your contribution, {interaction.user.display_name}!', ephemeral = True)
         await msg.create_thread(name = f"Feedback #{feedback_id}")
+        await msg.add_reaction("<:pepe_yes:1087411960737439804>")
+        await msg.add_reaction("<:pepe_nope:1087411932979527720>")
         self.DBClient['LC_db']['LC_tracking'].update_one({'feedback_id': feedback_id - 1}, {'$set': {'feedback_id': feedback_id}})
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
@@ -104,7 +107,7 @@ class QAView(discord.ui.View):
     async def fb_call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(FBModal(self.DBClient))
     
-    @discord.ui.button(label = "Ask a question (annoymously)", style = discord.ButtonStyle.primary, emoji = "🙋‍♂️", custom_id = 'persistent_view:ask')
+    @discord.ui.button(label = "Ask a question (anonymously)", style = discord.ButtonStyle.primary, emoji = "🙋‍♂️", custom_id = 'persistent_view:ask')
     async def ask_call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(QModal(self.DBClient))
 
