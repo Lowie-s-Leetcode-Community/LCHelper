@@ -79,7 +79,7 @@ class daily(commands.Cog):
             await log_channel.send('Monthly task started.')
             users = list(lc_col.find())
             for user in users:
-                user['previous_month'] = user['current_month']
+                user['previous_month'], user['current_month'] = user['current_month'], user['previous_month']
                 user['current_month']['max_daily_streak'] = 0
                 user['current_month']['current_daily_streak'] = 0
                 user['current_month']['score'] = 0
