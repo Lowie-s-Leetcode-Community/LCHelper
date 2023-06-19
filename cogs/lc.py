@@ -290,8 +290,9 @@ class lc(commands.Cog):
         response = ""
         idx = 1
         for user in users:
-            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Max: {user['current_month']['max_daily_streak']} - Current: {user['current_month']['current_daily_streak']}\n"
-            idx += 1
+            if user['current_month']['max_daily_streak'] > 0:
+                response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Max: {user['current_month']['max_daily_streak']} - Current: {user['current_month']['current_daily_streak']}\n"
+                idx += 1
         embed = discord.Embed(
             title = "Daily streak ranking",
             description = response
@@ -307,8 +308,9 @@ class lc(commands.Cog):
         response = ""
         idx = 1
         for user in users:
-            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['current_month']['score']}\n"
-            idx += 1
+            if user['current_month']['score'] > 0:
+                response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['current_month']['score']}\n"
+                idx += 1
         embed = discord.Embed(
             title = "Current month's score ranking",
             description = response
@@ -324,8 +326,9 @@ class lc(commands.Cog):
         response = ""
         idx = 1
         for user in users:
-            response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['previous_month']['score']}\n"
-            idx += 1
+            if user['previous_month']['score'] > 0:
+                response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['previous_month']['score']}\n"
+                idx += 1
         embed = discord.Embed(
             title = "Previous month's score ranking",
             description = response
