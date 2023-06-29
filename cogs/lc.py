@@ -261,6 +261,7 @@ class lc(commands.Cog):
 
     @app_commands.command(name = 'verify', description = "Sets a role for verified members")
     @app_commands.describe(role = "Choose a role")
+    @app_commands.checks.has_permissions(administrator = True)
     async def _verify(self, interaction: discord.Interaction, role: discord.Role):
         await interaction.response.defer(thinking = True)
 

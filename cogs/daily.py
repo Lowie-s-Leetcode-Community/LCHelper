@@ -74,20 +74,22 @@ class daily(commands.Cog):
         await log_channel.send('Daily task completed.')
 
         # Checking (and starting monthly task)
-        if datetime.datetime.now().day == 1:
-            lc_col = self.client.DBClient['LC_db']['LC_users']
-            await log_channel.send('Monthly task started.')
-            users = list(lc_col.find())
-            for user in users:
-                user['previous_month'], user['current_month'] = user['current_month'], user['previous_month']
-                user['current_month']['max_daily_streak'] = 0
-                user['current_month']['current_daily_streak'] = 0
-                user['current_month']['score'] = 0
+        # if datetime.datetime.now().day == 1:
+        #     lc_col = self.client.DBClient['LC_db']['LC_users']
+        #     await log_channel.send('Monthly task started.')
+        #     users = list(lc_col.find())
+        #     for user in users:
+        #         user['previous_month'], user['current_month'] = user['current_month'], user['previous_month']
+        #         user['current_month']['max_daily_streak'] = 0
+        #         user['current_month']['current_daily_streak'] = 0
+        #         user['current_month']['score'] = 0
 
-                lc_query = {'$set': user}
-                lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-                await asyncio.sleep(5)
-            await log_channel.send('Monthly task completed.')
+        #         lc_query = {'$set': user}
+        #         lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
+        #         await asyncio.sleep(5)
+        #     await log_channel.send('Monthly task completed.')
+
+        # Disabling the monthly task
 
     @daily.error
     async def on_error(self, exception):
