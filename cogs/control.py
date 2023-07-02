@@ -12,7 +12,7 @@ class control(commands.Cog):
         self.client = client
 
     @commands.command(name = "reload", aliases = ["r"])
-    @commands.is_owner()
+    @commands.has_permissions(administrator = True)
     async def _reload(self, ctx, *, s: str):
         msg = ""
         if (s == "all"):
@@ -43,7 +43,7 @@ class control(commands.Cog):
             await ctx.send(msg)
 
     @commands.command(name = "sync")
-    @commands.is_owner()
+    @commands.has_permissions(administrator = True)
     async def sync(self, ctx, guilds: Greedy[discord.Object], spec: Optional[Literal["1", "2", "3"]] = None):
         if not guilds:
             if spec == "1":

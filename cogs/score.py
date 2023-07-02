@@ -48,7 +48,20 @@ class score(commands.Cog):
         await logging.on_score_deduct(logging(self.client), member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score deducted.**")
 
-            
+    @score_group.command(name = 'monthly_reset', description = "Reset the server's monthly score")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def _score_reset(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        users = list(lc_col.find())
+        for user in users:
+            user['current_month']['score'] = 0
+            lc_query = {'$set': user}
+            lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
+        await logging.on_score_reset(logging(self.client), member_count = len(users))
+        msg = "Reset the score of " + str(len(users)) + " LLC members!"
+        await interaction.followup.send(msg)
 
 async def setup(client):
     await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])

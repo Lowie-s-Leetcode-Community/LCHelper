@@ -15,6 +15,7 @@ class logging(commands.Cog):
     logging_group = app_commands.Group(name = "logging", description = "Logging Group")
     @logging_group.command(name = 'track', description = "Sets a channel to track recent AC submissions")
     @app_commands.describe(channel = "Choose a channel")
+    @app_commands.checks.has_permissions(administrator = True)
     async def _track(self, interaction: discord.Interaction, channel: discord.channel.TextChannel):
         await interaction.response.defer(thinking = True)
 
@@ -31,6 +32,7 @@ class logging(commands.Cog):
 
     @logging_group.command(name = 'score', description = "Sets a channel to track score updates")
     @app_commands.describe(channel = "Choose a channel")
+    @app_commands.checks.has_permissions(administrator = True)
     async def _track(self, interaction: discord.Interaction, channel: discord.channel.TextChannel):
         await interaction.response.defer(thinking = True)
 
@@ -72,6 +74,13 @@ class logging(commands.Cog):
             color = Assets.hard
         )
         await log_channel.send(embed = embed)
+
+    async def on_score_reset(self, member_count: int):
+        guild = await self.client.fetch_guild(1085444549125611530)
+        log_channel = await guild.fetch_channel(1091763595777409025)
+        msg = "Reset the score of " + str(member_count) + " LLC members!"
+        await log_channel.send(msg)
+
 
 async def setup(client):
     await client.add_cog(logging(client), guilds=[discord.Object(id=1085444549125611530)])
