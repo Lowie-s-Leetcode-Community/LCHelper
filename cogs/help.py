@@ -28,9 +28,9 @@ class help_command(commands.Cog):
             inline = False
         )
         embed.add_field(
-            name = "🗃️  Xem thông tin LCC membership",
+            name = "🗃️  Xem thông tin LLC membership",
             value = f"""
-            `/profile`: Các dữ liệu điểm số của thành viên CLB trên hệ thống LCC.\n`/tasks`: Các nhiệm vụ để có thể kiếm điểm trong LCC.
+            `/profile`: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.\n`/tasks`: Các nhiệm vụ để có thể kiếm điểm trong LLC.
             ⠀
             """,
             inline = False
