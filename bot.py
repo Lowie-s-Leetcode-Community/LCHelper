@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 from utils.asset import Assets
 from pymongo import MongoClient
 import traceback
-
 load_dotenv()
+
 intent = discord.Intents.all()
 client = commands.Bot(command_prefix = os.getenv('BOT_PREFIX'), case_insensitive = True, intents = intent)
 activity = discord.Activity(name = 'Lowie', type = discord.ActivityType.playing)
@@ -40,7 +40,7 @@ async def on_app_command_error(interaction: Interaction, error: AppCommandError)
         await interaction.followup.send("You don't have the permission to execute this command")
     elif isinstance(error, app_commands.CommandNotFound):
         return
-    else: 
+    else:
         await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
     print(error)
 

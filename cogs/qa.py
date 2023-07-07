@@ -123,7 +123,7 @@ class qa(commands.Cog):
     async def _qa_init(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         embed = discord.Embed(
-            title = ":information_source: Info [BETA]",
+            title = ":information_source: Info",
             description = """
             Feedback? Questions? Confessions? Sending out an anonymous love letter? :eyes:
             """,

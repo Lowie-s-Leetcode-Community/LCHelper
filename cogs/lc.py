@@ -235,7 +235,7 @@ class lc(commands.Cog):
         )
         if lc_result:   
             embed.add_field(
-                name = "🏡 In-server (beta)",
+                name = "🏡 In-server",
                 value = f"""
                 ▸ **All-time**:
                 {Assets.blank} ▸ **Max daily streak:** {lc_result['all_time']['max_daily_streak']}
@@ -314,24 +314,6 @@ class lc(commands.Cog):
                 idx += 1
         embed = discord.Embed(
             title = "Current month's score ranking",
-            description = response
-        )
-        await interaction.followup.send(embed = embed)
-    
-    @ranklist.command(name = 'prev_month_score', description = "Views the score ranking of previous month")
-    async def _ranklist_prevscore(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        users = list(lc_col.find())
-        users.sort(key = lambda x: -x['previous_month']['score'])
-        response = ""
-        idx = 1
-        for user in users:
-            if user['previous_month']['score'] > 0:
-                response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['previous_month']['score']}\n"
-                idx += 1
-        embed = discord.Embed(
-            title = "Previous month's score ranking",
             description = response
         )
         await interaction.followup.send(embed = embed)

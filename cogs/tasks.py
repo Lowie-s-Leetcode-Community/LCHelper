@@ -25,13 +25,13 @@ class task(commands.Cog):
             """,
             color = discord.Colour.blue()
         )
+        score_msg = ""
+        score_msg += f"- All-time score: **{lc_user['all_time']['score']}**\n"
+        score_msg += f"- This month's score: **{lc_user['current_month']['score']}**\n"
+        score_msg += f"- Previous month's score: **{lc_user['previous_month']['score']}**"
         embed.add_field(
             name = "Your scores",
-            value = f"""
-            - All-time score: **{lc_user['all_time']['score']}**
-            - This month's score: **{lc_user['current_month']['score']}**
-            - Previous month's score: **{lc_user['previous_month']['score']}**
-            """,
+            value = score_msg,
             inline = False
         )
         daily_msg = ""
@@ -45,7 +45,7 @@ class task(commands.Cog):
         if lc_user['daily_task']['scores_earned_excluding_daily'] == 6:
             daily_msg += f"{Assets.green_tick} Self-practice (6/6 pts)\n"
         else:
-            daily_msg += f"{Assets.red_tick} **Self-practice ({lc_user['daily_task']['scores_earned_excluding_daily']}/6 pts)**\n"
+            daily_msg += f"{'⌛' if lc_user['daily_task']['scores_earned_excluding_daily'] else Assets.red_tick} **Self-practice ({lc_user['daily_task']['scores_earned_excluding_daily']}/6 pts)**\n"
         
         daily_msg += f"{Assets.blank} - *Solve an Easy problem (1 pts): {lc_user['daily_task']['easy_solved']} solved*\n"
         daily_msg += f"{Assets.blank} - *Solve a Medium problem (2 pts): {lc_user['daily_task']['medium_solved']} solved*\n"
@@ -64,7 +64,7 @@ class task(commands.Cog):
                 monthly_score += 4
                 monthly_msg += f"{Assets.green_tick} Reach a streak of {min(day, lc_user['current_month']['max_daily_streak'])}/{day} days (4 pts)\n"
             else:
-                monthly_msg += f"{Assets.red_tick} **Reach a streak of {min(day, lc_user['current_month']['max_daily_streak'])}/{day} days (4 pts)**\n"
+                monthly_msg += f"{'⌛' if {min(day, lc_user['current_month']['max_daily_streak'])} else Assets.red_tick} **Reach a streak of {min(day, lc_user['current_month']['max_daily_streak'])}/{day} days (4 pts)**\n"
         
 
         embed.add_field(

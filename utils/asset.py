@@ -2,6 +2,7 @@ class Assets:
     green_tick = "<:greentick:837013167791800320>"
     red_tick = "<:redtick:837013167779217419>"
     reload = "<:reload:1103496989242564749>"
+    progress = "<:progress:1126722949286735984>"
     online = "<:onlineicon:837032476819324981>"
     idle = "<:idleicon:837032477481631845>"
     dnd = "<:dndicon:837032477414916136>"
