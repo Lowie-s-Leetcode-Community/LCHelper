@@ -22,7 +22,7 @@ class bot_related(commands.Cog):
             name = "Pong!"
         )
         embed.set_footer(
-            text = ctx.author,
+            text = ctx.author.name,
             icon_url = author_avatar_url
         )
         response = await ctx.send(embed = embed)

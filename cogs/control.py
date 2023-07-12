@@ -44,17 +44,20 @@ class control(commands.Cog):
 
     @commands.command(name = "sync")
     @commands.has_permissions(administrator = True)
-    async def sync(self, ctx, guilds: Greedy[discord.Object], spec: Optional[Literal["1", "2", "3"]] = None):
+    async def sync(self, ctx, guilds: Greedy[discord.Object], spec: Optional[Literal["1", "2", "3", "4"]] = None):
         if not guilds:
-            if spec == "1":
+            if spec == "1": # Syncing all commands in the current tree to local
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
-            elif spec == "2":
+            elif spec == "2": # Syncing all commands from global to local
                 ctx.bot.tree.copy_global_to(guild=ctx.guild)
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
-            elif spec == "3":
+            elif spec == "3": # Clearing all commands on local
                 ctx.bot.tree.clear_commands(guild=ctx.guild)
                 await ctx.bot.tree.sync(guild=ctx.guild)
                 synced = []
+            elif spec == "4": # Clearing all commands on global and sync to local (to prevent duplicate commands)
+                ctx.bot.tree.clear_commands(guild=None)
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
             else:
                 synced = await ctx.bot.tree.sync()
 

@@ -30,12 +30,21 @@ def purify_members(interaction, lc_users: list, duration_type: int, rank_type: i
                 "value": user[duration_type_list[duration_type]][rank_type_list[rank_type]],  
             })
     return res_list
-    
+
+def get_index(user_list: list, expected_discord_username: str):
+    idx = 1
+    for user in user_list:
+        if user['discord_username'] == expected_discord_username:
+            return idx
+        idx += 1
+
+    return None
+
 def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int, page_number: int):
     lc_col = DBClient['LC_db']['LC_users']
     lc_users = list(lc_col.find())
 
-    # Removes members that have already left
+    # Removes members that have already left and sorts
     user_list = purify_members(
         interaction = interaction, 
         lc_users = lc_users, 
@@ -43,6 +52,8 @@ def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int,
         rank_type = rank_type
     ) 
     user_list.sort(key = lambda x: -x['value'])
+
+    # The embed discription content
     response = ""
     idx = 1
     for user in user_list:
@@ -50,7 +61,13 @@ def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int,
         response += f"{rank_idx} [``{user['lc_username']}``]({user['link']} '{user['discord_username']}'): {user['value']}\n"
         idx += 1
         
-        if idx > 10: break
+        if idx > 15: break
+
+    response += "---\n"
+    # interaction author's ranking
+    interaction_author_ranking = get_index(user_list = user_list, expected_discord_username = interaction.user.name)
+    rank_idx = medal_list[interaction_author_ranking - 1] if interaction_author_ranking < 4 else f"``#{interaction_author_ranking}``"
+    response += f"{rank_idx} [``{user_list[interaction_author_ranking - 1]['lc_username']}``]({user_list[interaction_author_ranking - 1]['link']} '{user_list[interaction_author_ranking - 1]['discord_username']}'): {user_list[interaction_author_ranking - 1]['value']}"
 
     embed = discord.Embed(
         title = f"{duration_frontend_list[duration_type]} {rank_frontend_list[rank_type]} ranking",
@@ -61,7 +78,7 @@ def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int,
     embed.set_thumbnail(
         url = interaction.guild.icon.url
     )
-    embed.set_footer(text = "Hover for Discord usernames • Page 1/5")
+    embed.set_footer(text = "Hover for Discord usernames")
     return embed
 
 class DurationDropdown(discord.ui.Select):

@@ -9,14 +9,6 @@ import string
 import asyncio
 import datetime
 
-class TestView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout = 30)
-
-    @discord.ui.button(label = "Click click", style = discord.ButtonStyle.secondary, emoji = "👀")
-    async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("You clicked the thing")
-    
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
         super().__init__(timeout = 60)
@@ -275,48 +267,6 @@ class lc(commands.Cog):
         else:
             lc_col.insert_one({'server_id': interaction.guild_id, 'verified_role_id': role.id})
         await interaction.followup.send(f"{Assets.green_tick} **Verified role has been set to {role.mention}**")
-
-    @app_commands.command(name = 'test')
-    async def _test(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
-        await interaction.followup.send("owo", view = TestView())
-
-    ranklist = app_commands.Group(name = 'ranklist', description = 'Ranking of all kinds')
-    @ranklist.command(name = 'streak', description = "Views the daily streak ranking")
-    async def _ranklist_streak(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        users = list(lc_col.find())
-        users.sort(key = lambda x: -x['current_month']['max_daily_streak'])
-        response = ""
-        idx = 1
-        for user in users:
-            if user['current_month']['max_daily_streak'] > 0:
-                response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Max: {user['current_month']['max_daily_streak']} - Current: {user['current_month']['current_daily_streak']}\n"
-                idx += 1
-        embed = discord.Embed(
-            title = "Daily streak ranking",
-            description = response
-        )
-        await interaction.followup.send(embed = embed)
-
-    @ranklist.command(name = 'score', description = "Views the score ranking of this month")
-    async def _ranklist_score(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        users = list(lc_col.find())
-        users.sort(key = lambda x: -x['current_month']['score'])
-        response = ""
-        idx = 1
-        for user in users:
-            if user['current_month']['score'] > 0:
-                response += f"`#{idx}` {user['lc_username']}/<@{user['discord_id']}> - Score: {user['current_month']['score']}\n"
-                idx += 1
-        embed = discord.Embed(
-            title = "Current month's score ranking",
-            description = response
-        )
-        await interaction.followup.send(embed = embed)
 
 async def setup(client):
     await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])

@@ -8,7 +8,7 @@ class help_command(commands.Cog):
         self.client = client
 
     @app_commands.command(name = 'help', description = "Các câu lệnh của LCHelper")
-    async def _help_command(self, interaction):
+    async def _help(self, interaction):
         await interaction.response.defer(thinking = True)
         
         embed = discord.Embed(
@@ -22,7 +22,7 @@ class help_command(commands.Cog):
         embed.add_field(
             name = "🔗  Xác nhận, kết nối tài khoản",
             value = f"""
-            `/link {{leetcode_username}}`: Kết nối tài khoản LeetCode với tài khoản Discord trong Lowie’s LeetCode Club. Hướng dẫn cụ thể trong kênh chat <#1092451759890374747>.
+            </link:1113100702886141993>: Kết nối tài khoản LeetCode với tài khoản Discord trong Lowie’s LeetCode Club. Hướng dẫn cụ thể trong kênh chat <#1092451759890374747>.
             ⠀
             """,
             inline = False
@@ -30,7 +30,7 @@ class help_command(commands.Cog):
         embed.add_field(
             name = "🗃️  Xem thông tin LLC membership",
             value = f"""
-            `/profile`: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.\n`/tasks`: Các nhiệm vụ để có thể kiếm điểm trong LLC.
+            </profile:1113100702886141995>: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.\n`/tasks`: Các nhiệm vụ để có thể kiếm điểm trong LLC.
             ⠀
             """,
             inline = False
@@ -51,7 +51,7 @@ class help_command(commands.Cog):
             inline = False
         )
         embed.add_field(
-            name = "⠀",
+            name = "\u200b",
             value = "[Chi tiết các câu lệnh có thể được xem tại đây](https://lowie-writes.notion.site/LCHelper-Documentation-d85de63f31144bc383136ab9f5804527?pvs=4)",
         )
 

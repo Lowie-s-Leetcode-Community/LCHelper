@@ -12,6 +12,14 @@ def next_weekday(d, weekday):
         days_ahead += 7
     return d + datetime.timedelta(days_ahead)
 
+def get_next_LLC_week_and_month():
+    d = datetime.date.today()
+    next_mon = next_weekday(d, 0)
+    week_no = int(next_mon.day / 7) + 1
+    month_no = next_mon.month
+
+    return week_no, month_no
+
 def get_registration_announce_msg(message):
     d = datetime.date.today()
     next_mon = next_weekday(d, 0)
@@ -39,15 +47,6 @@ def get_registration_announce_msg(message):
     
     #return reg_msg
     return textwrap.dedent(reg_msg)
-
-def get_next_LLC_week_and_month():
-    d = datetime.date.today()
-    next_mon = next_weekday(d, 0)
-    week_no = int(next_mon.day / 7) + 1
-    month_no = next_mon.month
-
-    return week_no, month_no
-
 
 class daily_reg(commands.Cog):
     def __init__(self, client):
