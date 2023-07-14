@@ -3,9 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from cogs.daily import daily
 from cogs.tasks import task
-from typing import Optional
 import asyncio
 import traceback
 

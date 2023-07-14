@@ -1,12 +1,8 @@
 import discord
-from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from typing import Optional
 import asyncio
-import datetime 
-from .logging import logging
 import traceback
 
 class daily(commands.Cog):

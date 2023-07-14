@@ -4,15 +4,8 @@ from discord import app_commands
 from discord.ext import commands
 import datetime
 from utils.asset import Assets
-import random
-import json
 import asyncio
-import functools
-import itertools
-import math
-import yt_dlp
 from yt_dlp import YoutubeDL
-from async_timeout import timeout
 
 # Silence useless bug reports messages
 YTDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}

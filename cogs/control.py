@@ -3,8 +3,6 @@ import os
 from discord.ext import commands
 from discord.ext.commands import Greedy
 from typing import Literal, Optional
-from datetime import datetime
-import typing
 from utils.asset import Assets
 
 class control(commands.Cog):

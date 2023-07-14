@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
-from datetime import datetime
-import random
-import json
+
 class bot_related(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -47,7 +45,7 @@ class bot_related(commands.Cog):
             name = "Pong!"
         )
         embed.set_footer(
-            text = ctx.author,
+            text = ctx.author.name,
             icon_url = author_avatar_url
         )
         await response.edit(embed = embed)

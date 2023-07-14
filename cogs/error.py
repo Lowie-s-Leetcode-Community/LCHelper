@@ -1,9 +1,6 @@
-import discord
 from discord.ext import commands
-from datetime import datetime
-import random
-import json
 from utils.asset import Assets
+
 class error(commands.Cog):
     def __init__(self, client):
         self.client = client

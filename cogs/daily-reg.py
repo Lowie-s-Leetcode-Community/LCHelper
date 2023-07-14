@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
-from discord.ext import tasks, commands
-import asyncio
+from discord.ext import commands
 import datetime
 import textwrap
 from typing import Optional
@@ -45,7 +44,6 @@ def get_registration_announce_msg(message):
     Sincerely,
     """ 
     
-    #return reg_msg
     return textwrap.dedent(reg_msg)
 
 class daily_reg(commands.Cog):

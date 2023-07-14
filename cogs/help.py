@@ -30,15 +30,15 @@ class help_command(commands.Cog):
         embed.add_field(
             name = "🗃️  Xem thông tin LLC membership",
             value = f"""
-            </profile:1113100702886141995>: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.\n`/tasks`: Các nhiệm vụ để có thể kiếm điểm trong LLC.
-            ⠀
+            </profile:1113100702886141995>: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.
+            </tasks:1107228520679231488>: Các nhiệm vụ để có thể kiếm điểm trong LLC.
             """,
             inline = False
         )
         embed.add_field(
             name = "📊  Xem các bảng xếp hạng",
             value = f"""
-            `/ranklist score`: Bảng xếp hạng tháng điểm số của các thành viên trong CLB.\n`/ranklist streak`: Bảng xếp hạng về chuỗi AC Daily dài nhất trong CLB.
+            </rank:1126870421363503145>: Bảng xếp hạng điểm số và streak daily của các thành viên trong CLB.
             ⠀
             """,
             inline = False
@@ -46,7 +46,8 @@ class help_command(commands.Cog):
         embed.add_field(
             name = "📝  LeetCode Problems",
             value = f"""
-            `/daily`: Trả về bài Daily trên LeetCode của ngày hôm nay.\n`/gimme`: Chọn một bài LeetCode ngẫu nhiên trên CSDL của LeetCode. Member có thể chọn độ khó và chủ đề mong muốn qua các tham số, và loại những chủ đề không mong muốn.
+            </daily:1113100702886141994>: Trả về bài Daily trên LeetCode của ngày hôm nay.
+            </gimme:1107228520679231497>: Chọn một bài LeetCode ngẫu nhiên trên CSDL của LeetCode. Member có thể chọn độ khó và chủ đề mong muốn qua các tham số, và loại những chủ đề không mong muốn.
             """,
             inline = False
         )
@@ -59,4 +60,4 @@ class help_command(commands.Cog):
 
 
 async def setup(client):
-    await client.add_cog(help_command(client))
+    await client.add_cog(help_command(client), guilds=[discord.Object(id=1085444549125611530)])

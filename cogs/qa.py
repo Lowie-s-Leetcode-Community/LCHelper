@@ -2,12 +2,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
-from utils.lc_utils import LC_utils
-from typing import Optional, Union
-import random
-import string
-import asyncio
-import datetime
 import traceback
 
 class QModal(discord.ui.Modal):

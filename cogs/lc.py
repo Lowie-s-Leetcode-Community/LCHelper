@@ -3,10 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from typing import Optional, Union
+from typing import Optional
 import random
 import string
-import asyncio
 import datetime
 
 class ConfirmView(discord.ui.View):

@@ -152,7 +152,7 @@ class ranking(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @app_commands.command(name = "rank")
+    @app_commands.command(name = "rank", description = "LLC's Hall of Fame")
     async def _rank(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
 
