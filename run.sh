@@ -1,6 +1,6 @@
 while true; do
     git pull
-    python bot.py
+    python3 bot.py
 
     (( $? != 42 )) && break
 
