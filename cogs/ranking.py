@@ -6,9 +6,9 @@ from utils.asset import Assets
 
 duration_type_list = ['current_month', 'all_time']
 duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
-rank_type_list = ['score', 'current_daily_streak']
-rank_frontend_list = ['score', 'current streak']
-color_list = [Assets.easy, Assets.hard]
+rank_type_list = ['score', 'current_daily_streak', 'max_daily_streak']
+rank_frontend_list = ['score', 'current streak', 'max streak']
+color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
 
 def get_discord_username(interaction, discord_id: int):
@@ -114,6 +114,7 @@ class RankDropdown(discord.ui.Select):
         options = [
             discord.SelectOption(label='Score', value = "0", description="Score leaderboard", emoji='🏆', default=True),
             discord.SelectOption(label='Current streak', value = "1", description="Current streak leaderboard", emoji='🏅'),
+            discord.SelectOption(label="Max streak", value = "2", description="Max streak leaderboard", emoji='🎖️')
         ]
         self.DBclient = DBclient
         super().__init__(min_values = 1, max_values = 1, options = options)
@@ -122,8 +123,9 @@ class RankDropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         chosen_idx = int(self.values[0])
+        for i in range(0, 3):
+            self.options[i].default = False
         self.options[chosen_idx].default = True
-        self.options[1 - chosen_idx].default = False
         self.view.rank_type = chosen_idx
     
         await interaction.edit_original_response(

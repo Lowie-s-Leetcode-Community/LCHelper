@@ -63,7 +63,8 @@ class daily(commands.Cog):
                     'medium_solved': 0,
                     'hard_solved': 0
                 },
-                'current_month': tmp['current_month']
+                'current_month': tmp['current_month'],
+                'all_time': tmp['all_time']
             }}
             lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
             await asyncio.sleep(5)
