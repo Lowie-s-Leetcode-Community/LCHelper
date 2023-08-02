@@ -33,6 +33,10 @@ class crawl(commands.Cog):
             recent_solved = []
             recent_info = LC_utils.get_recent_ac(lc_username, 20)
 
+            # Most likely account not found/deleted
+            if recent_info == None:
+                continue
+
             # For debugging
             """
             if lc_username == "leanhduy0206":
