@@ -14,7 +14,7 @@ def next_weekday(d, weekday):
 def get_next_LLC_week_and_month():
     d = datetime.date.today()
     next_mon = next_weekday(d, 0)
-    week_no = int(next_mon.day / 7) + 1
+    week_no = int((next_mon.day - 1) / 7) + 1
     month_no = next_mon.month
 
     return week_no, month_no

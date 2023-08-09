@@ -4,6 +4,13 @@ from utils.asset import Assets
 from utils.lc_utils import LC_utils
 import asyncio
 import traceback
+import datetime
+
+def is_monthly_reset_time():
+    d = datetime.date.today()
+    if d.weekday() == 0 and int((d.day - 1) / 7) + 1 == 1:
+        return True
+    return False
 
 class daily(commands.Cog):
     def __init__(self, client):
@@ -71,22 +78,20 @@ class daily(commands.Cog):
         await log_channel.send('Daily task completed.')
 
         # Checking (and starting monthly task)
-        # if datetime.datetime.now().day == 1:
-        #     lc_col = self.client.DBClient['LC_db']['LC_users']
-        #     await log_channel.send('Monthly task started.')
-        #     users = list(lc_col.find())
-        #     for user in users:
-        #         user['previous_month'], user['current_month'] = user['current_month'], user['previous_month']
-        #         user['current_month']['max_daily_streak'] = 0
-        #         user['current_month']['current_daily_streak'] = 0
-        #         user['current_month']['score'] = 0
+        if is_monthly_reset_time():
+            lc_col = self.client.DBClient['LC_db']['LC_users']
+            await log_channel.send('Monthly task started.')
+            users = list(lc_col.find())
+            for user in users:
+                user['previous_month'], user['current_month'] = user['current_month'], user['previous_month']
+                user['current_month']['max_daily_streak'] = 0
+                user['current_month']['current_daily_streak'] = 0
+                user['current_month']['score'] = 0
 
-        #         lc_query = {'$set': user}
-        #         lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-        #         await asyncio.sleep(5)
-        #     await log_channel.send('Monthly task completed.')
-
-        # Disabling the monthly task
+                lc_query = {'$set': user}
+                lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
+                await asyncio.sleep(5)
+            await log_channel.send(f'Monthly task completed. Reset the monthly data of {str(len(users))} LLC members!')
 
     @daily.error
     async def on_error(self, exception):
