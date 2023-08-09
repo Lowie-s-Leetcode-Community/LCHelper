@@ -40,7 +40,7 @@ def get_index(user_list: list, expected_discord_username: str):
 
     return None
 
-def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int, page_number: int):
+def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int, page_number: int, limit: int):
     lc_col = DBClient['LC_db']['LC_users']
     lc_users = list(lc_col.find())
 
@@ -61,7 +61,7 @@ def get_ranking_embed(interaction, DBClient, duration_type: int, rank_type: int,
         response += f"{rank_idx} [``{user['lc_username']}``]({user['link']} '{user['discord_username']}'): {user['value']}\n"
         idx += 1
         
-        if idx > 15: break
+        if idx > limit: break
 
     response += "---\n"
     # interaction author's ranking
@@ -155,9 +155,16 @@ class ranking(commands.Cog):
         self.client = client
 
     @app_commands.command(name = "rank", description = "LLC's Hall of Fame")
-    async def _rank(self, interaction: discord.Interaction):
+    @app_commands.choices(
+        limit = [
+            app_commands.Choice(name = 'All', value = 'all'),
+            app_commands.Choice(name = '15', value = '15'),
+        ]
+    )
+    @app_commands.describe(limit = "How many members to show")
+    async def _rank(self, interaction: discord.Interaction, limit: app_commands.Choice[str]):
         await interaction.response.defer(thinking = True)
-
+        
         # Update current month name
         global duration_frontend_list
         duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
@@ -169,7 +176,8 @@ class ranking(commands.Cog):
                 DBClient = self.client.DBClient, 
                 duration_type = 0,
                 rank_type = 0,
-                page_number = 1
+                page_number = 1,
+                limit = 30 if limit.name == "All" else 15
             ),
             view = view
         )

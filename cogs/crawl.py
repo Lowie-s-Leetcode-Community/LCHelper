@@ -56,7 +56,7 @@ class crawl(commands.Cog):
                     daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
-                    if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and user['daily_task']['finished_today_daily']):
+                    if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
                         # Getting channel log
                         server_id = 1085444549125611530
                         lc_result = lc_col_server.find_one({'server_id': 1085444549125611530})

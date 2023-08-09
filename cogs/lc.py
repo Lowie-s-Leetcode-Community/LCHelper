@@ -267,6 +267,38 @@ class lc(commands.Cog):
             lc_col.insert_one({'server_id': interaction.guild_id, 'verified_role_id': role.id})
         await interaction.followup.send(f"{Assets.green_tick} **Verified role has been set to {role.mention}**")
 
+    @app_commands.command(name = 'serverstats', description = "Server statistics fof LLC")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def _serverstats(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+
+        lc_db = self.client.DBClient['LC_db']
+        lc_col = lc_db['LC_users']
+        embed = discord.Embed(
+            title = "Server stats",
+            color = discord.Color.blue()
+        )
+        embed.add_field(
+            name = "Total members", 
+            value = f"{interaction.guild.member_count}"
+        )
+        role = discord.utils.find(lambda m: m.id == 1087761988068855890, interaction.guild.roles)
+        embed.add_field(
+            name = "Verified members",
+            value = len(role.members)
+        )
+        lc_member = list(lc_col.find())
+        active_member_count = 0
+        for member in lc_member:
+            if member['current_month']['score'] > 0: active_member_count += 1
+        
+        embed.add_field(
+            name = "Active members",
+            value = f"{active_member_count}"
+        )
+    
+        await interaction.followup.send(embed = embed)
+
 async def setup(client):
     await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
     #await client.add_cog(lc(client))
