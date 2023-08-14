@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from cogs.tasks import task
+from ..commands.tasks import task
 import asyncio
 import traceback
 
@@ -23,7 +23,7 @@ class crawl(commands.Cog):
 
         lc_db = self.client.DBClient['LC_db']
         lc_col_user = lc_db['LC_users']
-        lc_col_server = lc_db['LC_tracking']
+        lc_col_server = lc_db['LC_config']
         user_list = list(lc_col_user.find())
 
         # Checking every user in DB

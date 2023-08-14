@@ -10,7 +10,7 @@ import datetime
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
-        super().__init__(timeout = 60)
+        super().__init__(timeout = 120)
         self.code = code
         self.client = client
         self.username = username
@@ -82,7 +82,7 @@ class ConfirmView(discord.ui.View):
             
             try:
                 lc_query = {'server_id': interaction.guild_id}
-                lc_result = lc_db['LC_tracking'].find_one(lc_query)
+                lc_result = lc_db['LC_config'].find_one(lc_query)
                 role_id = lc_result['verified_role_id']
                 member = await interaction.guild.fetch_member(interaction.user.id)
                 role = discord.utils.get(interaction.guild.roles, id = role_id)
@@ -257,7 +257,7 @@ class lc(commands.Cog):
         await interaction.response.defer(thinking = True)
 
         lc_db = self.client.DBClient['LC_db']
-        lc_col = lc_db['LC_tracking']
+        lc_col = lc_db['LC_config']
         lc_query = {'server_id': interaction.guild_id}
         lc_result = lc_col.find_one(lc_query)
         if lc_result:

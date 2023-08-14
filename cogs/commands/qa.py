@@ -19,7 +19,7 @@ class QModal(discord.ui.Modal):
     
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        qa_id = self.DBClient['LC_db']['LC_tracking'].find_one()['qa_id'] + 1
+        qa_id = self.DBClient['LC_db']['LC_config'].find_one()['qa_id'] + 1
         embed = discord.Embed(
             description = self.question_response.value,
             timestamp = interaction.created_at,
@@ -38,7 +38,7 @@ class QModal(discord.ui.Modal):
         await interaction.followup.send(f'Your question has been sent, check back frequently for answers, {interaction.user.display_name}!', ephemeral = True)
         await msg.create_thread(name = f"Question #{qa_id}")
         await msg.add_reaction("<:pepe_love:1087411917603221627>")
-        self.DBClient['LC_db']['LC_tracking'].update_one({'qa_id': qa_id - 1}, {'$set': {'qa_id': qa_id}})
+        self.DBClient['LC_db']['LC_config'].update_one({'qa_id': qa_id - 1}, {'$set': {'qa_id': qa_id}})
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral = True)
@@ -65,7 +65,7 @@ class FBModal(discord.ui.Modal):
     
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        feedback_id = self.DBClient['LC_db']['LC_tracking'].find_one()['feedback_id'] + 1
+        feedback_id = self.DBClient['LC_db']['LC_config'].find_one()['feedback_id'] + 1
         embed = discord.Embed(
             title = self.feedback_title.value,
             description = self.feedback_response.value,
@@ -86,7 +86,7 @@ class FBModal(discord.ui.Modal):
         await msg.create_thread(name = f"Feedback #{feedback_id}")
         await msg.add_reaction("<:pepe_yes:1087411960737439804>")
         await msg.add_reaction("<:pepe_nope:1087411932979527720>")
-        self.DBClient['LC_db']['LC_tracking'].update_one({'feedback_id': feedback_id - 1}, {'$set': {'feedback_id': feedback_id}})
+        self.DBClient['LC_db']['LC_config'].update_one({'feedback_id': feedback_id - 1}, {'$set': {'feedback_id': feedback_id}})
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral = True)

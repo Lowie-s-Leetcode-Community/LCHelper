@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from .logging import logging
+from ..logging.logging import logging
 
 class task(commands.Cog):
     def __init__(self, client):

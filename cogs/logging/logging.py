@@ -15,7 +15,7 @@ class logging(commands.Cog):
         await interaction.response.defer(thinking = True)
 
         lc_db = self.client.DBClient['LC_db']
-        lc_col = lc_db['LC_tracking']
+        lc_col = lc_db['LC_config']
         lc_query = {'server_id': interaction.guild_id}
         lc_result = lc_col.find_one(lc_query)
         if lc_result:
@@ -32,7 +32,7 @@ class logging(commands.Cog):
         await interaction.response.defer(thinking = True)
 
         lc_db = self.client.DBClient['LC_db']
-        lc_col = lc_db['LC_tracking']
+        lc_col = lc_db['LC_config']
         lc_query = {'server_id': interaction.guild_id}
         lc_result = lc_col.find_one(lc_query)
         if lc_result:
@@ -44,7 +44,7 @@ class logging(commands.Cog):
 
     async def on_score_add(self, member: discord.Member, score: int, reason: str):
         guild_id = member.guild.id
-        lc_col = self.client.DBClient['LC_db']['LC_tracking']
+        lc_col = self.client.DBClient['LC_db']['LC_config']
         lc_guild = lc_col.find_one({'server_id': guild_id})
         log_channel = await member.guild.fetch_channel(lc_guild['score_log_channel_id'])
         embed = discord.Embed(
@@ -58,7 +58,7 @@ class logging(commands.Cog):
 
     async def on_score_deduct(self, member: discord.Member, score: int, reason: str):
         guild_id = member.guild.id
-        lc_col = self.client.DBClient['LC_db']['LC_tracking']
+        lc_col = self.client.DBClient['LC_db']['LC_config']
         lc_guild = lc_col.find_one({'server_id': guild_id})
         log_channel = await member.guild.fetch_channel(lc_guild['score_log_channel_id'])
         embed = discord.Embed(
@@ -75,6 +75,35 @@ class logging(commands.Cog):
         log_channel = await guild.fetch_channel(1091763595777409025)
         msg = "Reset the score of " + str(member_count) + " LLC members!"
         await log_channel.send(msg)
+
+    async def on_member_remove(self, member: discord.Member, reason: str):
+        guild_id = member.guild.id
+        lc_col = self.client.DBClient['LC_db']['LC_config']
+        lc_guild = lc_col.find_one({'server_id': guild_id})
+        log_channel = await member.guild.fetch_channel(lc_guild['event_channel_id'])
+        embed = discord.Embed(
+            color = Assets.hard
+        )
+        embed.add_field(
+            name = "Member",
+            value = f"{member.name} ({member.mention})"
+        )
+        embed.add_field(
+            name = "ID",
+            value = f"{member.id}"
+        )
+        embed.add_field(
+            name = "Member count",
+            value = f"{member.guild.member_count - 1}"
+        )
+        embed.add_field(
+            name = "Reason",
+            value = reason
+        )
+        embed.set_author(
+            name = "Member kicked"
+        )
+        await log_channel.send(embed = embed)
 
 
 async def setup(client):

@@ -14,30 +14,40 @@ class control(commands.Cog):
     async def _reload(self, ctx, *, s: str):
         msg = ""
         if (s == "all"):
-            for filename in os.listdir('./cogs'):
-                if filename.endswith('.py'):
-                    try:
-                        await self.client.unload_extension(f'cogs.{filename[:-3]}')
-                    except: continue
-            for filename in os.listdir('./cogs'):
-                if filename.endswith('.py'):
-                    try:
-                        await self.client.load_extension(f'cogs.{filename[:-3]}')
-                        msg += f"{Assets.reload} **cogs.{filename[:-3]}**\n"
-                    except Exception as e:
-                        msg += f"{Assets.red_tick} **cogs.{filename[:-3]}: `{e}`**\n"
+            for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
+                for filename in filenames:
+                    if filename.endswith('.py'):
+                        try:
+                            path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
+                            await self.client.unload_extension(path)
+                        except: continue
+                        
+            for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
+                for filename in filenames:
+                    if filename.endswith('.py'):
+                        try:
+                            path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
+                            await self.client.load_extension(path)
+                            msg += f"{Assets.reload} **{path}**\n"
+                        except Exception as e:
+                            msg += f"{Assets.red_tick} **{path}: `{e}`**\n"
             await ctx.send(msg)
         else:
             t = s.split(" ")
-            for i in t:
-                try:
-                    await self.client.unload_extension(f'cogs.{i}')
-                except: msg = msg
-                try:
-                    await self.client.load_extension(f'cogs.{i}')
-                    msg += f"{Assets.reload} **cogs.{i}**\n"
-                except Exception as e:
-                    msg += f"{Assets.red_tick} **cogs.{i}: `{e}`**\n"
+            for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
+                for filename in filenames:
+                    if filename.endswith('.py') and filename[:-3] in t:
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
+                        try:
+                            await self.client.unload_extension(path)
+                        except: 
+                            continue
+
+                        try:
+                            await self.client.load_extension(path)
+                            msg += f"{Assets.reload} **{path}**\n"
+                        except Exception as e:
+                            msg += f"{Assets.red_tick} **{path}: `{e}`**\n"
             await ctx.send(msg)
 
     @commands.command(name = "sync")
