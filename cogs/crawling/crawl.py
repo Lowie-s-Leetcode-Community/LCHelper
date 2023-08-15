@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from ..commands.tasks import task
+from ..features.tasks import task
 import asyncio
 import traceback
 
@@ -59,7 +59,7 @@ class crawl(commands.Cog):
                     if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
                         # Getting channel log
                         server_id = 1085444549125611530
-                        lc_result = lc_col_server.find_one({'server_id': 1085444549125611530})
+                        lc_result = lc_col_server.find_one({})
                         guild = await self.client.fetch_guild(server_id)
                         channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
 

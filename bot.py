@@ -46,4 +46,14 @@ async def on_app_command_error(interaction: Interaction, error: AppCommandError)
         await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
     print(error)
 
+@tree.error
+async def on_error(interaction: Interaction, error: AppCommandError):
+    if isinstance(error, app_commands.MissingPermissions):
+        await interaction.followup.send("You don't have the permission to execute this command")
+    elif isinstance(error, app_commands.CommandNotFound):
+        return
+    else:
+        await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
+    print(error)
+
 asyncio.run(main())

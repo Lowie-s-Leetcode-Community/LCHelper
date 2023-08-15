@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
@@ -93,6 +94,54 @@ class daily(commands.Cog):
                 await asyncio.sleep(5)
             await log_channel.send(f'Monthly task completed. Reset the monthly data of {str(len(users))} LLC members!')
 
+    @app_commands.command(name = 'daily', description = "Returns Leetcode's Daily Challenge")
+    async def _daily(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+        
+        # Getting the daily challenge
+
+        # daily_info = LC_utils.get_daily_challenge_info()
+        daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
+        info = LC_utils.get_problem_info(daily_info['title_slug'])
+
+        embed = discord.Embed(
+            title = f"**{info['title']}**",
+            url = f"{info['link']}",
+            color = Assets.easy if info['difficulty'] == 'Easy' else Assets.medium if info['difficulty'] == 'Medium' else Assets.hard
+        )
+        embed.add_field(
+            name = "Difficulty",
+            value = info['difficulty'],
+            inline = True
+        )
+        embed.add_field(
+            name = "AC Count", 
+            value = f"{info['total_AC']}/{info['total_submissions']}",
+            inline = True,
+        )
+        embed.add_field(
+            name = "AC Rate",
+            value = str(info['ac_rate'])[0:5] + "%",
+            inline = True,
+        )
+        tag_list = ""
+        for name, link in info['topics'].items():
+            tag_list += f"[``{name}``]({link}), "
+        
+        tag_list = tag_list[:-2]
+        tag_list = "||" + tag_list + "||"
+        embed.add_field(
+            name = "Topics",
+            value = tag_list,
+            inline = False
+        )
+        embed.set_footer(
+            text = f"{info['likes']} 👍 • {info['dislikes']} 👎"
+        )
+
+        await interaction.followup.send(f"Daily Challenge - {daily_info['date']}", embed = embed)
+
+    ### Dev stuff
     @daily.error
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(1085444549125611530)

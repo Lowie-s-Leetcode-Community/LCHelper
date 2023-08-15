@@ -40,8 +40,8 @@ class control(commands.Cog):
                         path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
                         try:
                             await self.client.unload_extension(path)
-                        except: 
-                            continue
+                        except Exception as e: 
+                            pass
 
                         try:
                             await self.client.load_extension(path)
