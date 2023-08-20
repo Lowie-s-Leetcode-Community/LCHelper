@@ -23,13 +23,13 @@ async def main():
     async with client:
         # Loading extensions
         print("Hello #1")
-        for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
+        for (dirpath, dirnames, filenames) in os.walk(r".\cogs"):
             print("Hello #2")
             for filename in filenames:
                 print(filename)
                 if filename.endswith('.py'):
                     try:
-                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.')
                         await client.load_extension(path)
                         print(f"{filename}: ok!")
                     except Exception as e:
