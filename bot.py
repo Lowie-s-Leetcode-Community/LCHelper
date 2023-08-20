@@ -22,7 +22,9 @@ client.DBClient = DBClient
 async def main():
     async with client:
         # Loading extensions
+        print("Hello #1")
         for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
+            print("Hello #2")
             for filename in filenames:
                 print(filename)
                 if filename.endswith('.py'):
