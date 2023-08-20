@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from utils.asset import Assets
 from pymongo import MongoClient
 import traceback
+from pathlib import Path
 load_dotenv()
 
 intent = discord.Intents.all()
@@ -23,7 +24,7 @@ async def main():
     async with client:
         # Loading extensions
         print("Hello #1")
-        for (dirpath, dirnames, filenames) in os.walk(r".\cogs"):
+        for (dirpath, dirnames, filenames) in os.walk(Path(r".\cogs")):
             print("Hello #2")
             for filename in filenames:
                 print(filename)
