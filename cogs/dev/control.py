@@ -14,20 +14,20 @@ class control(commands.Cog):
     async def _reload(self, ctx, *, s: str):
         msg = ""
         if (s == "all"):
-            for (dirpath, dirnames, filenames) in os.walk(r".\cogs"):
+            for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
                 for filename in filenames:
                     if filename.endswith('.py'):
                         try:
-                            path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.')
+                            path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.').replace('/', '.')
                             await self.client.unload_extension(path)
                         except: 
                             continue
                         
-            for (dirpath, dirnames, filenames) in os.walk(r".\cogs"):
+            for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
                 for filename in filenames:
                     if filename.endswith('.py'):
                         try:
-                            path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.')
+                            path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.').replace('/', '.')
                             await self.client.load_extension(path)
                             msg += f"{Assets.reload} **{path}**\n"
                         except Exception as e:
@@ -35,19 +35,19 @@ class control(commands.Cog):
             await ctx.send(msg)
         else:
             t = s.split(" ")
-            for (dirpath, dirnames, filenames) in os.walk(r".\cogs"):
+            for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
                 for filename in filenames:
                     if filename.endswith('.py') and filename[:-3] in t:
-                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
                         try:
                             await self.client.unload_extension(path)
                         except:
                             continue
             
-            for (dirpath, dirnames, filenames) in os.walk(r".\cogs"):
+            for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
                 for filename in filenames:
                     if filename.endswith('.py') and filename[:-3] in t:
-                        path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.')
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.').replace('/', '.')
                         try:
                             await self.client.load_extension(path)
                             msg += f"{Assets.reload} **{path}**\n"

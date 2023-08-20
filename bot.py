@@ -23,26 +23,21 @@ client.DBClient = DBClient
 async def main():
     async with client:
         # Loading extensions
-        print("Hello #1")
-        try:
-            for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
-                print("Hello #2")
-                for filename in filenames:
-                    print(filename)
-                    if filename.endswith('.py'):
-                        try:
-                            path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
-                            print(path)
-                            await client.load_extension(path)
-                            print(f"{filename}: ok!")
-                        except Exception as e:
-                            print(f"{filename}: not ok!! - {e}")
-            await client.load_extension("jishaku")
+        for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
+            for filename in filenames:
+                print(filename)
+                if filename.endswith('.py'):
+                    try:
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
+                        print(path)
+                        await client.load_extension(path)
+                        print(f"{filename}: ok!")
+                    except Exception as e:
+                        print(f"{filename}: not ok!! - {e}")
+        await client.load_extension("jishaku")
 
-            # Loading Discord client
-            await client.start(token)
-        except Exception as e:
-            print(e)
+        # Loading Discord client
+        await client.start(token)
             
 
 @tree.error
