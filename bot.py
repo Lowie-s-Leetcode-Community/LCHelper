@@ -28,7 +28,6 @@ async def main():
                 if filename.endswith('.py'):
                     try:
                         path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
-                        print(path)
                         await client.load_extension(path)
                         print(f"{filename}: ok!")
                     except Exception as e:
