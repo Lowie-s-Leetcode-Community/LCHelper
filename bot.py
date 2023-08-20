@@ -25,7 +25,6 @@ async def main():
         # Loading extensions
         for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
             for filename in filenames:
-                print(filename)
                 if filename.endswith('.py'):
                     try:
                         path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')

@@ -78,36 +78,32 @@ class logging(commands.Cog):
         await log_channel.send(msg)
 
     async def on_member_remove(self, member: discord.Member, reason: str):
-        try:
-            lc_col = self.client.DBClient['LC_db']['LC_config']
-            lc_guild = lc_col.find_one({})
-            log_channel = await member.guild.fetch_channel(lc_guild['event_channel_id'])
-            print(log_channel)
-            embed = discord.Embed(
-                color = Assets.hard
-            )
-            embed.add_field(
-                name = "Member",
-                value = f"{member.name} ({member.mention})"
-            )
-            embed.add_field(
-                name = "ID",
-                value = f"{member.id}"
-            )
-            embed.add_field(
-                name = "Member count",
-                value = f"{member.guild.member_count - 1}"
-            )
-            embed.add_field(
-                name = "Reason",
-                value = reason
-            )
-            embed.set_author(
-                name = "Member kicked"
-            )
-            await log_channel.send(embed = embed)
-        except Exception as e:
-            print(e)
+        lc_col = self.client.DBClient['LC_db']['LC_config']
+        lc_guild = lc_col.find_one({})
+        log_channel = await member.guild.fetch_channel(lc_guild['event_channel_id'])
+        embed = discord.Embed(
+            color = Assets.hard
+        )
+        embed.add_field(
+            name = "Member",
+            value = f"{member.name} ({member.mention})"
+        )
+        embed.add_field(
+            name = "ID",
+            value = f"{member.id}"
+        )
+        embed.add_field(
+            name = "Member count",
+            value = f"{member.guild.member_count - 1}"
+        )
+        embed.add_field(
+            name = "Reason",
+            value = reason
+        )
+        embed.set_author(
+            name = "Member kicked"
+        )
+        await log_channel.send(embed = embed)
 
 
 async def setup(client):
