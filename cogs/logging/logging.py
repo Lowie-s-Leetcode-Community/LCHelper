@@ -45,7 +45,7 @@ class logging(commands.Cog):
     async def on_score_add(self, member: discord.Member, score: int, reason: str):
         guild_id = member.guild.id
         lc_col = self.client.DBClient['LC_db']['LC_config']
-        lc_guild = lc_col.find_one({'server_id': guild_id})
+        lc_guild = lc_col.find_one({})
         log_channel = await member.guild.fetch_channel(lc_guild['score_log_channel_id'])
         embed = discord.Embed(
             description = f"""

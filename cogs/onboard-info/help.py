@@ -8,7 +8,7 @@ class help_command(commands.Cog):
         self.client = client
 
     @app_commands.command(name = 'help', description = "Các câu lệnh của LCHelper")
-    async def _help(self, interaction):
+    async def _help(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         
         embed = discord.Embed(
@@ -17,15 +17,6 @@ class help_command(commands.Cog):
         embed.set_author(
             name = "Những câu lệnh để tương tác với hệ thống LCHelper",
             icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png"
-        )
-
-        embed.add_field(
-            name = "🔗  Xác nhận, kết nối tài khoản",
-            value = f"""
-            </link:1113100702886141993>: Kết nối tài khoản LeetCode với tài khoản Discord trong Lowie’s LeetCode Club. Hướng dẫn cụ thể trong kênh chat <#1092451759890374747>.
-            ⠀
-            """,
-            inline = False
         )
         embed.add_field(
             name = "🗃️  Xem thông tin LLC membership",

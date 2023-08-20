@@ -60,12 +60,9 @@ class event(commands.Cog):
         guild = self.client.get_guild(1085444549125611530)
         for member in list(guild.members):
             lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
-        
-            log_channel = await member.guild.fetch_channel(lc_query['event_channel_id'])
             time_before_kick = lc_query['time_before_kick']
 
-            if member.id in [608147029176221706, 429919169140490242] and len(member.roles) == 1 and int(datetime.datetime.now().timestamp()) - int(member.joined_at.timestamp()) > time_before_kick:
-                print(f"########")
+            if len(member.roles) == 1 and int(datetime.datetime.now().timestamp()) - int(member.joined_at.timestamp()) > time_before_kick:
                 kicked_reason = "Unverified for 7 days"
 
                 # Logging 

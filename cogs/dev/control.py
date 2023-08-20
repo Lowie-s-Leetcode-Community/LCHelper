@@ -10,7 +10,7 @@ class control(commands.Cog):
         self.client = client
 
     @commands.command(name = "reload", aliases = ["r"])
-    @commands.has_permissions(administrator = True)
+    @commands.has_any_role(1087746207511757002)
     async def _reload(self, ctx, *, s: str):
         msg = ""
         if (s == "all"):
@@ -20,7 +20,8 @@ class control(commands.Cog):
                         try:
                             path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
                             await self.client.unload_extension(path)
-                        except: continue
+                        except: 
+                            continue
                         
             for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
                 for filename in filenames:
@@ -40,18 +41,25 @@ class control(commands.Cog):
                         path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
                         try:
                             await self.client.unload_extension(path)
-                        except Exception as e: 
-                            pass
-
+                        except:
+                            continue
+            
+            for (dirpath, dirnames, filenames) in os.walk('.\cogs'):
+                for filename in filenames:
+                    if filename.endswith('.py') and filename[:-3] in t:
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.')
                         try:
                             await self.client.load_extension(path)
                             msg += f"{Assets.reload} **{path}**\n"
                         except Exception as e:
                             msg += f"{Assets.red_tick} **{path}: `{e}`**\n"
-            await ctx.send(msg)
+            if msg != "":
+                await ctx.send(msg)
+            else:
+                await ctx.send(f"{Assets.red_tick} **None of the provided cog(s) exist**")
 
     @commands.command(name = "sync")
-    @commands.has_permissions(administrator = True)
+    @commands.has_any_role(1087746207511757002)
     async def sync(self, ctx, guilds: Greedy[discord.Object], spec: Optional[Literal["1", "2", "3", "4"]] = None):
         if not guilds:
             if spec == "1": # Syncing all commands in the current tree to local

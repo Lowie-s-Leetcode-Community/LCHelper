@@ -2,59 +2,77 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
+import asyncio
 
-OPERATING_MODEL_MSG = """
-Lowie’s Leetcode Club là CLB hoạt động theo mô hình Study group (nhóm học tập). CLB hoạt động phi lợi nhuận, và mở cho bất kỳ ai nhiệt tình tham gia, học hỏi, trao đổi. Trước mắt, CLB không chịu sự quản lý của VNU hay bất kỳ tổ chức hay cơ quan quản lý nào. CLB có hoạt động hàng tuần, có ban điều hành, và có các sự kiện, lớp tập huấn, luyện tập interview hàng tuần/cách tuần/hàng tháng.
-"""
-CLUB_ACTIVITY_MSG_1 = """
-Leetcode có một “bài toán của ngày” (gọi là Daily), thường ở mức độ Medium. 99.99% trong CLB sẽ có ít nhất 1 người giải được.
+STARTING_STORY_MSG = """
+Câu chuyện bắt nguồn từ một buổi Seminar được tổ chức dành cho các anh em ở UET K66-CN8, nơi mà anh già Lowie chia sẻ với các anh em trong khóa về 2 năm bán mình cho tư bản của anh ta.
 
-Tất cả mọi người đều có thể đăng ký, hoặc được assign để chữa bài một ngày nào đó. Đơn đăng ký chữa bài của tuần X sẽ được mở vào thứ Ba của tuần (X - 1), và chốt danh sách vào thứ Bảy cùng tuần. Các thành viên được assign sẽ có trách nhiệm code AC bài ngày hôm đó, và diễn giải bằng lời cách làm để cho các thành viên trong CLB có thể hiểu được.
-"""
-CLUB_ACTIVITY_MSG_2 = """
-CLB tổ chức Mock Whiteboard Interview hàng tuần/cách tuần. Các bạn sẽ được training trong một bài phỏng vấn thực tế, học cách diễn giải, trao đổi ý tưởng của mình với người phỏng vấn.
+Trong seminar đó có nêu ra ba cách để các bạn cải thiện hồ sơ của mình trong những năm còn lại trên đại học:
 
-Các buổi mock sẽ được thực hiện online hoặc offline, tùy vào điều kiện thực tế. Độ khó các bài sẽ khó hơn bài Daily, yêu cầu các bạn sẽ phải nghĩ nhiều hơn, và làm tốt việc diễn giải ý tưởng một cách chau chuốt nhất.
-"""
-CLUB_ACTIVITY_MSG_3 = """
-Dựa vào nhu cầu của các thành viên trong CLB, Core team sẽ tổ chức các buổi dạy về Giải thuật. Các bạn sẽ được học lý thuyết, thực hành, và lắng nghe một số mẹo nhỏ để có thể dễ dàng vượt qua những bài toán đó nếu như có được gặp lại.
+1. Tham gia các sự kiện Hackathon, CTF, Job Fair, …
+2. Luyện tập Cấu Giải và kỹ năng giải quyết vấn đề
+3. Làm sản phẩm
 
-Các cán bộ trong CLB sẽ lắng nghe ý kiến của các bạn và theo dõi nhu cầu trên Discord. Nên càng hỏi nhiều, càng bàn tán nhiều trên đó, các bạn sẽ nhận lại được càng nhiều sự hỗ trợ. Ngoài ra, sẽ có form để lấy ý kiến, cũng như đề nghị lecture để các bạn đăng ký chủ đề.
-"""
-CLUB_ACTIVITY_MSG_4 = """
-Đã có một số bạn đề xuất với anh Lowie rằng muốn viết blog để chia sẻ kiến thức về một chủ đề, hay một kinh nghiệm phỏng vấn nào đó. Lowie hoàn toàn hoan nghệnh.
+Trong đó, việc học Cấu Giải là tối quan trọng, khi các ứng viên với kỹ năng Giải thuật tốt luôn được “ưu ái” khi phỏng vấn vào các tập đoàn công nghệ. Việc trở nên thực sự “thành thạo” được bộ môn này, nhiều người vẫn cho rằng là đặc quyền của dân chuyên Toán-Tin, đã được học code từ rất lâu trước khi lên Đại học.
 
-Những bài viết với ý tưởng hay sẽ được các thành viên ban Chuyên Môn kiểm duyệt và sẽ được up vào blog nội bộ, cũng như kho tài liệu chung của CLB. Nếu lượng bài viết đủ nhiều, đủ cuốn hút, CLB chúng ta sẽ thành lập page facebook + làm web blog công khai.
+**Lowie’s Leetcode Club** được sinh ra để chứng minh điều đó hoàn toàn sai. Để làm được điều này, chúng mình mong muốn có thể trở thành một chỗ dựa vững chắc cho các bạn, trong quá trình các bạn tìm kiếm những công việc đầu tiên, và thực thi ước mơ của mình.
+
+*Vào ngày 15/03/2023, Lowie’s Leetcode Club chính thức được khai sinh với 6 thành viên UET K66-CACLC1 Core Team, cùng khoảng 15 anh em khác tham gia luyện tập.*
 """
+
+CLUB_MISSION_MSG = """
+Sứ mệnh của Lowie’s Leetcode Club ban đầu là tạo môi trường để các bạn luyện tập Leetcode - nền tảng các bài tập phỏng vấn dành cho các bạn giàu tham vọng đỗ được những doanh nghiệp, tập đoàn lớn.
+
+Tới đây, khi các bạn UET **K66 - “first gen”** của CLB - sẽ bước vào quá trình chuẩn bị hồ sơ và tìm kiếm những cơ hội đầu tiên, cũng là lúc chúng mình sẽ hoạt động mạnh mẽ nhất. Bằng được, mình mong muốn các bạn tham gia CLB đạt được những gì các bạn mong đợi từ lúc các bạn Verify tài khoản của mình. Động thái đầu tiên, chúng mình đã cho khai giảng Lowie’s Leetcode Class YELLOW - nơi các đơn vị kiến thức trong các bài phỏng vấn ở các doanh nghiệp được mình chia sẻ.
+
+Mình mong muốn, 1 năm nữa, được nhìn thấy những thành viên đầu tiên của CLB giành lấy được những bản hợp đồng thực tập giá trị ở các doanh nghiệp lớn trong nước (chẳng hạn: VinAI/VinBigData, Kyber Network, …), hay các doanh nghiệp nước ngoài (WorldQuant, DTL, Grab, Shopee, …). Thậm chí, nếu may mắn, chúng ta có thể đào tạo được những Thực tập sinh Google hay Amazon trong CLB của mình.
+"""
+
+CLUB_ACTIVITIES_MSG = """
+Để phục vụ sứ mệnh của CLB, các hoạt động trong CLB cũng đã và đang được triển khai dựa vào nhu cầu học tập của các bạn:
+
+- **Daily Problem Editorial:** Nơi các bạn mới học có thể tìm gợi ý/lời giải cho bài tập Daily trên Leetcode, và cũng là nơi các bạn đã có kinh nghiệm có thể tập diễn đạt, trình bày ý tưởng của mình cho các bạn khác trong CLB.
+- **Lowie’s Leetcode Class:** Nơi mà Lowie cùng ban chuyên môn sẽ mở lớp buổi tối để giúp các bạn lấp đầy những lỗ hổng về kiến thức, cũng như kỹ năng phỏng vấn. Lớp học có tính phí, và các bạn có quyền lợi sử dụng 1 năm Leetcode Premium.
+- **Chuyên Đề**: Nơi tất cả thành viên trong LLC cùng luyện tập & cọ xát cho một chủ đề nào đó.
+- **Bot LC Helper (a.k.a. “Đủ 500 bài LeetCode chưa?”)**: Các bạn đang có thời gian luyện LeetCode, nhưng CLB đang không có hoạt động gì cho mình? Hãy gõ </help:1130172149659881593> ở các kênh chat trong Discord để Con trai cưng của chúng mình hỗ trợ các bạn luyện tập nhé!
+Ngoài ra, chúng mình cũng có một hệ thống BẢNG XẾP HẠNG để các bạn có thể đua điểm với nhau, giành lấy danh hiệu Leetcoders of the Month và những phần quà giá trị khác từ Chủ tịch CLB.
+
+Các bạn có thể đọc đầy đủ về danh sách các hoạt động trong CLB ở [ĐÂY](https://hackmd.io/@lowies-leetcode-club/HkYbivnnn).
+"""
+
 CLUB_CORE_TEAM_MSG_1 = """
-Trên tinh thần đam mê, hiếu học, tự do trong nghiên cứu, trao đổi: bất kỳ thành viên nào cũng có thể tham gia LLC để củng cố và nâng cao kỹ năng làm coding interview của mình.
+<@318049602160951297> - Là một người đã có 2 năm kinh nghiệm ở các môi trường doanh nghiệp, và 7 năm kinh nghiệm trong bộ môn Lập trình Thi đấu, anh cả Lowie đã thành lập lên CLB với hoài bão giúp các anh em xung quanh có thể vươn tới những ước mơ cháy bỏng của mình. ❤️‍🔥❤️‍🔥
 
-Khi tham gia vào CLB, các bạn có trách nhiệm tham gia vào các hoạt động hàng ngày, hàng tuần cùng các hội viên khác. Cho đến ngày các bạn rời khỏi CLB, hoặc bị kick ra khỏi UET (cùng cái bằng), các bạn sẽ phải cảm thấy kỹ năng của các bạn phải được cải thiện rõ rệt, so với ngày các bạn join vào. CLB sẽ tạo mọi điều kiện trong khả năng để các bạn đạt được điều đó.
+Một số thành tích nổi bật:
+- Hạng 14 ICPC National Vietnam 2020.
+- Hạng 7 ICPC North American PACNW Regional 2019.
+- Thành viên đội tuyển Việt Nam tham dự Olympic Tin học Châu Á - Thái Bình Dương 2019.
 
-Vì thế, để đảm bảo các hoạt động được thông suốt, cần một nhóm core nhiệt tình, có trách nhiệm, và đam mê với CLB. Dưới đây, anh xin công bố các ban trong CLB của mình như sau:
+Xem CV của chủ tịch tại [ĐÂY](https://www.topcv.vn/xem-cv/D10DBgJXAVYGBlNSVQNUAwIFAwdTUFUHUAMGBg92be).
 """
+
 CLUB_CORE_TEAM_MSG_2 = """
-Tô Tuấn Dũng - <@318049602160951297>
+<@683328026943160464> - Là lớp trưởng của K66-CACLC1 (hay cậu thường gọi thân thương: K66A1), Lê Vũ Minh là một vị thủ lĩnh, luôn chăm chỉ và cố gắng làm tốt nhiệm vụ được giao. Bạn là người quản trị server Discord của CLB từ ngày thành lập đến tận bây giờ. Ngoài ra, bạn cũng đã và đang tham gia phát triển <@738713416914567198> - con trai cưng của CLB. 🤖🦸‍♂️
 """
+
 CLUB_CORE_TEAM_MSG_3 = """
-- **Trưởng ban**: Lê Vũ Minh - <@683328026943160464>
-
-Là Admin của các group, owner của repo tài liệu nội bộ, LVM sẽ quản lý các tài nguyên của CLB, và theo dõi tương tác của các bạn tham gia trong CLB. Trong giai đoạn đầu, LVM cùng anh sẽ giúp cho các giao tiếp nội bộ được thông suốt, và mọi người có môi trường tốt để học tập, trao đổi chiêu thức.
+<@641562953862086657> - Với thái độ làm việc chuyên nghiệp, cùng khả năng làm việc độc lập xuất sắc khi đã hoàn thành 400 bài LeetCode trước ngày gia nhập CLB, Dân Trần là một cánh tay phải đắc lực của Chủ tịch. Không những vậy, tư duy sáng tạo và khả năng truyền đạt ý tưởng của Dân chính là nền tảng để giúp cho LLC có thể đi xa hơn. 🧠💪
 """
+
 CLUB_CORE_TEAM_MSG_4 = """
-- **Trưởng ban**: Vũ Quý Đạt - <@888055463059537983>
-- **Phó ban**: Tạ Xuân Duy - <@418256822902718465>
-
-Các bạn này đều là các bạn đã có thành tích ở các giải lập trình trong quá khứ. Đây là những đầu mối đáng tin cậy để các bạn tham khảo, và nhận được sự giúp đỡ trong quá trình rèn luyện kỹ năng trong CLB.
+Là một ban chịu trách nhiệm chính về chất lượng chuyên môn các hoạt động trong CLB, ban Chuyên Môn là một ban tuy “khó tính”, nhưng luôn hết lòng vì các thành viên trong CLB. Các thành viên trong ban Chuyên Môn đều là những người đã có những thành tích nhất định trong CV của họ, với các giải thưởng Tin học lớn nhỏ khác nhau. Và họ tham gia vào Core Team, để làm tấm gương sáng cho bất kỳ ai trong CLB phấn đấu.
 """
+
 CLUB_CORE_TEAM_MSG_5 = """
-- **Trưởng ban**: Trần Nam Dân - <@641562953862086657>
-- **Phó ban**: Nguyễn Duy Chiến - <@633872635411038209>
-
-Các bạn này sẽ chịu trách nhiệm tổ chức các hoạt động trong CLB: Mock interview, hay tổ chức phòng học. Đây là đầu mối để các bạn nhận thông tin về các sự kiện trong CLB, cũng như nhận ý kiến đóng góp, phản hổi có tính xây dựng để các thành viên trong CLB có trải nghiệm tốt hơn.
+Trái ngược với ban Chuyên Môn, thì ban Truyền Thông hay bị “Bí Thuật Toán” 😉. Tuy vậy, họ không bao giờ bị “bí” những ý tưởng. Ngoài việc quản lý kênh truyền thông, bộ mặt của CLB, họ chính là nguồn tài nguyên ý tưởng dồi dào cho sự phát triển của CLB. Mục tiêu của họ: biến LLC thành một Đế chế truyền thông lớn trong VNU, ít nhất, về ngành CNTT.
 """
+
+CLUB_CORE_TEAM_MSG_6 = """
+Là những người cha nuôi của con Bot trong CLB, các thành viên trong ban Tự Động Hóa mang trong tim niềm đam mê to lớn với việc phát triển sản phẩm. Đây cũng là những thành viên “hưởng lợi ngầm” nhiều nhất từ CLB, khi trong quá trình tham gia, họ tích lũy được kinh nghiệm làm việc, cũng như mang về được những thành phẩm để “flexing” trong hồ sơ của họ 💪😏
+"""
+
 HOW_TO_VERIFY_MSG_1 = """
-Để tham gia vào các hoạt động CLB, bạn cần phải link tài khoản LeetCode của bạn với bot của server.
+Để tham gia vào các hoạt động CLB, bạn cần phải link tài khoản LeetCode của bạn với bot của server. Hãy [lập một tài khoản](https://leetcode.com/accounts/signup/) nếu bạn chưa có.
 
 ⚠️ Lưu ý, sau 7 ngày kể từ khi gia nhập mà bạn chưa link tài khoản, bạn sẽ tự động bị kick khỏi server. Hãy làm ngay và luôn để tránh bỏ lỡ những điều hay ho ✨
 """
@@ -82,140 +100,219 @@ class gl(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @app_commands.command(name = "gl-init", description = "Sends initial embeds for info channels")
-    @app_commands.checks.has_permissions(administrator = True)
-    async def _gl_init(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
+    @commands.command(name = "gl-init", description = "Sends initial embeds for info channels")
+    @commands.has_any_role(1087746207511757002)
+    async def _gl_init(self, ctx):
+        channel = await ctx.guild.fetch_channel(1139158245391474800)
 
         # Embeds in #giới-thiệu-clb
+
         embed1 = discord.Embed(
-            title = "🏭 Mô hình hoat động",
-            description = OPERATING_MODEL_MSG,
+            title = "📖 Câu chuyện khởi nguồn",
+            description = STARTING_STORY_MSG,
             color = discord.Color.red()
         )
-        
         embed1.set_thumbnail(
-            url = interaction.guild.icon.url
+            url = ctx.guild.icon.url
         )
+        await channel.purge(limit = 10)
+        msg1 = await channel.send(embed = embed1)
 
         embed2 = discord.Embed(
-            title = "🏃 Các hoạt động trong CLB",
+            title = "😇 Sứ mệnh của CLB",
+            description = CLUB_MISSION_MSG,
             color = discord.Color.blue()
         )
-        embed2.add_field(
-            name = "1️⃣ Chữa Daily",
-            value = CLUB_ACTIVITY_MSG_1,
-            inline = False
-        )
-        embed2.add_field(
-            name = "2️⃣ Mock Whiteboard Interview",
-            value = CLUB_ACTIVITY_MSG_2,
-            inline = False
-        )
-        embed2.add_field(
-            name = "3️⃣ Algorithm Lecture",
-            value = CLUB_ACTIVITY_MSG_3,
-            inline = False
-        )
-        embed2.add_field(
-            name = "4️⃣ Viết Blog",
-            value = CLUB_ACTIVITY_MSG_4,
-            inline = False
-        )
+        msg2 = await channel.send(embed = embed2)
 
         embed3 = discord.Embed(
-            title = "🧑‍🏭 Nhân sự CLB",
-            description = CLUB_CORE_TEAM_MSG_1,
+            title = "🏃 Các hoạt động trong CLB",
+            description = CLUB_ACTIVITIES_MSG,
+            color = discord.Color.gold()
+        )
+        msg3 = await channel.send(embed = embed3)
+
+        embed4 = discord.Embed(
+            title = "Đội ngũ 🌟 CORE TEAM 🌟",
+            description = "",
             color = discord.Color.green()
         )
-        embed3.add_field(
-            name = "1️⃣ Chủ tịch - Club owner",
+        embed4.set_image(
+            url = "https://lh3.googleusercontent.com/u/0/drive-viewer/AITFw-x30PDepeeoRJF6Vhdk0Magq_4rWKcJbRA6ZRKcNugenvmzAFHC8W0fB77aY-1vemIznfn5WH7HMEQ3YEwSCfcM7O9I=w1920-h923"
+        )
+        msg4 = await channel.send(embed = embed4)
+        
+        embed5 = discord.Embed(
+            title = "Ban Quản Trị (a.k.a. The Presidents)",
+            color = discord.Color.green()
+        )
+        embed5.add_field(
+            name = f"Chủ tịch - Tô Tuấn Dũng - CN8-K66",
+            value = CLUB_CORE_TEAM_MSG_1,
+            inline = False
+        )
+        embed5.add_field(
+            name = f"Phó chủ tịch - Lê Vũ Minh - CN8-K66",
             value = CLUB_CORE_TEAM_MSG_2,
             inline = False
         )
-        embed3.add_field(
-            name = "2️⃣ Ban Admin",
+        embed5.add_field(
+            name = f"Phó chủ tịch - Trần Nam Dân - CN8-K66",
             value = CLUB_CORE_TEAM_MSG_3,
             inline = False
         )
-        embed3.add_field(
-            name = "3️⃣ Ban Chuyên Môn",
-            value = CLUB_CORE_TEAM_MSG_4,
+        msg5 = await channel.send(embed = embed5)
+        
+        await asyncio.sleep(3)
+
+        embed6 = discord.Embed(
+            title = "Ban Chuyên Môn (a.k.a. Club Experts)",
+            description = CLUB_CORE_TEAM_MSG_4,
+            color = discord.Color.green()
+        )
+        embed6.add_field(
+            name = f"Trưởng ban",
+            value = "Vũ Quý Đạt - <@888055463059537983> - CN8-K66",
             inline = False
         )
-        embed3.add_field(
-            name = "4️⃣ Ban Sự Kiện",
-            value = CLUB_CORE_TEAM_MSG_5,
+        embed6.add_field(
+            name = f"Phó ban",
+            value = "Tạ Xuân Duy - <@418256822902718465> - CN8-K67",
             inline = False
         )
-        channel = await interaction.guild.fetch_channel(1139158245391474800)
-        await channel.send(embeds = [embed1, embed2, embed3])
+        embed6.add_field(
+            name = f"Thành viên",
+            value = f"- Lê Đức Anh - <@691975240414265385> - CN8-K68\n- Nguyễn Đức Huy - <@756870314344054835> - CN8-K68",
+            inline = False
+        )
+        msg6 = await channel.send(embed = embed6)
+
+        embed7 = discord.Embed(
+            title = "Ban Truyền Thông (a.k.a. PR & Media)",
+            description = CLUB_CORE_TEAM_MSG_5,
+            color = discord.Color.green()
+        )
+        embed7.add_field(
+            name = f"Trưởng ban",
+            value = "Nguyễn Duy Chiến - <@633872635411038209> - CN8-K66",
+            inline = False
+        )
+        embed7.add_field(
+            name = f"Thành viên",
+            value = f"- Bồ Quốc Trung - <@556463088983998505> - CN8-K67\n- Trần Gia Khánh - <@702776466265342022> - CN8-K68",
+            inline = False
+        )
+        embed7.set_image(
+            url = "https://scontent.fhan2-4.fna.fbcdn.net/v/t39.30808-6/357709046_3420474118213052_3229237850735346573_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=9kapCWj1neEAX-WzdJb&_nc_ht=scontent.fhan2-4.fna&oh=00_AfBdBzpVMClFSk6RgQ45mqHVNoQtWIVwhvETvZmobPV5_w&oe=64E3E97B"
+        )
+        msg7 = await channel.send(embed = embed7)
+
+        embed8 = discord.Embed(
+            title = "Ban Tự Động Hoá (a.k.a. Bot Developers)",
+            description = CLUB_CORE_TEAM_MSG_6,
+            color = discord.Color.green()
+        )
+        embed8.add_field(
+            name = f"Trưởng ban",
+            value = "Lê Anh Duy - <@535811480629542921> - CN8-K68",
+            inline = False
+        )
+        embed8.add_field(
+            name = f"Thành viên",
+            value = f"Vũ Việt Khánh - <@519418640358047745> - CN8-K66",
+            inline = False
+        )
+        embed8.set_image(
+            url = "https://hackmd.io/_uploads/Sy19Ru3h2.png"
+        )
+        msg8 = await channel.send(embed = embed8)
+        
+        NAVIGATION_MSG = ""
+        NAVIGATION_MSG += f"1. [Câu chuyện khởi nguồn]({msg1.jump_url})\n"
+        NAVIGATION_MSG += f"2. [Sứ mệnh của CLB]({msg2.jump_url})\n"
+        NAVIGATION_MSG += f"3. [Các hoạt động trong CLB]({msg3.jump_url})\n"
+        NAVIGATION_MSG += f"4. [Đội ngũ Core Team]({msg4.jump_url})\n"
+        NAVIGATION_MSG += f" - [Ban Quản Trị]({msg5.jump_url})\n"
+        NAVIGATION_MSG += f" - [Ban Chuyên Môn]({msg6.jump_url})\n"
+        NAVIGATION_MSG += f" - [Ban Truyền Thông]({msg7.jump_url})\n"
+        NAVIGATION_MSG += f" - [Ban Tự Động Hoá]({msg8.jump_url})\n"
+        embed9 = discord.Embed(
+            title = "Mục lục",
+            description = NAVIGATION_MSG,
+            color = discord.Color.greyple()
+        )
+        embed9.set_footer(
+            text = "Ấn vào link để nhảy đến content tương ứng"
+        )
+        await channel.send(embed = embed9)
+        await asyncio.sleep(3)
 
         # Embeds in #hướng-dẫn-verify
-        embed4 = discord.Embed(
+        channel = await ctx.guild.fetch_channel(1139158370926993499)
+        embed1 = discord.Embed(
             title = "📜 Hướng dẫn verify",
             description = HOW_TO_VERIFY_MSG_1,
             color = discord.Color.gold()
         )
 
-        embed5 = discord.Embed(
+        embed2 = discord.Embed(
             description = HOW_TO_VERIFY_MSG_2,
             color = 0xcdb4db
         )
-        embed5.set_author(
+        embed2.set_author(
             name = "Bước 1"
         )
-        embed5.set_image(
+        embed2.set_image(
             url = "https://media.discordapp.net/attachments/1092451759890374747/1092452461748424784/image.png"
         )
 
-        embed6 = discord.Embed(
+        embed3 = discord.Embed(
             description = HOW_TO_VERIFY_MSG_3,
             color = 0xffc8dd
         )
-        embed6.set_author(
+        embed3.set_author(
             name = "Bước 2"
         )
-        embed6.set_image(
+        embed3.set_image(
             url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092453040465903616/image.png"
         )
 
-        embed7 = discord.Embed(
+        embed4 = discord.Embed(
             description = HOW_TO_VERIFY_MSG_4,
             color = 0xffafcc,
         )
-        embed7.set_author(
+        embed4.set_author(
             name = "Bước 3"
         )
-        embed7.set_image(
+        embed4.set_image(
             url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092453850121777243/image.png"
         )
 
-        embed8 = discord.Embed(
+        embed5 = discord.Embed(
             description = HOW_TO_VERIFY_MSG_5,
             color = 0xbde0fe
         )
-        embed8.set_author(
+        embed5.set_author(
             name = "Bước 4"
         )
-        embed8.set_image(
+        embed5.set_image(
             url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092454978926419988/image.png"
         )
         
-        embed9 = discord.Embed(
+        embed6 = discord.Embed(
             description = HOW_TO_VERIFY_MSG_6,
             color = 0xa2d2ff
         )
-        embed9.set_author(
+        embed6.set_author(
             name = "Bước 5"
         )
-        embed9.set_image(
+        embed6.set_image(
             url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092455415150809158/image.png"
         )
         
-        channel = await interaction.guild.fetch_channel(1139158370926993499)
-        await channel.send(embeds = [embed4, embed5, embed6, embed7, embed8, embed9])
-        await interaction.followup.send(f"{Assets.green_tick} **All embeds sent**")
+        await channel.purge(limit = 5)
+        await channel.send(embeds = [embed1, embed2, embed3, embed4, embed5, embed6])
+        await ctx.send(f"{Assets.green_tick} **All embeds sent**")
 
     
 async def setup(client):
