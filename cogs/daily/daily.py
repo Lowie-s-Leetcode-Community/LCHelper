@@ -39,12 +39,12 @@ class daily(commands.Cog):
         lc_col_daily.update_one({'_id': 1}, lc_update)
 
         guild = await self.client.fetch_guild(1085444549125611530)
-        log_channel = await guild.fetch_channel(guild['event_channel_id'])
+        lc_col = self.client.DBClient['LC_db']['LC_config']
+        lc_result = lc_col.find_one({})
+        log_channel = await guild.fetch_channel(lc_result['event_channel_id'])
         await log_channel.send("Daily task started.")
     
         # Creating daily thread
-        lc_col_tracking = self.client.DBClient['LC_db']['LC_config']
-        lc_result = lc_col_tracking.find_one({'server_id': 1085444549125611530})
 
         guild = await self.client.fetch_guild(1085444549125611530)
         channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
