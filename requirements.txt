@@ -8,4 +8,4 @@ requests
 yt_dlp
 jishaku
 ffmpeg
-dotenv
+python-dotenv
