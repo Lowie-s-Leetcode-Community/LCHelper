@@ -25,7 +25,13 @@ class crawl(commands.Cog):
         lc_col_user = lc_db['LC_users']
         lc_col_server = lc_db['LC_config']
         user_list = list(lc_col_user.find())
-
+            
+        # Getting channel log
+        server_id = 1085444549125611530
+        lc_result = lc_col_server.find_one({})
+        guild = await self.client.fetch_guild(server_id)
+        channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
+        
         # Checking every user in DB
         for user in user_list:
             # Getting the most recent submissions
@@ -35,6 +41,12 @@ class crawl(commands.Cog):
 
             # Most likely account not found/deleted
             if recent_info == None:
+                continue
+
+            # If member already left
+            try:
+                discord_member = await guild.fetch_member(user['discord_id'])
+            except: 
                 continue
 
             # For debugging
@@ -57,15 +69,9 @@ class crawl(commands.Cog):
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
                     if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
-                        # Getting channel log
-                        server_id = 1085444549125611530
-                        lc_result = lc_col_server.find_one({})
-                        guild = await self.client.fetch_guild(server_id)
-                        channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
 
                         # Posting update log in LLC
                         untracked_new_submission = True
-                        discord_member = await guild.fetch_member(user['discord_id'])
                         lc_user_info = LC_utils.get_user_profile(lc_username)
                         problem_info = LC_utils.get_problem_info(submission['titleSlug'])
                         desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
