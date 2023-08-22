@@ -55,7 +55,7 @@ class crawl(commands.Cog):
                 recent_info = [{
                     'id': '926059124', 
                     'title': 'Binary Search', 
-                    'titleSlug': 'binary-search', 
+                    'titleSlug': 'binary-5XHWH', 
                     'timestamp': '4680366541'
                 }]
             """

@@ -80,15 +80,12 @@ class ConfirmView(discord.ui.View):
             lc_update = {'$set': tmp_query}
             lc_col.update_one(lc_query, lc_update)
             
-            try:
-                lc_query = {'server_id': interaction.guild_id}
-                lc_result = lc_db['LC_config'].find_one(lc_query)
-                role_id = lc_result['verified_role_id']
-                member = await interaction.guild.fetch_member(interaction.user.id)
-                role = discord.utils.get(interaction.guild.roles, id = role_id)
-                await member.add_roles(role)
-            except:
-                pass
+            lc_query = {}
+            lc_result = lc_db['LC_config'].find_one(lc_query)
+            role_id = lc_result['verified_role_id']
+            member = await interaction.guild.fetch_member(interaction.user.id)
+            role = discord.utils.get(interaction.guild.roles, id = role_id)
+            await member.add_roles(role)
 
             await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
 

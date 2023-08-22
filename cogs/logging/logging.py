@@ -16,7 +16,7 @@ class logging(commands.Cog):
 
         lc_db = self.client.DBClient['LC_db']
         lc_col = lc_db['LC_config']
-        lc_query = {'server_id': interaction.guild_id}
+        lc_query = {}
         lc_result = lc_col.find_one(lc_query)
         if lc_result:
             lc_update = {'$set': {'tracking_channel_id': channel.id}}
@@ -33,7 +33,7 @@ class logging(commands.Cog):
 
         lc_db = self.client.DBClient['LC_db']
         lc_col = lc_db['LC_config']
-        lc_query = {'server_id': interaction.guild_id}
+        lc_query = {}
         lc_result = lc_col.find_one(lc_query)
         if lc_result:
             lc_update = {'$set': {'score_log_channel_id': channel.id}}
