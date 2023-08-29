@@ -18,7 +18,7 @@ class control(commands.Cog):
                 for filename in filenames:
                     if filename.endswith('.py'):
                         try:
-                            path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.').replace('/', '.')
+                            path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
                             await self.client.unload_extension(path)
                         except: 
                             continue
@@ -27,7 +27,7 @@ class control(commands.Cog):
                 for filename in filenames:
                     if filename.endswith('.py'):
                         try:
-                            path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.').replace('/', '.')
+                            path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
                             await self.client.load_extension(path)
                             msg += f"{Assets.reload} **{path}**\n"
                         except Exception as e:
@@ -47,7 +47,7 @@ class control(commands.Cog):
             for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
                 for filename in filenames:
                     if filename.endswith('.py') and filename[:-3] in t:
-                        path = f"{dirpath[2:]}\{filename[:-3]}".replace(r'\\', '.').replace('/', '.')
+                        path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
                         try:
                             await self.client.load_extension(path)
                             msg += f"{Assets.reload} **{path}**\n"
