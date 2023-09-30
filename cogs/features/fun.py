@@ -1,10 +1,11 @@
+import json
 import discord
-import sys
+from utils.asset import Assets
 from discord import app_commands
 from discord.ext import commands
-from utils.lc_utils import LC_utils
 from ..logging.logging import logging
 import random
+import requests
 
 class fun(commands.Cog):
     def __init__(self, client):
@@ -45,6 +46,39 @@ class fun(commands.Cog):
         await interaction.followup.send(embed = embed)
         if lc_daily_finished:
             await logging.on_score_add(logging(self.client), member = member, score = bonus, reason = 'Gacha!')
+
+
+
+    @app_commands.command(name="ask", description="Ask random shiet things")
+    @app_commands.choices(
+    difficulty = [
+        app_commands.Choice(name = "Easy", value = "easy"),
+        app_commands.Choice(name = "Medium", value = "medium"),
+        app_commands.Choice(name = "Hard", value = "hard"),
+    ],
+    type = [
+        app_commands.Choice(name = 'True / False', value = 'boolean'),
+        app_commands.Choice(name = 'Multiple Choice', value = 'multiple')
+    ]
+    )
+    async def _ask(
+        self, 
+        interaction: discord.Interaction,
+        difficulty: app_commands.Choice[str] = None,
+        type: app_commands.Choice[str] = None
+    ):
+        difficulty_value = difficulty.value if difficulty else 'easy'
+        type_value = type.value if type else 'multiple'
+        response = requests.get(f'https://opentdb.com/api.php?amount=1&difficulty={difficulty_value}&type={type_value}');
+        await interaction.response.defer(thinking=True)
+        data = json.loads(response.content)
+        print(data)
+        # quiz = data.get('results')[0]
+        embed = discord.Embed(
+            title = 'question',
+        )
+        await interaction.followup.send(embed = embed)
+
 
     
 async def setup(client):
