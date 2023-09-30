@@ -11,17 +11,24 @@ class fun(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    global bonus
+
     @app_commands.command(name="gacha", description="Random bonus point")
     async def _gacha(self, interaction: discord.Interaction):
         avatar_url = interaction.user.guild_avatar.url if interaction.user.guild_avatar else interaction.user.display_avatar.url    
         await interaction.response.defer(thinking = True)
         lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
+        lc_col = self.client.DBClient['LC_db']['LC_users']
         lc_daily_finished = lc_user['daily_task']['finished_today_daily']
         guild = self.client.get_guild(interaction.guild_id)
         member = guild.get_member(lc_user['discord_id'])
         if lc_daily_finished:
+            global bonus
             bonus = random.randint(1, 3)
+            lc_user['current_month']['score'] += 0
             lc_user['all_time']['score'] += 0
+            lc_query = {'$set': lc_user}
+            lc_col.update_one({'discord_id': member.id}, lc_query)
             embed = discord.Embed(
                 title = "Gacha",
                 description = f"You got {bonus} {'points' if bonus > 1 else 'point'} !",    
