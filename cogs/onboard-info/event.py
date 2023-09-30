@@ -16,6 +16,9 @@ class event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
+        unverified_role = member.guild.get_role(lc_query['unverified_role_id'])
+        await member.add_roles(unverified_role)
         embed = discord.Embed(
             title = "Welcome to Lowie's LeetCode Club",
             description = """
@@ -51,18 +54,15 @@ class event(commands.Cog):
         channel = await member.guild.fetch_channel(1139158423846531162)
         await channel.send(content = f"{member.mention}", embed = embed)
 
-    @tasks.loop(seconds = 120)
+    @tasks.loop(minutes = 5)
     async def member_prune(self):
-        # Waiting for internal cache, I suppose
-        await self.client.wait_until_ready()
-        await asyncio.sleep(5)
-
         guild = self.client.get_guild(1085444549125611530)
+        lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
+        
+        unverified_role = guild.get_role(lc_query['unverified_role_id'])
+        time_before_kick = lc_query['time_before_kick']
         for member in list(guild.members):
-            lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
-            time_before_kick = lc_query['time_before_kick']
-
-            if len(member.roles) == 1 and int(datetime.datetime.now().timestamp()) - int(member.joined_at.timestamp()) > time_before_kick:
+            if unverified_role in member.roles and int(datetime.datetime.now().timestamp()) - int(member.joined_at.timestamp()) > time_before_kick:
                 kicked_reason = "Unverified for 7 days"
 
                 # Logging 
@@ -74,6 +74,9 @@ class event(commands.Cog):
                 # Actually kick the member
                 await member.kick(reason = kicked_reason)
 
+    @member_prune.before_loop
+    async def wait_for_cache(self):
+        await self.client.wait_until_ready()
 
 async def setup(client):
     await client.add_cog(event(client))

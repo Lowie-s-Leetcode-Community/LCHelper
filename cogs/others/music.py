@@ -20,11 +20,12 @@ class Music(commands.Cog):
         self.loop = {}
 
     async def queue_check(self, interaction):
+        print("hi")
         if self.loop[interaction.guild_id] == True:
             query = self.np[interaction.guild_id]
             await self.play_music(interaction, query, True, False)
             return
-
+        print(self.queue)
         if interaction.guild_id in self.queue:
             if len(self.queue[interaction.guild_id]):
                 query = self.queue[interaction.guild_id][0]
@@ -158,8 +159,10 @@ class Music(commands.Cog):
         else:  
             info = self.get_query_info(interaction, query)
             if interaction.guild_id in self.queue:
+                print("1")
                 self.queue[interaction.guild_id].append(info)
             else:
+                print("2")
                 self.queue[interaction.guild_id] = [info]
             
             embed = discord.Embed(
