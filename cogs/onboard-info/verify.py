@@ -89,7 +89,8 @@ class ConfirmView(discord.ui.View):
             unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
             await member.add_roles(verified_role)
             try:
-                member.remove_roles(unverified_role)
+                # in case the role was already manually removed
+                await member.remove_roles(unverified_role)
             except:
                 pass
 
