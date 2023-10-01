@@ -82,10 +82,16 @@ class ConfirmView(discord.ui.View):
             
             lc_query = {}
             lc_result = lc_db['LC_config'].find_one(lc_query)
-            role_id = lc_result['verified_role_id']
+            verified_role_id = lc_result['verified_role_id']
+            unverified_role_id = lc_result['unverified_role_id']
             member = await interaction.guild.fetch_member(interaction.user.id)
-            role = discord.utils.get(interaction.guild.roles, id = role_id)
-            await member.add_roles(role)
+            verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
+            unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
+            await member.add_roles(verified_role)
+            try:
+                member.remove_roles(unverified_role)
+            except:
+                pass
 
             await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
 
