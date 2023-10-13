@@ -219,7 +219,7 @@ class gl(commands.Cog):
         )
         embed8.add_field(
             name = f"Thành viên",
-            value = f"Vũ Việt Khánh - <@519418640358047745> - CN8-K66",
+            value = f"Vũ Việt Khánh - <@519418640358047745> - CN8-K66\nPhùng Minh Tuấn Anh - <@699897753802637415> - CN8-K67",
             inline = False
         )
         embed8.set_image(
