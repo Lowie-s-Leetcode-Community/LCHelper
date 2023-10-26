@@ -58,7 +58,7 @@ async def on_error(interaction: Interaction, error: AppCommandError):
     elif isinstance(error, app_commands.CommandNotFound):
         return
     else:
+        print(traceback.format_exc())
         await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
-    print(error)
 
 asyncio.run(main())
