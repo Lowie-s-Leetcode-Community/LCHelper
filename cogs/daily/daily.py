@@ -69,7 +69,8 @@ class daily(commands.Cog):
                     'scores_earned_excluding_daily': 0,
                     'easy_solved': 0,
                     'medium_solved': 0,
-                    'hard_solved': 0
+                    'hard_solved': 0,
+                    'gacha': False
                 },
                 'current_month': tmp['current_month'],
                 'all_time': tmp['all_time']
