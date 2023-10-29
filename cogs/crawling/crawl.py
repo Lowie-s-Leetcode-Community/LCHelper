@@ -15,7 +15,7 @@ class crawl(commands.Cog):
     def cog_unload(self):
         self.crawling.cancel()
 
-    @tasks.loop(seconds = 120)
+    @tasks.loop(seconds = 10)
     async def crawling(self):
         # Waiting for internal cache, I suppose
         await self.client.wait_until_ready()
@@ -138,7 +138,7 @@ class crawl(commands.Cog):
                 }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
             
-            await asyncio.sleep(5)
+            await asyncio.sleep(60)
 
     @crawling.error
     async def on_error(self, exception):

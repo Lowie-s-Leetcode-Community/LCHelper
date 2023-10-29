@@ -21,7 +21,7 @@ class daily(commands.Cog):
     def cog_unload(self):
         self.daily.cancel()
 
-    @tasks.loop(seconds = 120)
+    @tasks.loop(seconds = 600)
     async def daily(self):
         # Waiting for internal cache, I suppose
         await self.client.wait_until_ready()
@@ -76,7 +76,7 @@ class daily(commands.Cog):
                 'all_time': tmp['all_time']
             }}
             lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-            await asyncio.sleep(5)
+            await asyncio.sleep(15)
         await log_channel.send('Daily task completed.')
 
         # Checking (and starting monthly task)
@@ -92,7 +92,7 @@ class daily(commands.Cog):
 
                 lc_query = {'$set': user}
                 lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-                await asyncio.sleep(5)
+                await asyncio.sleep(15)
             await log_channel.send(f'Monthly task completed. Reset the monthly data of {str(len(users))} LLC members!')
 
     @app_commands.command(name = 'daily', description = "Returns Leetcode's Daily Challenge")
