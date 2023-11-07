@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from ..logging.logging import logging
-
+import random
 class score(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -59,6 +59,59 @@ class score(commands.Cog):
     #     msg = "Reset the score of " + str(len(users)) + " LLC members!"
     #     await interaction.followup.send(msg)
 
+    """ Command not released yet
+    global bonus
+
+    @app_commands.command(name="gacha", description="Random bonus point")
+    async def _gacha(self, interaction: discord.Interaction):
+        avatar_url = interaction.user.guild_avatar.url if interaction.user.guild_avatar else interaction.user.display_avatar.url
+        await interaction.response.defer(thinking=True)
+        lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
+        lc_col = self.client.DBClient['LC_db']['LC_users']
+        lc_gacha = lc_user['daily_task']['gacha']
+        lc_daily_finished = lc_user['daily_task']['finished_today_daily']
+        guild = self.client.get_guild(interaction.guild_id)
+        member = guild.get_member(lc_user['discord_id'])
+        if lc_daily_finished and lc_gacha is False:
+            global bonus
+            bonus = random.randint(0, 3)
+            lc_user['current_month']['score'] += bonus
+            lc_user['all_time']['score'] += bonus
+            lc_query = {'$set': lc_user}
+            lc_col.update_one({'discord_id': member.id}, lc_query)
+            embed = discord.Embed(
+                title="Gacha",
+                description=f"You got {bonus} {'points' if bonus > 1 else 'point'} !",
+                color=0x03cffc,
+                timestamp=interaction.created_at
+            )
+        elif lc_daily_finished and lc_gacha is True:
+            embed = discord.Embed(
+                title="Gacha",
+                description=f"You already got your bonus point today!",
+                color=0x03cffc,
+                timestamp=interaction.created_at
+            )
+        else:
+            embed = discord.Embed(
+                title="Gacha",
+                description=f"You got to finish daily Leetcode first!",
+                color=0x03cffc,
+                timestamp=interaction.created_at
+            )
+        embed.set_author(
+            name="Gacha",
+            icon_url=self.client.user.display_avatar.url
+        )
+        embed.set_footer(
+            text=interaction.user.display_name,
+            icon_url=avatar_url
+        )
+        await interaction.followup.send(embed=embed)
+        if lc_daily_finished:
+            await logging.on_score_add(logging(self.client), member=member, score=bonus, reason='Gacha!')
+
+    """
 async def setup(client):
     await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])
     #await client.add_cog(score(client))

@@ -10,6 +10,8 @@ from utils.asset import Assets
 from pymongo import MongoClient
 import traceback
 from pathlib import Path
+import logging
+
 load_dotenv()
 
 intent = discord.Intents.all()
@@ -19,6 +21,7 @@ token = os.getenv('BOT_TOKEN')
 tree = client.tree
 DBClient = MongoClient(os.getenv('MONGODB_LOGIN_CRED'))
 client.DBClient = DBClient
+log_handler = logging.FileHandler(filename = "discord.log", encoding = "utf-8", mode = "w")
 
 async def main():
     async with client:
@@ -55,7 +58,7 @@ async def on_error(interaction: Interaction, error: AppCommandError):
     elif isinstance(error, app_commands.CommandNotFound):
         return
     else:
+        print(traceback.format_exc())
         await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
-    print(error)
 
 asyncio.run(main())

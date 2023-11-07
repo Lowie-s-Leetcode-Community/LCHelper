@@ -10,7 +10,7 @@ import datetime
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
-        super().__init__(timeout = 120)
+        super().__init__(timeout = 300)
         self.code = code
         self.client = client
         self.username = username
@@ -82,10 +82,17 @@ class ConfirmView(discord.ui.View):
             
             lc_query = {}
             lc_result = lc_db['LC_config'].find_one(lc_query)
-            role_id = lc_result['verified_role_id']
+            verified_role_id = lc_result['verified_role_id']
+            unverified_role_id = lc_result['unverified_role_id']
             member = await interaction.guild.fetch_member(interaction.user.id)
-            role = discord.utils.get(interaction.guild.roles, id = role_id)
-            await member.add_roles(role)
+            verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
+            unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
+            await member.add_roles(verified_role)
+            try:
+                # in case the role was already manually removed
+                await member.remove_roles(unverified_role)
+            except:
+                pass
 
             await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
 
@@ -107,7 +114,7 @@ class verify(commands.Cog):
         if user_info:
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))   
             view = ConfirmView(code = code, username = username, user_id = interaction.user.id, client = self.client)
-            await interaction.followup.send(f"**Please paste this code `{code}` at the start of your [profile summary](https://leetcode.com/profile/).**", view = view)
+            await interaction.followup.send(f"**Please paste this code `{code}` at the start of your [profile summary](https://leetcode.com/profile/), then click the button below**", view = view)
             view.response = await interaction.original_response()
         else:
             await interaction.followup.send(f"{Assets.red_tick} **Username doesn't exist, please double check.**")

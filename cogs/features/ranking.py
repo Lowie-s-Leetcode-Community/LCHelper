@@ -6,6 +6,8 @@ import datetime
 import typing
 from utils.asset import Assets
 import traceback
+import aiohttp
+import json
 
 duration_type_list = ['current_month', 'all_time']
 duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
@@ -40,9 +42,10 @@ def purify_members(interaction, lc_users: list):
             })
     return res_list
 
-def get_user_list(interaction, DBClient):
-    lc_col = DBClient['LC_db']['LC_users']
-    lc_users = list(lc_col.find())
+def get_user_list(interaction, DBClient, lc_users = None):
+    if lc_users == None:
+        lc_col = DBClient['LC_db']['LC_users']
+        lc_users = list(lc_col.find())
 
     # Removes members that have already left and sorts
     user_list = purify_members(
@@ -267,14 +270,57 @@ class ranking(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @app_commands.command(name = "rank", description = "LLC's Hall of Fame")
-    async def _rank(self, interaction: discord.Interaction):
+    rank_group = app_commands.Group(name = "rank", description = "Ranking Group")
+    @rank_group.command(name = "view", description = "Take a look at LLC's Hall of Fame")
+    async def _rank_view(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         
         # Update current month name
         global duration_frontend_list
         duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
         user_list = get_user_list(interaction = interaction, DBClient = self.client.DBClient)
+        embed_limit = 10
+        page_number_limit = (len(user_list) + (embed_limit - 1)) // embed_limit
+        view = RankingView(user_list, page_number_limit, embed_limit)
+        await interaction.followup.send(
+            embed = get_ranking_embed(
+                interaction = interaction, 
+                user_list = user_list,
+                duration_type = 0,
+                rank_type = 0,
+                page_number = 1,
+                page_number_limit = page_number_limit,
+                embed_limit = embed_limit
+            ),
+            view = view
+        )
+        view.response = await interaction.original_response()
+
+    @rank_group.command(name = "backup", description = "View rankings from a backup file")
+    async def _rank_backup(self, interaction: discord.Interaction, backup_message_id: str):
+        await interaction.response.defer(thinking = True)
+        
+        backup_message_id = int(backup_message_id)
+
+        lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
+        backup_channel_id = lc_query['backup_channel_id']
+        backup_channel = await interaction.guild.fetch_channel(backup_channel_id)
+        backup_message = await backup_channel.fetch_message(backup_message_id)
+        backup_attachment_link = backup_message.attachments[0].url
+
+        print(backup_attachment_link)
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(backup_attachment_link) as res:
+                await res.read()
+        
+        backup_file = open("backup.json")
+        data = json.load(backup_file)
+        user_list = data['LC_users']
+
+        # And everything below is (almost) the same as the above command
+        global duration_frontend_list
+        duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
+        user_list = get_user_list(interaction = interaction, DBClient = self.client.DBClient, lc_users = user_list)
         embed_limit = 10
         page_number_limit = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, page_number_limit, embed_limit)

@@ -17,31 +17,31 @@ Trong đó, việc học Cấu Giải là tối quan trọng, khi các ứng vi�
 
 **Lowie’s Leetcode Club** được sinh ra để chứng minh điều đó hoàn toàn sai. Để làm được điều này, chúng mình mong muốn có thể trở thành một chỗ dựa vững chắc cho các bạn, trong quá trình các bạn tìm kiếm những công việc đầu tiên, và thực thi ước mơ của mình.
 
-*Vào ngày 15/03/2023, Lowie’s Leetcode Club chính thức được khai sinh với 6 thành viên UET K66-CACLC1 Core Team, cùng khoảng 15 anh em khác tham gia luyện tập.*
+*Vào ngày 15/03/2023, Lowie’s Leetcode Club (hiện tại là Lowie's Leetcode Community) chính thức được khai sinh với 6 thành viên UET K66-CACLC1 Core Team, cùng khoảng 15 anh em khác tham gia luyện tập.*
 """
 
-CLUB_MISSION_MSG = """
-Sứ mệnh của Lowie’s Leetcode Club ban đầu là tạo môi trường để các bạn luyện tập Leetcode - nền tảng các bài tập phỏng vấn dành cho các bạn giàu tham vọng đỗ được những doanh nghiệp, tập đoàn lớn.
+Community_MISSION_MSG = """
+Sứ mệnh của Lowie’s Leetcode Community ban đầu là tạo môi trường để các bạn luyện tập Leetcode - nền tảng các bài tập phỏng vấn dành cho các bạn giàu tham vọng đỗ được những doanh nghiệp, tập đoàn lớn.
 
-Tới đây, khi các bạn UET **K66 - “first gen”** của CLB - sẽ bước vào quá trình chuẩn bị hồ sơ và tìm kiếm những cơ hội đầu tiên, cũng là lúc chúng mình sẽ hoạt động mạnh mẽ nhất. Bằng được, mình mong muốn các bạn tham gia CLB đạt được những gì các bạn mong đợi từ lúc các bạn Verify tài khoản của mình. Động thái đầu tiên, chúng mình đã cho khai giảng Lowie’s Leetcode Class YELLOW - nơi các đơn vị kiến thức trong các bài phỏng vấn ở các doanh nghiệp được mình chia sẻ.
+Tới đây, khi các bạn UET **K66 - “first gen”** của Cộng đồng - sẽ bước vào quá trình chuẩn bị hồ sơ và tìm kiếm những cơ hội đầu tiên, cũng là lúc chúng mình sẽ hoạt động mạnh mẽ nhất. Bằng được, mình mong muốn các bạn tham gia Cộng đồng đạt được những gì các bạn mong đợi từ lúc các bạn Verify tài khoản của mình. Động thái đầu tiên, chúng mình đã cho khai giảng Lowie’s Leetcode Class YELLOW - nơi các đơn vị kiến thức trong các bài phỏng vấn ở các doanh nghiệp được mình chia sẻ.
 
-Mình mong muốn, 1 năm nữa, được nhìn thấy những thành viên đầu tiên của CLB giành lấy được những bản hợp đồng thực tập giá trị ở các doanh nghiệp lớn trong nước (chẳng hạn: VinAI/VinBigData, Kyber Network, …), hay các doanh nghiệp nước ngoài (WorldQuant, DTL, Grab, Shopee, …). Thậm chí, nếu may mắn, chúng ta có thể đào tạo được những Thực tập sinh Google hay Amazon trong CLB của mình.
+Mình mong muốn, 1 năm nữa, được nhìn thấy những thành viên đầu tiên của Cộng đồng giành lấy được những bản hợp đồng thực tập giá trị ở các doanh nghiệp lớn trong nước (chẳng hạn: VinAI/VinBigData, Kyber Network, …), hay các doanh nghiệp nước ngoài (WorldQuant, DTL, Grab, Shopee, …). Thậm chí, nếu may mắn, chúng ta có thể đào tạo được những Thực tập sinh Google hay Amazon trong Cộng đồng của mình.
 """
 
-CLUB_ACTIVITIES_MSG = """
-Để phục vụ sứ mệnh của CLB, các hoạt động trong CLB cũng đã và đang được triển khai dựa vào nhu cầu học tập của các bạn:
+Community_ACTIVITIES_MSG = """
+Để phục vụ sứ mệnh của Cộng đồng, các hoạt động trong Cộng đồng cũng đã và đang được triển khai dựa vào nhu cầu học tập của các bạn:
 
-- **Daily Problem Editorial:** Nơi các bạn mới học có thể tìm gợi ý/lời giải cho bài tập Daily trên Leetcode, và cũng là nơi các bạn đã có kinh nghiệm có thể tập diễn đạt, trình bày ý tưởng của mình cho các bạn khác trong CLB.
+- **Daily Problem Editorial:** Nơi các bạn mới học có thể tìm gợi ý/lời giải cho bài tập Daily trên Leetcode, và cũng là nơi các bạn đã có kinh nghiệm có thể tập diễn đạt, trình bày ý tưởng của mình cho các bạn khác trong Cộng đồng.
 - **Lowie’s Leetcode Class:** Nơi mà Lowie cùng ban chuyên môn sẽ mở lớp buổi tối để giúp các bạn lấp đầy những lỗ hổng về kiến thức, cũng như kỹ năng phỏng vấn. Lớp học có tính phí, và các bạn có quyền lợi sử dụng 1 năm Leetcode Premium.
 - **Chuyên Đề**: Nơi tất cả thành viên trong LLC cùng luyện tập & cọ xát cho một chủ đề nào đó.
-- **Bot LC Helper (a.k.a. “Đủ 500 bài LeetCode chưa?”)**: Các bạn đang có thời gian luyện LeetCode, nhưng CLB đang không có hoạt động gì cho mình? Hãy gõ </help:1130172149659881593> ở các kênh chat trong Discord để Con trai cưng của chúng mình hỗ trợ các bạn luyện tập nhé!
-Ngoài ra, chúng mình cũng có một hệ thống BẢNG XẾP HẠNG để các bạn có thể đua điểm với nhau, giành lấy danh hiệu Leetcoders of the Month và những phần quà giá trị khác từ Chủ tịch CLB.
+- **Bot LC Helper (a.k.a. “Đủ 500 bài LeetCode chưa?”)**: Các bạn đang có thời gian luyện LeetCode, nhưng Cộng đồng đang không có hoạt động gì cho mình? Hãy gõ </help:1130172149659881593> ở các kênh chat trong Discord để Con trai cưng của chúng mình hỗ trợ các bạn luyện tập nhé!
+Ngoài ra, chúng mình cũng có một hệ thống BẢNG XẾP HẠNG để các bạn có thể đua điểm với nhau, giành lấy danh hiệu Leetcoders of the Month và những phần quà giá trị khác từ Chủ tịch Cộng đồng.
 
-Các bạn có thể đọc đầy đủ về danh sách các hoạt động trong CLB ở [ĐÂY](https://hackmd.io/@lowies-leetcode-club/HkYbivnnn).
+Các bạn có thể đọc đầy đủ về danh sách các hoạt động trong Cộng đồng ở [ĐÂY](https://hackmd.io/@lowies-leetcode-Community/HkYbivnnn).
 """
 
-CLUB_CORE_TEAM_MSG_1 = """
-<@318049602160951297> - Là một người đã có 2 năm kinh nghiệm ở các môi trường doanh nghiệp, và 7 năm kinh nghiệm trong bộ môn Lập trình Thi đấu, anh cả Lowie đã thành lập lên CLB với hoài bão giúp các anh em xung quanh có thể vươn tới những ước mơ cháy bỏng của mình. ❤️‍🔥❤️‍🔥
+Community_CORE_TEAM_MSG_1 = """
+<@318049602160951297> - Là một người đã có 2 năm kinh nghiệm ở các môi trường doanh nghiệp, và 7 năm kinh nghiệm trong bộ môn Lập trình Thi đấu, anh cả Lowie đã thành lập lên Cộng đồng với hoài bão giúp các anh em xung quanh có thể vươn tới những ước mơ cháy bỏng của mình. ❤️‍🔥❤️‍🔥
 
 Một số thành tích nổi bật:
 - Hạng 14 ICPC National Vietnam 2020.
@@ -51,28 +51,28 @@ Một số thành tích nổi bật:
 Xem CV của chủ tịch tại [ĐÂY](https://www.topcv.vn/xem-cv/D10DBgJXAVYGBlNSVQNUAwIFAwdTUFUHUAMGBg92be).
 """
 
-CLUB_CORE_TEAM_MSG_2 = """
-<@683328026943160464> - Là lớp trưởng của K66-CACLC1 (hay cậu thường gọi thân thương: K66A1), Lê Vũ Minh là một vị thủ lĩnh, luôn chăm chỉ và cố gắng làm tốt nhiệm vụ được giao. Bạn là người quản trị server Discord của CLB từ ngày thành lập đến tận bây giờ. Ngoài ra, bạn cũng đã và đang tham gia phát triển <@738713416914567198> - con trai cưng của CLB. 🤖🦸‍♂️
+Community_CORE_TEAM_MSG_2 = """
+<@683328026943160464> - Là lớp trưởng của K66-CACLC1 (hay cậu thường gọi thân thương: K66A1), Lê Vũ Minh là một vị thủ lĩnh, luôn chăm chỉ và cố gắng làm tốt nhiệm vụ được giao. Bạn là người quản trị server Discord của Cộng đồng từ ngày thành lập đến tận bây giờ. Ngoài ra, bạn cũng đã và đang tham gia phát triển <@738713416914567198> - con trai cưng của Cộng đồng. 🤖🦸‍♂️
 """
 
-CLUB_CORE_TEAM_MSG_3 = """
-<@641562953862086657> - Với thái độ làm việc chuyên nghiệp, cùng khả năng làm việc độc lập xuất sắc khi đã hoàn thành 400 bài LeetCode trước ngày gia nhập CLB, Dân Trần là một cánh tay phải đắc lực của Chủ tịch. Không những vậy, tư duy sáng tạo và khả năng truyền đạt ý tưởng của Dân chính là nền tảng để giúp cho LLC có thể đi xa hơn. 🧠💪
+Community_CORE_TEAM_MSG_3 = """
+<@641562953862086657> - Với thái độ làm việc chuyên nghiệp, cùng khả năng làm việc độc lập xuất sắc khi đã hoàn thành 400 bài LeetCode trước ngày gia nhập Cộng đồng, Dân Trần là một cánh tay phải đắc lực của Chủ tịch. Không những vậy, tư duy sáng tạo và khả năng truyền đạt ý tưởng của Dân chính là nền tảng để giúp cho LLC có thể đi xa hơn. 🧠💪
 """
 
-CLUB_CORE_TEAM_MSG_4 = """
-Là một ban chịu trách nhiệm chính về chất lượng chuyên môn các hoạt động trong CLB, ban Chuyên Môn là một ban tuy “khó tính”, nhưng luôn hết lòng vì các thành viên trong CLB. Các thành viên trong ban Chuyên Môn đều là những người đã có những thành tích nhất định trong CV của họ, với các giải thưởng Tin học lớn nhỏ khác nhau. Và họ tham gia vào Core Team, để làm tấm gương sáng cho bất kỳ ai trong CLB phấn đấu.
+Community_CORE_TEAM_MSG_4 = """
+Là một ban chịu trách nhiệm chính về chất lượng chuyên môn các hoạt động trong Cộng đồng, ban Chuyên Môn là một ban tuy “khó tính”, nhưng luôn hết lòng vì các thành viên trong Cộng đồng. Các thành viên trong ban Chuyên Môn đều là những người đã có những thành tích nhất định trong CV của họ, với các giải thưởng Tin học lớn nhỏ khác nhau. Và họ tham gia vào Core Team, để làm tấm gương sáng cho bất kỳ ai trong Cộng đồng phấn đấu.
 """
 
-CLUB_CORE_TEAM_MSG_5 = """
-Trái ngược với ban Chuyên Môn, thì ban Truyền Thông hay bị “Bí Thuật Toán” 😉. Tuy vậy, họ không bao giờ bị “bí” những ý tưởng. Ngoài việc quản lý kênh truyền thông, bộ mặt của CLB, họ chính là nguồn tài nguyên ý tưởng dồi dào cho sự phát triển của CLB. Mục tiêu của họ: biến LLC thành một Đế chế truyền thông lớn trong VNU, ít nhất, về ngành CNTT.
+Community_CORE_TEAM_MSG_5 = """
+Trái ngược với ban Chuyên Môn, thì ban Truyền Thông hay bị “Bí Thuật Toán” 😉. Tuy vậy, họ không bao giờ bị “bí” những ý tưởng. Ngoài việc quản lý kênh truyền thông, bộ mặt của Cộng đồng, họ chính là nguồn tài nguyên ý tưởng dồi dào cho sự phát triển của Cộng đồng. Mục tiêu của họ: biến LLC thành một Đế chế truyền thông lớn trong VNU, ít nhất, về ngành CNTT.
 """
 
-CLUB_CORE_TEAM_MSG_6 = """
-Là những người cha nuôi của con Bot trong CLB, các thành viên trong ban Tự Động Hóa mang trong tim niềm đam mê to lớn với việc phát triển sản phẩm. Đây cũng là những thành viên “hưởng lợi ngầm” nhiều nhất từ CLB, khi trong quá trình tham gia, họ tích lũy được kinh nghiệm làm việc, cũng như mang về được những thành phẩm để “flexing” trong hồ sơ của họ 💪😏
+Community_CORE_TEAM_MSG_6 = """
+Là những người cha nuôi của con Bot trong Cộng đồng, các thành viên trong ban Tự Động Hóa mang trong tim niềm đam mê to lớn với việc phát triển sản phẩm. Đây cũng là những thành viên “hưởng lợi ngầm” nhiều nhất từ Cộng đồng, khi trong quá trình tham gia, họ tích lũy được kinh nghiệm làm việc, cũng như mang về được những thành phẩm để “flexing” trong hồ sơ của họ 💪😏
 """
 
 HOW_TO_VERIFY_MSG_1 = """
-Để tham gia vào các hoạt động CLB, bạn cần phải link tài khoản LeetCode của bạn với bot của server. Hãy [lập một tài khoản](https://leetcode.com/accounts/signup/) nếu bạn chưa có.
+Để tham gia vào các hoạt động Cộng đồng, bạn cần phải link tài khoản LeetCode của bạn với bot của server. Hãy [lập một tài khoản](https://leetcode.com/accounts/signup/) nếu bạn chưa có.
 
 ⚠️ Lưu ý, sau 7 ngày kể từ khi gia nhập mà bạn chưa link tài khoản, bạn sẽ tự động bị kick khỏi server. Hãy làm ngay và luôn để tránh bỏ lỡ những điều hay ho ✨
 """
@@ -93,7 +93,7 @@ Quay trở lại LeetCode, vào `Edit Profile`. Duới mục **Summary**, vào e
 HOW_TO_VERIFY_MSG_6 = """
 Quay trở lại Discord, bấm nút `Verify Me!` trên dòng tin nhắn của con bot. 
 
-Nếu bạn làm các bước trên chính xác, thì bot sẽ báo thành công và bạn sẽ được nhận role <@&1087761988068855890>, chính thức xác nhận bạn là thành viên CLB 🎉🎉🎉.
+Nếu bạn làm các bước trên chính xác, thì bot sẽ báo thành công và bạn sẽ được nhận role <@&1087761988068855890>, chính thức xác nhận bạn là thành viên Cộng đồng 🎉🎉🎉.
 """
 
 class gl(commands.Cog):
@@ -105,7 +105,7 @@ class gl(commands.Cog):
     async def _gl_init(self, ctx):
         channel = await ctx.guild.fetch_channel(1139158245391474800)
 
-        # Embeds in #giới-thiệu-clb
+        # Embeds in #giới-thiệu-Cộng đồng
 
         embed1 = discord.Embed(
             title = "📖 Câu chuyện khởi nguồn",
@@ -119,15 +119,15 @@ class gl(commands.Cog):
         msg1 = await channel.send(embed = embed1)
 
         embed2 = discord.Embed(
-            title = "😇 Sứ mệnh của CLB",
-            description = CLUB_MISSION_MSG,
+            title = "😇 Sứ mệnh của Cộng đồng",
+            description = Community_MISSION_MSG,
             color = discord.Color.blue()
         )
         msg2 = await channel.send(embed = embed2)
 
         embed3 = discord.Embed(
-            title = "🏃 Các hoạt động trong CLB",
-            description = CLUB_ACTIVITIES_MSG,
+            title = "🏃 Các hoạt động trong Cộng đồng",
+            description = Community_ACTIVITIES_MSG,
             color = discord.Color.gold()
         )
         msg3 = await channel.send(embed = embed3)
@@ -148,17 +148,17 @@ class gl(commands.Cog):
         )
         embed5.add_field(
             name = f"Chủ tịch - Tô Tuấn Dũng - CN8-K66",
-            value = CLUB_CORE_TEAM_MSG_1,
+            value = Community_CORE_TEAM_MSG_1,
             inline = False
         )
         embed5.add_field(
             name = f"Phó chủ tịch - Lê Vũ Minh - CN8-K66",
-            value = CLUB_CORE_TEAM_MSG_2,
+            value = Community_CORE_TEAM_MSG_2,
             inline = False
         )
         embed5.add_field(
             name = f"Phó chủ tịch - Trần Nam Dân - CN8-K66",
-            value = CLUB_CORE_TEAM_MSG_3,
+            value = Community_CORE_TEAM_MSG_3,
             inline = False
         )
         msg5 = await channel.send(embed = embed5)
@@ -166,8 +166,8 @@ class gl(commands.Cog):
         await asyncio.sleep(3)
 
         embed6 = discord.Embed(
-            title = "Ban Chuyên Môn (a.k.a. Club Experts)",
-            description = CLUB_CORE_TEAM_MSG_4,
+            title = "Ban Chuyên Môn (a.k.a. Community Experts)",
+            description = Community_CORE_TEAM_MSG_4,
             color = discord.Color.green()
         )
         embed6.add_field(
@@ -189,7 +189,7 @@ class gl(commands.Cog):
 
         embed7 = discord.Embed(
             title = "Ban Truyền Thông (a.k.a. PR & Media)",
-            description = CLUB_CORE_TEAM_MSG_5,
+            description = Community_CORE_TEAM_MSG_5,
             color = discord.Color.green()
         )
         embed7.add_field(
@@ -209,7 +209,7 @@ class gl(commands.Cog):
 
         embed8 = discord.Embed(
             title = "Ban Tự Động Hoá (a.k.a. Bot Developers)",
-            description = CLUB_CORE_TEAM_MSG_6,
+            description = Community_CORE_TEAM_MSG_6,
             color = discord.Color.green()
         )
         embed8.add_field(
@@ -219,7 +219,7 @@ class gl(commands.Cog):
         )
         embed8.add_field(
             name = f"Thành viên",
-            value = f"Vũ Việt Khánh - <@519418640358047745> - CN8-K66",
+            value = f"Vũ Việt Khánh - <@519418640358047745> - CN8-K66\nPhùng Minh Tuấn Anh - <@699897753802637415> - CN8-K67",
             inline = False
         )
         embed8.set_image(
@@ -229,8 +229,8 @@ class gl(commands.Cog):
         
         NAVIGATION_MSG = ""
         NAVIGATION_MSG += f"1. [Câu chuyện khởi nguồn]({msg1.jump_url})\n"
-        NAVIGATION_MSG += f"2. [Sứ mệnh của CLB]({msg2.jump_url})\n"
-        NAVIGATION_MSG += f"3. [Các hoạt động trong CLB]({msg3.jump_url})\n"
+        NAVIGATION_MSG += f"2. [Sứ mệnh của Cộng đồng]({msg2.jump_url})\n"
+        NAVIGATION_MSG += f"3. [Các hoạt động trong Cộng đồng]({msg3.jump_url})\n"
         NAVIGATION_MSG += f"4. [Đội ngũ Core Team]({msg4.jump_url})\n"
         NAVIGATION_MSG += f" - [Ban Quản Trị]({msg5.jump_url})\n"
         NAVIGATION_MSG += f" - [Ban Chuyên Môn]({msg6.jump_url})\n"
