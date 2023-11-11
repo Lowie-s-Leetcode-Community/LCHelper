@@ -30,7 +30,7 @@ class ask(commands.Cog):
         # print(interaction.data)
         # print(question)
         original_mes = await interaction.original_response()
-        await original_mes.add_reaction("👍")
+        # await original_mes.add_reaction("👍")
 
 async def setup(client):
     await client.add_cog(

@@ -9,3 +9,4 @@ yt_dlp
 jishaku
 ffmpeg
 python-dotenv
+pymongo
