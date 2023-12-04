@@ -1,4 +1,5 @@
 import discord
+import datetime
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
@@ -13,6 +14,14 @@ class task(commands.Cog):
     async def _task(self, interaction):
         await interaction.response.defer(thinking = True)
         lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
+        lc_config = self.client.DBClient['LC_db']['LC_config'].find_one({})
+        current_time = int(datetime.datetime.now().timestamp())
+        start_time = lc_config['event_multiplier_topic_start']
+        end_time = lc_config['event_multiplier_topic_end']
+        multi_event_on = False
+        if start_time <= current_time and current_time <= end_time:
+            multi_event_on = True
+
         embed = discord.Embed(
             title = "Tasks",
             description = """
@@ -23,7 +32,17 @@ class task(commands.Cog):
         score_msg = ""
         score_msg += f"- All-time score: **{lc_user['all_time']['score']}**\n"
         score_msg += f"- This month's score: **{lc_user['current_month']['score']}**\n"
-        score_msg += f"- Previous month's score: **{lc_user['previous_month']['score']}**"
+
+        if multi_event_on:
+            event_list_str = ""
+            for i in lc_config['event_multiplier_topic_list']:
+                event_list_str += f"**{i}**, "
+            event_list_str = event_list_str[:-2]
+            embed.add_field(
+                name = "✨ Ongoing event:",
+                value = f"During this event, you will earn bonus scores (**{lc_config['event_multiplier_topic_bonus']}x** of your normal scores) if you <:AC:1110041831800057906> problems with topics: {event_list_str}"
+            )
+        
         embed.add_field(
             name = "Your scores",
             value = score_msg,
@@ -37,6 +56,8 @@ class task(commands.Cog):
         else:
             daily_msg += f"{Assets.red_tick} **Complete Daily Challenge 🗓️ (2 pts)**\n"
 
+        daily_msg += f"{Assets.red_tick} **Use </gacha:1168530503675166791> (0-3 pts)**\n"
+
         if lc_user['daily_task']['scores_earned_excluding_daily'] == 6:
             daily_msg += f"{Assets.green_tick} Self-practice (6/6 pts)\n"
         else:
@@ -46,7 +67,7 @@ class task(commands.Cog):
         daily_msg += f"{Assets.blank} - *Solve a Medium problem (2 pts): {lc_user['daily_task']['medium_solved']} solved*\n"
         daily_msg += f"{Assets.blank} - *Solve a Hard problem (3 pts): {lc_user['daily_task']['hard_solved']} solved*\n"
         embed.add_field(
-            name = f"Daily tasks ({daily_score}/8 pts)",
+            name = f"Daily tasks ({daily_score}/11 pts)",
             value = daily_msg,
             inline = False
         )

@@ -5,11 +5,13 @@ import time
 from discord.ext import commands, tasks
 from utils.asset import Assets
 from ..logging.logging import logging
+import os
 
 class event(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.member_prune.start()
+        if os.getenv('START_UP_TASKS') == "True":
+            self.member_prune.start()
 
     def cog_unload(self):
         self.member_prune.cancel()

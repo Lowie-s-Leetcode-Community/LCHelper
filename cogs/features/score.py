@@ -59,7 +59,6 @@ class score(commands.Cog):
     #     msg = "Reset the score of " + str(len(users)) + " LLC members!"
     #     await interaction.followup.send(msg)
 
-    """ Command not released yet
     global bonus
 
     @app_commands.command(name="gacha", description="Random bonus point")
@@ -111,7 +110,6 @@ class score(commands.Cog):
         if lc_daily_finished:
             await logging.on_score_add(logging(self.client), member=member, score=bonus, reason='Gacha!')
 
-    """
 async def setup(client):
     await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])
     #await client.add_cog(score(client))
