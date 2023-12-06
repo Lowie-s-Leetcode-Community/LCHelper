@@ -56,7 +56,7 @@ class task(commands.Cog):
         else:
             daily_msg += f"{Assets.red_tick} **Complete Daily Challenge 🗓️ (2 pts)**\n"
 
-        daily_msg += f"{Assets.red_tick} **Use </gacha:1168530503675166791> (0-3 pts)**\n"
+        # daily_msg += f"{Assets.red_tick} **Use </gacha:1168530503675166791> (0-3 pts)**\n"
 
         if lc_user['daily_task']['scores_earned_excluding_daily'] == 6:
             daily_msg += f"{Assets.green_tick} Self-practice (6/6 pts)\n"
@@ -67,7 +67,7 @@ class task(commands.Cog):
         daily_msg += f"{Assets.blank} - *Solve a Medium problem (2 pts): {lc_user['daily_task']['medium_solved']} solved*\n"
         daily_msg += f"{Assets.blank} - *Solve a Hard problem (3 pts): {lc_user['daily_task']['hard_solved']} solved*\n"
         embed.add_field(
-            name = f"Daily tasks ({daily_score}/11 pts)",
+            name = f"Daily tasks ({daily_score}/8 pts)",
             value = daily_msg,
             inline = False
         )
