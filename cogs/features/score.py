@@ -59,8 +59,7 @@ class score(commands.Cog):
     #     msg = "Reset the score of " + str(len(users)) + " LLC members!"
     #     await interaction.followup.send(msg)
 
-    """
-    global bonus
+    
 
     @app_commands.command(name="gacha", description="Random bonus point")
     async def _gacha(self, interaction: discord.Interaction):
@@ -68,20 +67,21 @@ class score(commands.Cog):
         await interaction.response.defer(thinking=True)
         lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
         lc_col = self.client.DBClient['LC_db']['LC_users']
-        lc_gacha = lc_user['daily_task']['gacha']
+        lc_gacha = (lc_user['daily_task']['gacha'] != -1)
         lc_daily_finished = lc_user['daily_task']['finished_today_daily']
         guild = self.client.get_guild(interaction.guild_id)
         member = guild.get_member(lc_user['discord_id'])
+        bonus = min([random.randint(1, 3), random.randint(1, 3), random.randint(1, 3)])
+
         if lc_daily_finished and lc_gacha is False:
-            global bonus
-            bonus = random.randint(0, 3)
             lc_user['current_month']['score'] += bonus
             lc_user['all_time']['score'] += bonus
+            lc_user['daily_task']['gacha'] = bonus
             lc_query = {'$set': lc_user}
             lc_col.update_one({'discord_id': member.id}, lc_query)
             embed = discord.Embed(
                 title="Gacha",
-                description=f"You got {bonus} {'points' if bonus > 1 else 'point'} !",
+                description=f"You got {bonus} {'points' if bonus > 1 else 'point'}!",
                 color=0x03cffc,
                 timestamp=interaction.created_at
             )
@@ -110,7 +110,7 @@ class score(commands.Cog):
         await interaction.followup.send(embed=embed)
         if lc_daily_finished:
             await logging.on_score_add(logging(self.client), member=member, score=bonus, reason='Gacha!')
-    """
+    
 
 async def setup(client):
     await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])

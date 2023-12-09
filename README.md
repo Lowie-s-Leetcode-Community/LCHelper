@@ -1,7 +1,7 @@
 # LCHelper
 Repo for LCHelper bot - A Discord bot built for LLC, LeetCode queries and all other stuff.
 
-The database currently in use is MongoDB. Be aware that this bot is NOT built with self-host purpose in mind, rather for private work and passion. If you still want to host the spaghetti-coded bot, feel free to do so at your own discretion.
+The database currently in use is MongoDB.
 
 PRs and issues are appreciated, and I will try to look into them often.
 
@@ -43,6 +43,17 @@ To make it easy to deploy the bot in different enviroments, LCHelper uses `doten
 BOT_TOKEN = 
 MONGODB_LOGIN_CRED = 
 BOT_PREFIX = 
+START_UP_TASKS = 
+```
+
+The general MongoDB structure should be:
+```
+LC_db (Database)
+⌊ LC_config (Collections)
+⌊ LC_daily
+⌊ LC_problems
+⌊ LC_quiz
+⌊ LC_users
 ```
 
 ## 5. `.gitignore`

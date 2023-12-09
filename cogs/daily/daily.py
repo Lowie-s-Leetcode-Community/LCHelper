@@ -72,7 +72,7 @@ class daily(commands.Cog):
                     'easy_solved': 0,
                     'medium_solved': 0,
                     'hard_solved': 0,
-                    'gacha': False
+                    'gacha': -1
                 },
                 'current_month': tmp['current_month'],
                 'all_time': tmp['all_time']
