@@ -1,26 +1,22 @@
 # LCHelper
-Repo for LCHelper bot - A Discord bot built for LLC, LeetCode queries and all other stuff.
+Repo for LCHelper bot - A Discord bot built for Lowie's LeetCode Community (LLC) and all other stuff.
 
-The database currently in use is MongoDB.
+The database currently in use is `MongoDB`, and the library wrapper for the bot is `discord.py 2.0+`.
 
 PRs and issues are appreciated, and I will try to look into them often.
 
 # Features
 The features of the bot are separated into a number of cogs, which are also sorted in their respective folders. 
 
-## LeetCode cogs
 - **Onboarding**: Guides new users into LLC.
 - **Features**: Provides LeetCode-related commands for LLC members.
 - **Daily**: Handles LeetCode's Daily Challenge.
 - **Crawling**: "Crawls" recent successful LeetCode submissions.
 - **Logging**: Logs entries such as scoring, kick/ban,...
 
-## Other cogs
-- These are mostly tools for my own personal needs.
-
 # Installation
 
-## 1. Have your Discord bot
+## 1. Have your Discord bot ready
 - The bot should have all the necessary **Privileged Gateway Intents** enabled, and have the scope `applications.commands` when adding into servers in order to use Slash commands.
 
 ## 2. Clone the repository
@@ -68,9 +64,9 @@ To prevent cache or unnecessary files from being pushed to the main repository, 
 The file should include:
 ```
 .env
-.gitignore
 __pycache__/
 *.pyc
+backup.json
 ```
 
 ## 6. Run the bot
@@ -92,3 +88,5 @@ python bot.py
 
 # License
 [MIT](https://choosealicense.com/licenses/mit/)
+
+Made with 🧡 by Orange.
