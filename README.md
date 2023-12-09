@@ -46,6 +46,11 @@ BOT_PREFIX =
 START_UP_TASKS = 
 ```
 
+- `BOT_TOKEN`: The token required for a Discord bot to run.
+- `MONGODB_LOGIN_CRED`: An URL to connect to the MongoDB deployment.
+- `BOT_PREFIX`: The bot's prefix.
+- `START_UP_TASKS:` True/False - if the crawling and the daily tasks should start when running the bot. Should be set to `False` if you are running it locally to avoid conflicts.
+
 The general MongoDB structure should be:
 ```
 LC_db (Database)
@@ -55,9 +60,10 @@ LC_db (Database)
 ⌊ LC_quiz
 ⌊ LC_users
 ```
+(Script to create a MongoDB sample should be added soon)
 
 ## 5. `.gitignore`
-To prevent cache or unnecessary files from being pushed to the main repository, a `.gitignore` file is highly recommended.
+To prevent cache or unnecessary files from being pushed to the main repository, a `.gitignore` file is required.
 
 The file should include:
 ```

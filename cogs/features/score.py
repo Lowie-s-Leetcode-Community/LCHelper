@@ -80,21 +80,18 @@ class score(commands.Cog):
             lc_query = {'$set': lc_user}
             lc_col.update_one({'discord_id': member.id}, lc_query)
             embed = discord.Embed(
-                title="Gacha",
                 description=f"You got {bonus} {'points' if bonus > 1 else 'point'}!",
                 color=0x03cffc,
                 timestamp=interaction.created_at
             )
         elif lc_daily_finished and lc_gacha is True:
             embed = discord.Embed(
-                title="Gacha",
                 description=f"You already got your bonus point today!",
                 color=0x03cffc,
                 timestamp=interaction.created_at
             )
         else:
             embed = discord.Embed(
-                title="Gacha",
                 description=f"You got to finish daily Leetcode first!",
                 color=0x03cffc,
                 timestamp=interaction.created_at
