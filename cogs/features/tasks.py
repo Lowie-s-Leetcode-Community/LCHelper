@@ -60,7 +60,7 @@ class task(commands.Cog):
             daily_score += lc_user['daily_task']['gacha']
             daily_msg += f"{Assets.green_tick}  Use </gacha:1168530503675166791> ({lc_user['daily_task']['gacha']} pts)\n"
         else:
-            daily_msg += f"{Assets.red_tick} **Use </gacha:1168530503675166791> ({lc_user['daily_task']['gacha']} pts)**\n"
+            daily_msg += f"{Assets.red_tick} **Use </gacha:1168530503675166791> (1-3 pts)**\n"
 
         if lc_user['daily_task']['scores_earned_excluding_daily'] == 6:
             daily_msg += f"{Assets.green_tick} Self-practice (6/6 pts)\n"
