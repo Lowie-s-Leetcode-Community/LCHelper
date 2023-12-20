@@ -1,4 +1,5 @@
 import discord
+import datetime
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
@@ -13,22 +14,40 @@ class task(commands.Cog):
     async def _task(self, interaction):
         await interaction.response.defer(thinking = True)
         lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
+        lc_config = self.client.DBClient['LC_db']['LC_config'].find_one({})
+        current_time = int(datetime.datetime.now().timestamp())
+        start_time = lc_config['event_multiplier_topic_start']
+        end_time = lc_config['event_multiplier_topic_end']
+        multi_event_on = False
+        if start_time <= current_time and current_time <= end_time:
+            multi_event_on = True
+
+
+        embed_list = []
+        if multi_event_on:
+            event_list_str = ""
+            for i in lc_config['event_multiplier_topic_list']:
+                event_list_str += f"**{i}**, "
+            event_list_str = event_list_str[:-2]
+            embed_event = discord.Embed(
+                title = "✨ Ongoing event:",
+                description = f"- During this event, you will earn bonus scores (**{lc_config['event_multiplier_topic_bonus']}x** of your normal scores) if you <:AC:1110041831800057906> problems with either of topic(s): {event_list_str}\n- Event ends at <t:{end_time}> (<t:{end_time}:R>)\n",
+                color = discord.Colour.red()
+            )
+            embed_list.append(embed_event)
+
+
         embed = discord.Embed(
             title = "Tasks",
             description = """
-            You can earn scores by completing specific tasks. [More info](https://www.notion.so/lowie-writes/How-does-LLC-s-Scoring-System-work-33e3316e95024b448690eac31173e795?pvs=4)
+            *<a:blob_gaming:1093831896212971540> You can earn scores by completing specific tasks. [More info](https://www.notion.so/lowie-writes/How-does-LLC-s-Scoring-System-work-33e3316e95024b448690eac31173e795?pvs=4)*
             """,
             color = discord.Colour.blue()
         )
         score_msg = ""
         score_msg += f"- All-time score: **{lc_user['all_time']['score']}**\n"
         score_msg += f"- This month's score: **{lc_user['current_month']['score']}**\n"
-        score_msg += f"- Previous month's score: **{lc_user['previous_month']['score']}**"
-        embed.add_field(
-            name = "Your scores",
-            value = score_msg,
-            inline = False
-        )
+        
         daily_msg = ""
         daily_score = lc_user['daily_task']['scores_earned_excluding_daily']
         if lc_user['daily_task']['finished_today_daily']:
@@ -36,6 +55,12 @@ class task(commands.Cog):
             daily_msg += f"{Assets.green_tick} Complete Daily Challenge 🗓️ (2 pts)\n"
         else:
             daily_msg += f"{Assets.red_tick} **Complete Daily Challenge 🗓️ (2 pts)**\n"
+
+        if lc_user['daily_task']['gacha'] != -1:
+            daily_score += lc_user['daily_task']['gacha']
+            daily_msg += f"{Assets.green_tick}  Use </gacha:1168530503675166791> ({lc_user['daily_task']['gacha']} pts)\n"
+        else:
+            daily_msg += f"{Assets.red_tick} **Use </gacha:1168530503675166791> (1-3 pts)**\n"
 
         if lc_user['daily_task']['scores_earned_excluding_daily'] == 6:
             daily_msg += f"{Assets.green_tick} Self-practice (6/6 pts)\n"
@@ -46,7 +71,7 @@ class task(commands.Cog):
         daily_msg += f"{Assets.blank} - *Solve a Medium problem (2 pts): {lc_user['daily_task']['medium_solved']} solved*\n"
         daily_msg += f"{Assets.blank} - *Solve a Hard problem (3 pts): {lc_user['daily_task']['hard_solved']} solved*\n"
         embed.add_field(
-            name = f"Daily tasks ({daily_score}/8 pts)",
+            name = f"Daily tasks ({daily_score}/11 pts)",
             value = daily_msg,
             inline = False
         )
@@ -67,9 +92,15 @@ class task(commands.Cog):
             value = monthly_msg,
             inline = False
         )
+
+        embed.add_field(
+            name = "Your scores",
+            value = score_msg,
+            inline = False
+        )
         
-        
-        await interaction.followup.send(embed = embed)
+        embed_list.append(embed)
+        await interaction.followup.send(embeds = embed_list)
     
     async def on_problem_completed(self, member: discord.Member, lc_user: dict, problem_title_slug: str, is_daily: bool):
         lc_col = self.client.DBClient['LC_db']['LC_users']

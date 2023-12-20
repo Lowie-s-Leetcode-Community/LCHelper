@@ -3,11 +3,12 @@ from discord import app_commands
 from discord.ext import tasks, commands
 import json
 from bson import json_util
-
+import os
 class backup(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.backup_loop.start()
+        if os.getenv('START_UP_TASKS') == "True":
+            self.backup_loop.start()
 
     def cog_unload(self):
         self.backup_loop.cancel()

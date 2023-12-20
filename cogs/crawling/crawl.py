@@ -4,13 +4,15 @@ from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from ..features.tasks import task
+import os
 import asyncio
 import traceback
 
 class crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.crawling.start()
+        if os.getenv('START_UP_TASKS') == "True":
+            self.crawling.start()
 
     def cog_unload(self):
         self.crawling.cancel()

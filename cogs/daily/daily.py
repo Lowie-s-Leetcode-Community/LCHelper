@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
+import os
 import asyncio
 import traceback
 import datetime
@@ -16,7 +17,8 @@ def is_monthly_reset_time():
 class daily(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.daily.start()
+        if os.getenv('START_UP_TASKS') == "True": 
+            self.daily.start()
 
     def cog_unload(self):
         self.daily.cancel()
@@ -70,13 +72,13 @@ class daily(commands.Cog):
                     'easy_solved': 0,
                     'medium_solved': 0,
                     'hard_solved': 0,
-                    'gacha': False
+                    'gacha': -1
                 },
                 'current_month': tmp['current_month'],
                 'all_time': tmp['all_time']
             }}
             lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-            await asyncio.sleep(15)
+            await asyncio.sleep(3)
         await log_channel.send('Daily task completed.')
 
         # Checking (and starting monthly task)
@@ -92,7 +94,7 @@ class daily(commands.Cog):
 
                 lc_query = {'$set': user}
                 lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-                await asyncio.sleep(15)
+                await asyncio.sleep(3)
             await log_channel.send(f'Monthly task completed. Reset the monthly data of {str(len(users))} LLC members!')
 
     @app_commands.command(name = 'daily', description = "Returns Leetcode's Daily Challenge")
