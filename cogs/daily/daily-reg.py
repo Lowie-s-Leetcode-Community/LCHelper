@@ -21,25 +21,30 @@ def get_next_LLC_week_and_month():
 
 def get_registration_announce_msg(message):
     d = datetime.date.today()
+    weekdays = []
     next_mon = next_weekday(d, 0)
-    next_tue = next_mon + datetime.timedelta(days=1)
-    next_wed = next_mon + datetime.timedelta(days=2)
-    next_thu = next_mon + datetime.timedelta(days=3)
-    next_fri = next_mon + datetime.timedelta(days=4)
-    next_sat = next_mon + datetime.timedelta(days=5)
-    next_sun = next_mon + datetime.timedelta(days=6)
+    weekdays.append(next_mon)
+    for i in range(6):
+        weekdays.append(next_mon + datetime.timedelta(days = i + 1))
+    # next_mon = next_weekday(d, 0)
+    # next_tue = next_mon + datetime.timedelta(days=1)
+    # next_wed = next_mon + datetime.timedelta(days=2)
+    # next_thu = next_mon + datetime.timedelta(days=3)
+    # next_fri = next_mon + datetime.timedelta(days=4)
+    # next_sat = next_mon + datetime.timedelta(days=5)
+    # next_sun = next_mon + datetime.timedelta(days=6)
 
     reg_msg = f"""
     Xin chào buổi tối, các thành viên LLC <@&1087761988068855890>,
     {message}
 
-    2️⃣: Thứ 2, {next_mon}
-    3️⃣: Thứ 3, {next_tue} 
-    4️⃣: Thứ 4, {next_wed}
-    5️⃣: Thứ 5, {next_thu}
-    6️⃣: Thứ 6, {next_fri}
-    7️⃣: Thứ 7, {next_sat}
-    8️⃣: Chủ Nhật, {next_sun}
+    2️⃣: Thứ 2, {weekdays[0]}
+    3️⃣: Thứ 3, {weekdays[1]} 
+    4️⃣: Thứ 4, {weekdays[2]}
+    5️⃣: Thứ 5, {weekdays[3]}
+    6️⃣: Thứ 6, {weekdays[4]}
+    7️⃣: Thứ 7, {weekdays[5]}
+    8️⃣: Chủ Nhật, {weekdays[6]}
 
     Sincerely,
     """ 

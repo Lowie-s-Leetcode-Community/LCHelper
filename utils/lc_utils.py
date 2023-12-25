@@ -249,25 +249,34 @@ class LC_utils:
         problem_tmp = json.loads(response.content)
         problem_info = problem_tmp['data']
         problem_json = {
-            'total_problem':{
-                'all': problem_info['allQuestionsCount'][0]['count'],
-                'easy': problem_info['allQuestionsCount'][1]['count'],
-                'medium': problem_info['allQuestionsCount'][2]['count'],
-                'hard': problem_info['allQuestionsCount'][3]['count']
-            },
-            'solved': {
-                'all': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][0]['count'],
-                'easy': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][1]['count'],
-                'medium':problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][2]['count'],
-                'hard': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][3]['count']
-            },
-            'percentage':{
-                'all': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][0]['count']/problem_info['allQuestionsCount'][0]['count']*100, 1),
-                'easy': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][1]['count']/problem_info['allQuestionsCount'][1]['count']*100, 1),
-                'medium': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][2]['count']/problem_info['allQuestionsCount'][2]['count']*100, 1),
-                'hard': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][3]['count']/problem_info['allQuestionsCount'][3]['count']*100, 1),
-            }
+            'total_problem': {},
+            'solved': {},
+            'percentage': {}
+            # 'total_problem':{
+            #     'all': problem_info['allQuestionsCount'][0]['count'],
+            #     'easy': problem_info['allQuestionsCount'][1]['count'],
+            #     'medium': problem_info['allQuestionsCount'][2]['count'],
+            #     'hard': problem_info['allQuestionsCount'][3]['count']
+            # },
+            # 'solved': {
+            #     'all': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][0]['count'],
+            #     'easy': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][1]['count'],
+            #     'medium':problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][2]['count'],
+            #     'hard': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][3]['count']
+            # },
+            # 'percentage':{
+            #     'all': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][0]['count']/problem_info['allQuestionsCount'][0]['count']*100, 1),
+            #     'easy': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][1]['count']/problem_info['allQuestionsCount'][1]['count']*100, 1),
+            #     'medium': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][2]['count']/problem_info['allQuestionsCount'][2]['count']*100, 1),
+            #     'hard': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][3]['count']/problem_info['allQuestionsCount'][3]['count']*100, 1),
+            # }
         }
+        diffs = ['all', 'easy', 'medium', 'hard']
+        for i in range(4):
+            problem_json['total_problem'][diffs[i]] = problem_info['allQuestionsCount'][i]['count']
+            problem_json['solved'][diffs[i]] = problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][i]['count']
+            problem_json['percentage'][diffs[i]] = round(problem_json['solved'][diffs[i]] / problem_json['total_problem'][diffs[i]] * 100, 1),
+            
 
         # Contest info 
         payload = {"query": QUERY_USER_CONTEST_INFO, "variables": {"username": username}}
@@ -298,8 +307,16 @@ class LC_utils:
     
     def get_recent_ac(username: str, limit: int):
         payload = {"query": QUERY_RECENT_AC, "variables": {"username": username, "limit": limit}}
-        response = requests.post(API_URL, json = payload)
-        recent_tmp = json.loads(response.content)
-        recent_list = recent_tmp['data']['recentAcSubmissionList']
+        # response = requests.post(API_URL, json = payload)
+        # recent_tmp = json.loads(response.content)
+        # recent_list = recent_tmp['data']['recentAcSubmissionList']
+        try:
+            response = requests.post(API_URL, json = payload)
+            recent_tmp = json.loads(response.content)
+            recent_list = recent_tmp['data']['recentAcSubmissionList']
+        except requests.exceptions.HTTPError as error:
+            print("Error: " + error[0])
+            print("Trying again")
+            # code to try again ?
         
         return recent_list

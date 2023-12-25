@@ -68,7 +68,7 @@ def get_ranking_embed(interaction, user_list, duration_type: int, rank_type: int
     # Removes members that have already left and sorts
     user_list.sort(key = lambda x: -x['value'][duration_type][rank_type])
 
-    # The embed discription content
+    # The embed disscription content
     response = ""
     for idx in range(embed_limit * (page_number - 1) + 1, min(embed_limit * page_number, len(user_list)) + 1):
         user = user_list[idx - 1]
@@ -232,28 +232,40 @@ class RankingView(discord.ui.View):
         self.add_item(DurationDropdown())
         self.add_item(RankDropdown())
 
+    def toggle_disable_button(ids, state):
+        for id in ids:
+            self.children[id].disabled = state
+            if (state):
+                self.children[id].style = discord.ButtonStyle.gray
+            else:
+                self.children[id].style = discord.ButtonStyle.blurple
+
     def adjust_buttons(self):
         if self.current_page_number == 1:
-            self.children[0].disabled = True
-            self.children[0].style = discord.ButtonStyle.gray
-            self.children[1].disabled = True
-            self.children[1].style = discord.ButtonStyle.gray
+            # self.children[0].disabled = True
+            # self.children[0].style = discord.ButtonStyle.gray
+            # self.children[1].disabled = True
+            # self.children[1].style = discord.ButtonStyle.gray
+            self.toggle_disable_button([0, 1], True)
         else:
-            self.children[0].disabled = False
-            self.children[0].style = discord.ButtonStyle.blurple
-            self.children[1].disabled = False
-            self.children[1].style = discord.ButtonStyle.blurple
+            # self.children[0].disabled = False
+            # self.children[0].style = discord.ButtonStyle.blurple
+            # self.children[1].disabled = False
+            # self.children[1].style = discord.ButtonStyle.blurple
+            self.toggle_disable_button([0, 1], False)
 
         if self.current_page_number == self.page_number_limit:
-            self.children[3].disabled = True
-            self.children[3].style = discord.ButtonStyle.gray
-            self.children[4].disabled = True
-            self.children[4].style = discord.ButtonStyle.gray
+            # self.children[3].disabled = True
+            # self.children[3].style = discord.ButtonStyle.gray
+            # self.children[4].disabled = True
+            # self.children[4].style = discord.ButtonStyle.gray
+            self.toggle_disable_button([3, 4], True)
         else:
-            self.children[3].disabled = False
-            self.children[3].style = discord.ButtonStyle.blurple
-            self.children[4].disabled = False
-            self.children[4].style = discord.ButtonStyle.blurple
+            # self.children[3].disabled = False
+            # self.children[3].style = discord.ButtonStyle.blurple
+            # self.children[4].disabled = False
+            # self.children[4].style = discord.ButtonStyle.blurple
+            self.toggle_disable_button([3, 4], False)
 
         self.children[2].label = self.current_page_number
         

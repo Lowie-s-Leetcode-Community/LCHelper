@@ -37,10 +37,17 @@ class Menu(discord.ui.View):
     def __init__(self, correct: str):
         super().__init__(timeout=None)
         self.correct = correct
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='A', custom_id='A', correct=correct))
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='B', custom_id='B', correct=correct))
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='C', custom_id='C', correct=correct))
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='D', custom_id='D', correct=correct))
+        # self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='A', custom_id='A', correct=correct))
+        # self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='B', custom_id='B', correct=correct))
+        # self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='C', custom_id='C', correct=correct))
+        # self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='D', custom_id='D', correct=correct))
+        for i in range(4):
+            self.add_item(self.AnsButton(
+                style=discord.ButtonStyle.blurple,
+                label='A'+i,
+                custom_id='A'+i,
+                correct=correct
+            ))
 
         # print(self.correct[0])
 
@@ -86,10 +93,12 @@ def make_embed_quiz(quiz):
         color=0xffc01e if quiz['difficulty'] == 'Medium' else 0xef4743
     )
     options = quiz['options']
-    embed.add_field(name="Ans", value=options[0], inline=False)
-    embed.add_field(name="Ans", value=options[1], inline=False)
-    embed.add_field(name="Ans", value=options[2], inline=False)
-    embed.add_field(name="Ans", value=options[3], inline=False)
+    # embed.add_field(name="Ans", value=options[0], inline=False)
+    # embed.add_field(name="Ans", value=options[1], inline=False)
+    # embed.add_field(name="Ans", value=options[2], inline=False)
+    # embed.add_field(name="Ans", value=options[3], inline=False)
+    for i in range(4):
+        embed.add_field(name="Ans", value=options[i], inline=False)
     embed.add_field(name="Category", value=quiz.get('category'), inline=True)
     embed.add_field(name="Difficulty", value=quiz.get('difficulty'), inline=True)
     return embed
