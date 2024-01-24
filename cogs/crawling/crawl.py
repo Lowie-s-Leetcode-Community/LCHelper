@@ -57,7 +57,7 @@ class crawl(commands.Cog):
             try:
                 discord_member = await guild.fetch_member(user['discord_id'])
             except: 
-                print("Member left discord server!")
+                await benchmark_channel.send("Member left discord server!")
                 continue
 
             # Collect recent LeetCode submissions
@@ -65,7 +65,7 @@ class crawl(commands.Cog):
 
             # Most likely account not found/deleted
             if recent_info == None:
-                print("LeetCode account probably not found/deleted/name-changed!")
+                await benchmark_channel.send("LeetCode account probably not found/deleted/name-changed!")
                 continue
 
             # Getting user info
