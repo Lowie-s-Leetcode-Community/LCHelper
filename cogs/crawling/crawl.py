@@ -52,16 +52,20 @@ class crawl(commands.Cog):
             lc_username = user['lc_username']
             recent_solved = []
             user_total_solved = set(user['solved'])
-            recent_info = LC_utils.get_recent_ac(lc_username, 20)
-
-            # Most likely account not found/deleted
-            if recent_info == None:
-                continue
 
             # If member already left
             try:
                 discord_member = await guild.fetch_member(user['discord_id'])
             except: 
+                print("Member left discord server!")
+                continue
+
+            # Collect recent LeetCode submissions
+            recent_info = LC_utils.get_recent_ac(lc_username, 20)
+
+            # Most likely account not found/deleted
+            if recent_info == None:
+                print("LeetCode account probably not found/deleted/name-changed!")
                 continue
 
             # Getting user info
@@ -144,6 +148,9 @@ class crawl(commands.Cog):
                         # Updating daily earnable scores
                         await task.on_problem_completed(task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
 
+                else:
+                    break
+
 
             # Updating solved list and most recent solved in database
             if untracked_new_submission:
@@ -154,12 +161,13 @@ class crawl(commands.Cog):
                 }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
             
+            # Reporting benchmark results
             millisecond_end = int(round(time.time() * 1000))
             processing_time = (millisecond_end - millisecond_start) / 1000.0
             report_message = f"Processing user {lc_username} took {processing_time:.3f} seconds with {len(recent_info)} problems!"
             await benchmark_channel.send(report_message)
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
     @crawling.error
     async def on_error(self, exception):
