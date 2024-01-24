@@ -17,12 +17,13 @@ class crawl(commands.Cog):
     def cog_unload(self):
         self.crawling.cancel()
 
-    @tasks.loop(seconds = 10)
+    @tasks.loop(seconds = 10) # this interval is like 100x shorter than the process of crawling data of everyone now q:
     async def crawling(self):
         # Waiting for internal cache, I suppose
         await self.client.wait_until_ready()
         await asyncio.sleep(5)
 
+        # Fetch LLC user list
         lc_db = self.client.DBClient['LC_db']
         lc_col_user = lc_db['LC_users']
         lc_col_server = lc_db['LC_config']
@@ -33,12 +34,16 @@ class crawl(commands.Cog):
         lc_result = lc_col_server.find_one({})
         guild = await self.client.fetch_guild(server_id)
         channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
+
+        # Getting daily task
+        daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
         
         # Checking every user in DB
         for user in user_list:
             # Getting the most recent submissions
             lc_username = user['lc_username']
             recent_solved = []
+            user_total_solved = set(user['solved'])
             recent_info = LC_utils.get_recent_ac(lc_username, 20)
 
             # Most likely account not found/deleted
@@ -50,6 +55,9 @@ class crawl(commands.Cog):
                 discord_member = await guild.fetch_member(user['discord_id'])
             except: 
                 continue
+
+            # Getting user info
+            lc_user_info = LC_utils.get_user_profile(lc_username)
 
             # For debugging
             """
@@ -67,14 +75,12 @@ class crawl(commands.Cog):
                 if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
                     # New AC submissions found
                     # Checking if daily challenge
-                    daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
                     if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
-
                         # Posting update log in LLC
                         untracked_new_submission = True
-                        lc_user_info = LC_utils.get_user_profile(lc_username)
+                        
                         problem_info = LC_utils.get_problem_info(submission['titleSlug'])
                         desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
 
