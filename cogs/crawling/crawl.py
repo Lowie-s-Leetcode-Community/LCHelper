@@ -7,6 +7,7 @@ from ..features.tasks import task
 import os
 import asyncio
 import traceback
+import time
 
 class crawl(commands.Cog):
     def __init__(self, client):
@@ -35,11 +36,18 @@ class crawl(commands.Cog):
         guild = await self.client.fetch_guild(server_id)
         channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
 
+        # Benchmarking purpose
+        benchmark_channel = await guild.fetch_channel(lc_result['benchmark_channel_id'])
+
         # Getting daily task
         daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
         
         # Checking every user in DB
         for user in user_list:
+            # Collecting millisecond starting time
+            millisecond_start = int(round(time.time() * 1000))
+            await benchmark_channel.send(f"Starting processing time measurement for {user['lc_username']}")
+
             # Getting the most recent submissions
             lc_username = user['lc_username']
             recent_solved = []
@@ -77,7 +85,7 @@ class crawl(commands.Cog):
                     # Checking if daily challenge
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
-                    if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
+                    if (submission['titleSlug'] not in user_total_solved) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
                         # Posting update log in LLC
                         untracked_new_submission = True
                         
@@ -146,6 +154,11 @@ class crawl(commands.Cog):
                 }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
             
+            millisecond_end = int(round(time.time() * 1000))
+            processing_time = (millisecond_end - millisecond_start) / 1000.0
+            report_message = f"Processing user {lc_username} took {processing_time:.3f} seconds with {len(recent_info)} problems!"
+            await benchmark_channel.send(report_message)
+
             await asyncio.sleep(60)
 
     @crawling.error
