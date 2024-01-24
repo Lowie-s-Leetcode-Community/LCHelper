@@ -159,7 +159,7 @@ class crawl(commands.Cog):
             report_message = f"Processing user {lc_username} took {processing_time:.3f} seconds with {len(recent_info)} problems!"
             await benchmark_channel.send(report_message)
 
-            await asyncio.sleep(60)
+            await asyncio.sleep(5)
 
     @crawling.error
     async def on_error(self, exception):
