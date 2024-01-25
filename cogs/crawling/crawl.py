@@ -71,13 +71,13 @@ class crawl(commands.Cog):
             """
             # Tracking the most recent submissions
             untracked_new_submission = False
-            for submission in reversed(recent_info):
+            for submission in recent_info:
                 if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
                     # New AC submissions found
                     # Checking if daily challenge
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
-                    if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
+                    if (submission['titleSlug'] not in user_total_solved) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
                         # Posting update log in LLC
                         untracked_new_submission = True
                         
@@ -136,6 +136,9 @@ class crawl(commands.Cog):
                         # Updating daily earnable scores
                         await task.on_problem_completed(task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
 
+                else:
+                    break
+
 
             # Updating solved list and most recent solved in database
             if untracked_new_submission:
@@ -146,7 +149,7 @@ class crawl(commands.Cog):
                 }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
             
-            await asyncio.sleep(60)
+            await asyncio.sleep(10)
 
     @crawling.error
     async def on_error(self, exception):
