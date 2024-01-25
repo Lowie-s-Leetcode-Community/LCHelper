@@ -137,13 +137,21 @@ class DailyObject :
 		self.userDailyObjects = []
 
 	def get_id (self) :
+		return self.id
+	def get_created_at(self):
 		return self.createdAt
 	def get_updatedAt(self) :
+		return self.updatedAt
+	def get_problemId(self):
 		return self.problemId
 	def get_isToday(self) :
+		return self.isToday
+	def get_generateDate(self):
 		return self.generatedDate 
 	def get_problem (self) :
-		return self.userDailyObjects 
+		return self.problem
+	def get_user_daily_objects(self):
+		return self.userDailyObjects
 
 class UserDailyObject :
 	def __init__(self):
