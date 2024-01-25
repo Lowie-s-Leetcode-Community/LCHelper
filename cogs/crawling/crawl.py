@@ -60,7 +60,7 @@ class crawl(commands.Cog):
                 lc_user_error_embed = discord.Embed(
                     color = 0xeb4034,
                 )
-                lc_user_error_embed.set_author(f"{lc_username} is not in the Discord server!")
+                lc_user_error_embed.set_author(name = f"{lc_username} is not in the Discord server!")
                 await benchmark_channel.send(embed = embed)
                 continue
 
@@ -72,7 +72,7 @@ class crawl(commands.Cog):
                 lc_user_error_embed = discord.Embed(
                     color = 0xeb4034,
                 )
-                lc_user_error_embed.set_author(f"LeetCode user {lc_username} not found!")
+                lc_user_error_embed.set_author(name = f"LeetCode user {lc_username} not found!")
                 await benchmark_channel.send(embed = embed)
                 continue
 
@@ -94,7 +94,7 @@ class crawl(commands.Cog):
             user_progress_embed = discord.Embed(
                 color = 0x72e833,
             )
-            user_progress_embed.set_author(name = f"{lc_username}'s progress report " + str(datetime.datetime.now())[:-7])
+            user_progress_embed.set_author(name = f"{lc_username}'s progress report - " + str(datetime.datetime.now())[:-7])
             user_progress_report = ""
 
             # Tracking the most recent submissions
