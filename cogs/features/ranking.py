@@ -232,7 +232,7 @@ class RankingView(discord.ui.View):
         self.add_item(DurationDropdown())
         self.add_item(RankDropdown())
 
-    def toggle_disable_button(ids, state):
+    def toggle_disable_button(self, ids, state):
         for id in ids:
             self.children[id].disabled = state
             if (state):

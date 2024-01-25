@@ -40,8 +40,8 @@ class Menu(discord.ui.View):
         for i in range(4):
             self.add_item(self.AnsButton(
                 style=discord.ButtonStyle.blurple,
-                label='A'+i,
-                custom_id='A'+i,
+                label=chr(65 + i),
+                custom_id=chr(65 + i),
                 correct=correct
             ))
 
