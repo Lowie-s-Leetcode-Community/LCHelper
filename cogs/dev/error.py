@@ -5,7 +5,6 @@ class error(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if hasattr(ctx.command, 'on_error'):
@@ -16,7 +15,6 @@ class error(commands.Cog):
             return
         else: await ctx.send(f"{Assets.red_tick} **`{error}` ({ctx.command})**")
         print(error)
-    
 
 async def setup(client):
     await client.add_cog(error(client))

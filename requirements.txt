@@ -10,3 +10,4 @@ jishaku
 ffmpeg
 python-dotenv
 pymongo
+Pillow
