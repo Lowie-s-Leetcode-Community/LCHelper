@@ -46,7 +46,6 @@ class crawl(commands.Cog):
         for user in user_list:
             # Collecting millisecond starting time
             millisecond_start = int(round(time.time() * 1000))
-            await benchmark_channel.send(f"Starting processing time measurement for {user['lc_username']}")
 
             # Getting the most recent submissions
             lc_username = user['lc_username']
@@ -57,7 +56,7 @@ class crawl(commands.Cog):
             try:
                 discord_member = await guild.fetch_member(user['discord_id'])
             except: 
-                await benchmark_channel.send("Member left discord server!")
+                await benchmark_channel.send(f"```{lc_username} left the server already!```")
                 continue
 
             # Collect recent LeetCode submissions
@@ -65,7 +64,7 @@ class crawl(commands.Cog):
 
             # Most likely account not found/deleted
             if recent_info == None:
-                await benchmark_channel.send("LeetCode account probably not found/deleted/name-changed!")
+                await benchmark_channel.send(f"```LeetCode user {lc_username} not found!```")
                 continue
 
             # Getting user info
@@ -83,7 +82,11 @@ class crawl(commands.Cog):
             """
 
             # Benchmark report message
-            user_progress_report = f"{lc_username}'s report:"
+            user_progress_embed = discord.Embed(
+                color = 0xf5cb42,
+            )
+            user_progress_embed.set_author(f"{lc_username}'s progress report")
+            user_progress_report = ""
 
             # Tracking the most recent submissions
             untracked_new_submission = False
@@ -91,11 +94,11 @@ class crawl(commands.Cog):
                 if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
                     # New AC submissions found
                     # Checking if daily challenge
+                    untracked_new_submission = True
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
                     if (submission['titleSlug'] not in user_total_solved) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
                         # Posting update log in LLC
-                        untracked_new_submission = True
                         
                         problem_info = LC_utils.get_problem_info(submission['titleSlug'])
                         desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
@@ -151,13 +154,13 @@ class crawl(commands.Cog):
 
                         # Updating daily earnable scores
                         await task.on_problem_completed(task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
-                        user_progress_report += f"{lc_username} submitted a new problem {submission['title']}!\n"
+                        user_progress_report += f"✅ {submission['title']}!\n"
 
                     else:
-                        user_progress_report += f"{lc_username} has already done {submission['title']}!\n"
+                        user_progress_report += f"🟨 {submission['title']}!\n"
 
                 else:
-                    user_progress_report += f"{lc_username}'s submission of {submission['title']} has already been recorded!\n"
+                    user_progress_report += f"🔁 {submission['title']}\n"
                     break
 
 
@@ -169,14 +172,22 @@ class crawl(commands.Cog):
                     'solved': solved_list
                 }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
-            
-            await benchmark_channel.send(user_progress_report)
 
             # Reporting benchmark results
+            if not user_progress_report:
+                user_progress_report += "User has no submissions!" 
+
+            user_progress_embed.add_field(
+                value = user_progress_report,
+                inline = False
+            )
+
             millisecond_end = int(round(time.time() * 1000))
             processing_time = (millisecond_end - millisecond_start) / 1000.0
-            report_message = f"Processing user {lc_username} took {processing_time:.3f} seconds with {len(recent_info)} problems!"
-            await benchmark_channel.send(report_message)
+            report_message = f"Took {processing_time:.3f} seconds with {len(recent_info)} problems!"
+
+            user_progress_embed.set_footer(report_message)
+            await benchmark_channel.send(embed = user_progress_embed)
 
             await asyncio.sleep(2)
 
