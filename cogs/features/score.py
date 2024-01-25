@@ -84,6 +84,7 @@ class score(commands.Cog):
                 color=0x03cffc,
                 timestamp=interaction.created_at
             )
+            await logging.on_score_add(logging(self.client), member=member, score=bonus, reason='Gacha!')
         elif lc_daily_finished and lc_gacha is True:
             embed = discord.Embed(
                 description=f"You already got your bonus point today!",
@@ -105,9 +106,7 @@ class score(commands.Cog):
             icon_url=avatar_url
         )
         await interaction.followup.send(embed=embed)
-        if lc_daily_finished:
-            await logging.on_score_add(logging(self.client), member=member, score=bonus, reason='Gacha!')
-    
+ 
 
 async def setup(client):
     await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])
