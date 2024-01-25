@@ -37,12 +37,13 @@ class Menu(discord.ui.View):
     def __init__(self, correct: str):
         super().__init__(timeout=None)
         self.correct = correct
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='A', custom_id='A', correct=correct))
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='B', custom_id='B', correct=correct))
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='C', custom_id='C', correct=correct))
-        self.add_item(self.AnsButton(style=discord.ButtonStyle.blurple, label='D', custom_id='D', correct=correct))
-
-        # print(self.correct[0])
+        for i in range(4):
+            self.add_item(self.AnsButton(
+                style=discord.ButtonStyle.blurple,
+                label=chr(65 + i),
+                custom_id=chr(65 + i),
+                correct=correct
+            ))
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.custom_id == self.correct[0]:
@@ -50,26 +51,10 @@ class Menu(discord.ui.View):
         else:
             await interaction.response.send_message('Wrong', ephemeral=True)
 
-    # async def interaction_check(self, interaction: discord.Interaction):
-    #     if interaction.user != self.view.message.author:
-    #         await interaction.response.send_message("You cannot interact with this trivia.", ephemeral=True)
-    #         return False
-    #     return True
-
     class AnsButton(discord.ui.Button):
         def __init__(self, style: discord.ButtonStyle, label: str, custom_id: str, correct: str):
             super().__init__(style=style, label=label, custom_id=custom_id)
             self.correct = correct
-
-        # async def process_answer(self, button: discord.ui.Button, interaction: discord.Interaction):
-        #     print(123)
-        #     await interaction.response.defer(thinking=True)
-        #     if button.custom_id == self.correct:
-        #         content = "Correct!"
-        #     else:
-        #         content = "Wrong!"
-        #     await interaction.followup.send(content)
-
 
 def get_question(difficulty: str, db):
     lc_quizzes = db['LC_db']['LC_quiz'].find({'difficulty': difficulty})
@@ -86,10 +71,8 @@ def make_embed_quiz(quiz):
         color=0xffc01e if quiz['difficulty'] == 'Medium' else 0xef4743
     )
     options = quiz['options']
-    embed.add_field(name="Ans", value=options[0], inline=False)
-    embed.add_field(name="Ans", value=options[1], inline=False)
-    embed.add_field(name="Ans", value=options[2], inline=False)
-    embed.add_field(name="Ans", value=options[3], inline=False)
+    for i in range(4):
+        embed.add_field(name="Ans", value=options[i], inline=False)
     embed.add_field(name="Category", value=quiz.get('category'), inline=True)
     embed.add_field(name="Difficulty", value=quiz.get('difficulty'), inline=True)
     return embed
