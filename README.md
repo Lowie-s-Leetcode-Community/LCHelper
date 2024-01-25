@@ -8,7 +8,7 @@ PRs and issues are appreciated, and I will try to look into them often.
 
 ## Features
 
-The features of the bot are separated into a number of cogs, which are also sorted in their respective folders. 
+The features of the bot are separated into a number of cogs, which are also sorted in their respective folders.
 
 - **Onboarding**: Guides new users into LLC.
 - **Features**: Provides LeetCode-related commands for LLC members.
@@ -105,3 +105,5 @@ python bot.py
 [MIT](https://choosealicense.com/licenses/mit/)
 
 Made with 🧡 by Orange.
+
+## Note Jan 25: have to add instruction to install psycopg2. :)
