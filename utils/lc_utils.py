@@ -252,24 +252,6 @@ class LC_utils:
             'total_problem': {},
             'solved': {},
             'percentage': {}
-            # 'total_problem':{
-            #     'all': problem_info['allQuestionsCount'][0]['count'],
-            #     'easy': problem_info['allQuestionsCount'][1]['count'],
-            #     'medium': problem_info['allQuestionsCount'][2]['count'],
-            #     'hard': problem_info['allQuestionsCount'][3]['count']
-            # },
-            # 'solved': {
-            #     'all': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][0]['count'],
-            #     'easy': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][1]['count'],
-            #     'medium':problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][2]['count'],
-            #     'hard': problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][3]['count']
-            # },
-            # 'percentage':{
-            #     'all': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][0]['count']/problem_info['allQuestionsCount'][0]['count']*100, 1),
-            #     'easy': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][1]['count']/problem_info['allQuestionsCount'][1]['count']*100, 1),
-            #     'medium': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][2]['count']/problem_info['allQuestionsCount'][2]['count']*100, 1),
-            #     'hard': round(problem_info['matchedUser']['submitStatsGlobal']['acSubmissionNum'][3]['count']/problem_info['allQuestionsCount'][3]['count']*100, 1),
-            # }
         }
         diffs = ['all', 'easy', 'medium', 'hard']
         for i in range(4):
@@ -307,9 +289,6 @@ class LC_utils:
     
     def get_recent_ac(username: str, limit: int):
         payload = {"query": QUERY_RECENT_AC, "variables": {"username": username, "limit": limit}}
-        # response = requests.post(API_URL, json = payload)
-        # recent_tmp = json.loads(response.content)
-        # recent_list = recent_tmp['data']['recentAcSubmissionList']
         try:
             response = requests.post(API_URL, json = payload)
             recent_tmp = json.loads(response.content)
