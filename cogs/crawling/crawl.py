@@ -81,6 +81,10 @@ class crawl(commands.Cog):
                     'timestamp': '4680366541'
                 }]
             """
+
+            # Benchmark report message
+            user_progress_report = ""
+
             # Tracking the most recent submissions
             untracked_new_submission = False
             for submission in reversed(recent_info):
@@ -147,8 +151,13 @@ class crawl(commands.Cog):
 
                         # Updating daily earnable scores
                         await task.on_problem_completed(task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
+                        user_progress_report += f"{lc_username} submitted a new problem {submission['title']}!\n"
+
+                    else:
+                        user_progress_report += f"{lc_username} has already done {submission['title']}!\n"
 
                 else:
+                    user_progress_report += f"{lc_username}'s submission of {submission['title']} has already been recorded!\n"
                     break
 
 
@@ -161,13 +170,15 @@ class crawl(commands.Cog):
                 }}
                 lc_col_user.update_one({'lc_username': lc_username}, lc_update)
             
+            await benchmark_channel.send(user_progress_report)
+
             # Reporting benchmark results
             millisecond_end = int(round(time.time() * 1000))
             processing_time = (millisecond_end - millisecond_start) / 1000.0
             report_message = f"Processing user {lc_username} took {processing_time:.3f} seconds with {len(recent_info)} problems!"
             await benchmark_channel.send(report_message)
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
     @crawling.error
     async def on_error(self, exception):
