@@ -1,8 +1,11 @@
 import discord
 from discord import app_commands
 from discord.ext import tasks, commands
+
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
+from database.get_databases import DatabaseGet
+
 from ..features.tasks import task
 import os
 import asyncio
@@ -23,21 +26,25 @@ class crawl(commands.Cog):
         await self.client.wait_until_ready()
         await asyncio.sleep(5)
 
-        lc_db = self.client.DBClient['LC_db']
-        lc_col_user = lc_db['LC_users']
-        lc_col_server = lc_db['LC_config']
-        user_list = list(lc_col_user.find())
+        # old code
+        # lc_db = self.client.DBClient['LC_db']
+        # lc_col_user = lc_db['LC_users']
+        # lc_col_server = lc_db['LC_config']
+        # user_list = list(lc_col_user.find())
+        user_list = DatabaseGet.get_user_list()
+        lc_col_server = DatabaseGet.get_system_configuration()
             
         # Getting channel log
         server_id = 1085444549125611530
-        lc_result = lc_col_server.find_one({})
+        lc_result = lc_col_server.find_one({}) # need help
         guild = await self.client.fetch_guild(server_id)
         channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
         
         # Checking every user in DB
         for user in user_list:
             # Getting the most recent submissions
-            lc_username = user['lc_username']
+            # lc_username = user['lc_username']
+            lc_username = user.get_lc_username()
             recent_solved = []
             recent_info = LC_utils.get_recent_ac(lc_username, 20)
 
@@ -47,7 +54,8 @@ class crawl(commands.Cog):
 
             # If member already left
             try:
-                discord_member = await guild.fetch_member(user['discord_id'])
+                # discord_member = await guild.fetch_member(user['discord_id'])
+                discord_member = await guild.fetch_member(user.get_discord_id())
             except: 
                 continue
 
@@ -64,11 +72,14 @@ class crawl(commands.Cog):
             # Tracking the most recent submissions
             untracked_new_submission = False
             for submission in reversed(recent_info):
-                if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
+                # if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
+                user_solved_problems = DatabaseGet.get_user_solved_problems()
+                if int(submission['timestamp']) > int(user_solved_problems[0].get_wtf): # need help
                     # New AC submissions found
                     # Checking if daily challenge
-                    daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
-                    is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
+                    # daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
+                    daily_info = DatabaseGet.get_daily().get_problem()
+                    is_daily_challenge = True if daily_info.get_titleSlug() == submission['titleSlug'] else False
 
                     if (submission['titleSlug'] not in user['solved']) or (is_daily_challenge and not user['daily_task']['finished_today_daily']):
 
@@ -116,7 +127,10 @@ class crawl(commands.Cog):
                         )
                                             
                         embed.set_author(
-                            name = f"{lc_username}: {lc_user_info['problem']['solved']['all']}/{lc_user_info['problem']['total_problem']['all']} ({lc_user_info['problem']['percentage']['all']}%)",
+                            # name = f"{lc_username}: {lc_user_info['problem']['solved']['all']}/{lc_user_info['problem']['total_problem']['all']} ({lc_user_info['problem']['percentage']['all']}%)",
+                            # icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
+                            # url = lc_user_info['profile']['link']
+                            name = f"{lc_username}: {lc_user_info.get_problem()}/{lc_user_info['problem']['total_problem']['all']} ({lc_user_info['problem']['percentage']['all']}%)",
                             icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
                             url = lc_user_info['profile']['link']
                         )
