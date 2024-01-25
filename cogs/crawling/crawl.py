@@ -8,6 +8,7 @@ import os
 import asyncio
 import traceback
 import time
+import datetime
 
 class crawl(commands.Cog):
     def __init__(self, client):
@@ -56,7 +57,11 @@ class crawl(commands.Cog):
             try:
                 discord_member = await guild.fetch_member(user['discord_id'])
             except: 
-                await benchmark_channel.send(f"```{lc_username} left the server already!```")
+                lc_user_error_embed = discord.Embed(
+                    color = 0xeb4034,
+                )
+                lc_user_error_embed.set_author(f"{lc_username} is not in the Discord server!")
+                await benchmark_channel.send(embed = embed)
                 continue
 
             # Collect recent LeetCode submissions
@@ -64,7 +69,11 @@ class crawl(commands.Cog):
 
             # Most likely account not found/deleted
             if recent_info == None:
-                await benchmark_channel.send(f"```LeetCode user {lc_username} not found!```")
+                lc_user_error_embed = discord.Embed(
+                    color = 0xeb4034,
+                )
+                lc_user_error_embed.set_author(f"LeetCode user {lc_username} not found!")
+                await benchmark_channel.send(embed = embed)
                 continue
 
             # Getting user info
@@ -83,9 +92,9 @@ class crawl(commands.Cog):
 
             # Benchmark report message
             user_progress_embed = discord.Embed(
-                color = 0xf5cb42,
+                color = 0x72e833,
             )
-            user_progress_embed.set_author(name = f"{lc_username}'s progress report")
+            user_progress_embed.set_author(name = f"{lc_username}'s progress report " + str(datetime.datetime.now())[:-7])
             user_progress_report = ""
 
             # Tracking the most recent submissions
@@ -94,6 +103,7 @@ class crawl(commands.Cog):
                 if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
                     # New AC submissions found
                     # Checking if daily challenge
+
                     untracked_new_submission = True
                     is_daily_challenge = True if daily_info['title_slug'] == submission['titleSlug'] else False
 
@@ -176,6 +186,7 @@ class crawl(commands.Cog):
             # Reporting benchmark results
             if not user_progress_report:
                 user_progress_report += "User has no submissions!" 
+                user_progress_embed.color = 0xf5cb42
 
             user_progress_embed.add_field(
                 name = "Report Content",
