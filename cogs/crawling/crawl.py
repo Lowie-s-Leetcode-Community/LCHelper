@@ -83,11 +83,11 @@ class crawl(commands.Cog):
             """
 
             # Benchmark report message
-            user_progress_report = ""
+            user_progress_report = f"{lc_username}'s report:"
 
             # Tracking the most recent submissions
             untracked_new_submission = False
-            for submission in reversed(recent_info):
+            for submission in recent_info:
                 if int(submission['timestamp']) > int(user['recent_ac']['timestamp']):
                     # New AC submissions found
                     # Checking if daily challenge
