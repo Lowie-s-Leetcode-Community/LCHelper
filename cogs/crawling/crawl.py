@@ -61,7 +61,7 @@ class crawl(commands.Cog):
                     color = 0xeb4034,
                 )
                 lc_user_error_embed.set_author(name = f"{lc_username} is not in the Discord server!")
-                await benchmark_channel.send(embed = embed)
+                await benchmark_channel.send(embed = lc_user_error_embed)
                 continue
 
             # Collect recent LeetCode submissions
@@ -73,7 +73,7 @@ class crawl(commands.Cog):
                     color = 0xeb4034,
                 )
                 lc_user_error_embed.set_author(name = f"LeetCode user {lc_username} not found!")
-                await benchmark_channel.send(embed = embed)
+                await benchmark_channel.send(embed = lc_user_error_embed)
                 continue
 
             # Getting user info
