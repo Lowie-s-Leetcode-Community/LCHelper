@@ -85,7 +85,7 @@ class crawl(commands.Cog):
             user_progress_embed = discord.Embed(
                 color = 0xf5cb42,
             )
-            user_progress_embed.set_author(f"{lc_username}'s progress report")
+            user_progress_embed.set_author(name = f"{lc_username}'s progress report")
             user_progress_report = ""
 
             # Tracking the most recent submissions
