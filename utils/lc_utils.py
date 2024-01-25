@@ -181,7 +181,13 @@ class LC_utils:
     def get_problem_info(title_slug: str):
         payload = {"query": QUERY_QUESTION_INFO, "variables": {"titleSlug": title_slug}}
         response = requests.post(API_URL, json = payload)
-        tmp = json.loads(response.content)
+
+        # New error catching mechanism
+        try:
+            tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_PROBLEM_INFO_RESPONSE\n" + str(response.content)
+
         info = tmp['data']['question']
 
         tmp = json.loads(tmp['data']['question']['stats']) # This is a string for whatever reason
@@ -206,7 +212,13 @@ class LC_utils:
     def get_daily_challenge_info():
         payload = {"query": QUERY_DAILY_CHALLENGE}
         response = requests.post(API_URL, json = payload)
-        tmp = json.loads(response.content)
+
+        try:
+            tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_DAILY_INFO_RESPONSE\n" + str(response.content)
+
+        # tmp = json.loads(response.content)
         info = tmp['data']['activeDailyCodingChallengeQuestion']
         return {
             'date': info['date'],
@@ -220,7 +232,13 @@ class LC_utils:
         # Public user profile
         payload = {"query": QUERY_USER_PROFILE, "variables": {"username": username}}
         response = requests.post(API_URL, json = payload)
-        profile_tmp = json.loads(response.content)
+
+        try:
+            profile_tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_USER_PROFILE_RESPONSE\n" + str(response.content)
+
+        # profile_tmp = json.loads(response.content)
         if not profile_tmp['data']['matchedUser']:
             return None
         profile_info = profile_tmp['data']['matchedUser']['profile']
@@ -236,7 +254,13 @@ class LC_utils:
         # Calendar info 
         payload = {"query": QUERY_USER_CALENDAR_INFO, "variables": {"username": username}}
         response = requests.post(API_URL, json = payload)
-        calendar_tmp = json.loads(response.content)
+
+        try:
+            calendar_tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_CALENDAR_RESPONSE\n" + str(response.content)
+
+        # calendar_tmp = json.loads(response.content)
         calendar_info = calendar_tmp['data']['matchedUser']['userCalendar']
         calendar_json = {
             'total_active_days': calendar_info['totalActiveDays'],
@@ -246,7 +270,13 @@ class LC_utils:
         # Problem solved info
         payload = {"query": QUERY_USER_PROBLEM_INFO, "variables": {"username": username}}
         response = requests.post(API_URL, json = payload)
-        problem_tmp = json.loads(response.content)
+
+        try:
+            problem_tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_PROFILE_PROBLEM_RESPONSE\n" + str(response.content)
+
+        # problem_tmp = json.loads(response.content)
         problem_info = problem_tmp['data']
         problem_json = {
             'total_problem':{
@@ -272,7 +302,13 @@ class LC_utils:
         # Contest info 
         payload = {"query": QUERY_USER_CONTEST_INFO, "variables": {"username": username}}
         response = requests.post(API_URL, json = payload)
-        contest_tmp = json.loads(response.content)
+
+        try:
+            contest_tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_CONTEST_RESPONSE\n" + str(response.content)
+
+        # contest_tmp = json.loads(response.content)
         contest_info = contest_tmp['data']['userContestRanking']
         if contest_info:
             contest_json = {
@@ -299,7 +335,10 @@ class LC_utils:
     def get_recent_ac(username: str, limit: int):
         payload = {"query": QUERY_RECENT_AC, "variables": {"username": username, "limit": limit}}
         response = requests.post(API_URL, json = payload)
-        recent_tmp = json.loads(response.content)
+        try:
+            recent_tmp = json.loads(response.content)
+        except:
+            raise "LCH_BAD_RECENT_AC_RESPONSE\n" + str(response.content)
+
         recent_list = recent_tmp['data']['recentAcSubmissionList']
-        
         return recent_list
