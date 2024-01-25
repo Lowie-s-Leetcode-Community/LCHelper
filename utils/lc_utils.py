@@ -186,7 +186,7 @@ class LC_utils:
         try:
             tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_PROBLEM_INFO_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_PROBLEM_INFO_RESPONSE\n\n" + str(response.content))
 
         info = tmp['data']['question']
 
@@ -216,7 +216,7 @@ class LC_utils:
         try:
             tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_DAILY_INFO_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_DAILY_INFO_RESPONSE\n\n" + str(response.content))
 
         # tmp = json.loads(response.content)
         info = tmp['data']['activeDailyCodingChallengeQuestion']
@@ -236,7 +236,7 @@ class LC_utils:
         try:
             profile_tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_USER_PROFILE_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_USER_PROFILE_RESPONSE\n\n" + str(response.content))
 
         # profile_tmp = json.loads(response.content)
         if not profile_tmp['data']['matchedUser']:
@@ -258,7 +258,7 @@ class LC_utils:
         try:
             calendar_tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_CALENDAR_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_CALENDAR_RESPONSE\n\n" + str(response.content))
 
         # calendar_tmp = json.loads(response.content)
         calendar_info = calendar_tmp['data']['matchedUser']['userCalendar']
@@ -274,7 +274,7 @@ class LC_utils:
         try:
             problem_tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_PROFILE_PROBLEM_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_PROFILE_PROBLEM_RESPONSE\n\n" + str(response.content))
 
         # problem_tmp = json.loads(response.content)
         problem_info = problem_tmp['data']
@@ -306,7 +306,7 @@ class LC_utils:
         try:
             contest_tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_CONTEST_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_CONTEST_RESPONSE\n\n" + str(response.content))
 
         # contest_tmp = json.loads(response.content)
         contest_info = contest_tmp['data']['userContestRanking']
@@ -338,7 +338,7 @@ class LC_utils:
         try:
             recent_tmp = json.loads(response.content)
         except:
-            raise "LCH_BAD_RECENT_AC_RESPONSE\n" + str(response.content)
+            raise Exception("LCH_BAD_RECENT_AC_RESPONSE\n\n" + str(response.content))
 
         recent_list = recent_tmp['data']['recentAcSubmissionList']
         return recent_list
