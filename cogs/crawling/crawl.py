@@ -178,6 +178,7 @@ class crawl(commands.Cog):
                 user_progress_report += "User has no submissions!" 
 
             user_progress_embed.add_field(
+                name = "Report Content",
                 value = user_progress_report,
                 inline = False
             )
@@ -186,7 +187,7 @@ class crawl(commands.Cog):
             processing_time = (millisecond_end - millisecond_start) / 1000.0
             report_message = f"Took {processing_time:.3f} seconds with {len(recent_info)} problems!"
 
-            user_progress_embed.set_footer(report_message)
+            user_progress_embed.set_footer(name = report_message)
             await benchmark_channel.send(embed = user_progress_embed)
 
             await asyncio.sleep(2)
