@@ -38,7 +38,7 @@ class daily(commands.Cog):
         daily_challenge_info = LC_utils.get_daily_challenge_info()
         if type(daily_challenge_info) == str:
             with open("temp_problem.log", mode="w+") as log:
-                log.writelines(str)
+                log.writelines(daily_challenge_info)
 
             await bot_error_channel.send("🆘 error during daily problem check routine!")
             await bot_error_channel.send(file = discord.File("temp_problem.log"))

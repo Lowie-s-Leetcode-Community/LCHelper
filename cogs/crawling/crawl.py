@@ -82,7 +82,7 @@ class crawl(commands.Cog):
 
             if type(lc_user_info) == str:
                 with open("temp_problem.log", mode="w+") as log:
-                    log.writelines(str)
+                    log.writelines(lc_user_info)
 
                 await bot_error_channel.send(f"🆘 error during {lc_username}'s crawling routine (getting user info)!")
                 await bot_error_channel.send(file = discord.File("temp_problem.log"))
@@ -122,7 +122,7 @@ class crawl(commands.Cog):
                         problem_info = LC_utils.get_problem_info(submission['titleSlug'])
                         if type(problem_info) == str:
                             with open("temp_problem.log", mode="w+") as log:
-                                log.writelines(str)
+                                log.writelines(problem_info)
 
                             await bot_error_channel.send(f"🆘 error during {lc_username}'s crawling routine (getting problem)!")
                             await bot_error_channel.send(file = discord.File("temp_problem.log"))
