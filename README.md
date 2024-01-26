@@ -1,3 +1,5 @@
+## This `benchmark` branch is VDotMint's beta testing feature. While the main bot will run off of this for a long time, it is not expected to merge with `main`.
+
 # LCHelper
 Repo for LCHelper bot - A Discord bot built for Lowie's LeetCode Community (LLC) and all other stuff.
 
