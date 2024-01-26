@@ -81,7 +81,11 @@ class crawl(commands.Cog):
             lc_user_info = LC_utils.get_user_profile(lc_username)
 
             if type(lc_user_info) == str:
-                await bot_error_channel.send("```" + lc_user_info + "```")
+                with open("temp_problem.log", mode="w+") as log:
+                    log.writelines(str)
+
+                await bot_error_channel.send(f"🆘 error during {lc_username}'s crawling routine (getting user info)!")
+                await bot_error_channel.send(file = discord.File("temp_problem.log"))
                 continue
 
             # For debugging
@@ -117,7 +121,11 @@ class crawl(commands.Cog):
                         
                         problem_info = LC_utils.get_problem_info(submission['titleSlug'])
                         if type(problem_info) == str:
-                            await bot_error_channel.send("```" + problem_info + "```")
+                            with open("temp_problem.log", mode="w+") as log:
+                                log.writelines(str)
+
+                            await bot_error_channel.send(f"🆘 error during {lc_username}'s crawling routine (getting problem)!")
+                            await bot_error_channel.send(file = discord.File("temp_problem.log"))
                             continue
 
                         desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"

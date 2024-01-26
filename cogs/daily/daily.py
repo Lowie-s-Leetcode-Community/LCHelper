@@ -37,7 +37,11 @@ class daily(commands.Cog):
         # Fetching daily problem.
         daily_challenge_info = LC_utils.get_daily_challenge_info()
         if type(daily_challenge_info) == str:
-            await bot_error_channel.send("```" + daily_challenge_info + "```")
+            with open("temp_problem.log", mode="w+") as log:
+                log.writelines(str)
+
+            await bot_error_channel.send("🆘 error during daily problem check routine!")
+            await bot_error_channel.send(file = discord.File("temp_problem.log"))
             return
 
         lc_col_daily = self.client.DBClient['LC_db']['LC_daily']
