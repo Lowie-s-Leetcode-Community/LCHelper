@@ -36,6 +36,7 @@ class crawl(commands.Cog):
         lc_result = lc_col_server.find_one({})
         guild = await self.client.fetch_guild(server_id)
         channel = await guild.fetch_channel(lc_result['tracking_channel_id'])
+        bot_error_channel = await guild.fetch_channel(1091763595777409025)
 
         # Benchmarking purpose
         benchmark_channel = await guild.fetch_channel(lc_result['benchmark_channel_id'])
@@ -79,6 +80,10 @@ class crawl(commands.Cog):
             # Getting user info
             lc_user_info = LC_utils.get_user_profile(lc_username)
 
+            if type(lc_user_info) == str:
+                await bot_error_channel.send("```" + lc_user_info + "```")
+                continue
+
             # For debugging
             """
             if lc_username == "leanhduy0206":
@@ -111,6 +116,10 @@ class crawl(commands.Cog):
                         # Posting update log in LLC
                         
                         problem_info = LC_utils.get_problem_info(submission['titleSlug'])
+                        if type(problem_info) == str:
+                            await bot_error_channel.send("```" + problem_info + "```")
+                            continue
+
                         desc_str = f"▸ **Submitted:** <t:{submission['timestamp']}:R>"
 
                         if is_daily_challenge: desc_str = "▸ 🗓️ **Daily challenge**\n" + desc_str

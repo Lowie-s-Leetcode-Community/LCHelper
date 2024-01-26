@@ -30,8 +30,16 @@ class daily(commands.Cog):
         await self.client.wait_until_ready()
         await asyncio.sleep(5)
 
+        # Channel setup
+        guild = await self.client.fetch_guild(1085444549125611530)
+        bot_error_channel = await guild.fetch_channel(1091763595777409025)
+
         # Fetching daily problem.
         daily_challenge_info = LC_utils.get_daily_challenge_info()
+        if type(daily_challenge_info) == str:
+            await bot_error_channel.send("```" + daily_challenge_info + "```")
+            return
+
         lc_col_daily = self.client.DBClient['LC_db']['LC_daily']
         lc_current_daily_info = lc_col_daily.find_one({'_id': 1})
         if lc_current_daily_info['daily_challenge']['title'] == daily_challenge_info['title']: 
@@ -45,7 +53,6 @@ class daily(commands.Cog):
         lc_col_daily.update_one({'_id': 1}, lc_update)
 
         # Sending a message to the Discord channel log
-        guild = await self.client.fetch_guild(1085444549125611530)
         lc_col = self.client.DBClient['LC_db']['LC_config']
         lc_result = lc_col.find_one({})
         log_channel = await guild.fetch_channel(lc_result['event_channel_id'])
