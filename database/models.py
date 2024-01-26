@@ -160,19 +160,3 @@ class DiscordQuizAnswer(Base):
     discordQuiz: Mapped[DiscordQuiz] = relationship(back_populates="discordQuizAnswer")
 
 # missing: SystemConfiguration
-
-########################### Testing-zone ##########################
-
-from sqlalchemy import create_engine
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
-dbschema='lc_db'
-
-engine = create_engine(
-  "postgresql://postgres:12345678@localhost:5432/lc_db", 
-  connect_args={'options': '-csearch_path={}'.format(dbschema)}, echo=True)
-session = Session(engine)
-stmt = select(User).where(User.leetcodeUsername.in_(["kaylous", "lowie_", "VDotMint"]))
-for user in session.scalars(stmt):
-  print(user)

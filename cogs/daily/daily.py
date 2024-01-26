@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
+import database.api as api
 import os
 import asyncio
 import traceback
@@ -107,48 +108,37 @@ class daily(commands.Cog):
     async def _daily(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         
-        # Getting the daily challenge
-
-        # daily_info = LC_utils.get_daily_challenge_info()
-        daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
-        info = LC_utils.get_problem_info(daily_info['title_slug'])
+        # daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
+        # info = LC_utils.get_problem_info(daily_info['title_slug'])
+        info = api.getLatestDaily()
+        url = f"https://leetcode.com/problems/{info['problem']['titleSlug']}"
+        difficulty = info['problem']['difficulty']
+        color = Assets.easy if difficulty == 'Easy' else Assets.medium if difficulty == 'Medium' else Assets.hard
 
         embed = discord.Embed(
-            title = f"**{info['title']}**",
-            url = f"{info['link']}",
-            color = Assets.easy if info['difficulty'] == 'Easy' else Assets.medium if info['difficulty'] == 'Medium' else Assets.hard
+            title = f"**{info['problem']['id']}. {info['problem']['title']}**",
+            url = f"{url}",
+            color = color
         )
         embed.add_field(
             name = "Difficulty",
-            value = info['difficulty'],
+            value = difficulty,
             inline = True
         )
         embed.add_field(
-            name = "AC Count", 
-            value = f"{info['total_AC']}/{info['total_submissions']}",
-            inline = True,
-        )
-        embed.add_field(
             name = "AC Rate",
-            value = str(info['ac_rate'])[0:5] + "%",
+            value = "100%",
             inline = True,
-        )
-        tag_list = ""
-        for name, link in info['topics'].items():
-            tag_list += f"[``{name}``]({link}), "
-        
-        tag_list = tag_list[:-2]
-        tag_list = "||" + tag_list + "||"
-        embed.add_field(
-            name = "Topics",
-            value = tag_list,
-            inline = False
-        )
-        embed.set_footer(
-            text = f"{info['likes']} 👍 • {info['dislikes']} 👎"
         )
 
-        await interaction.followup.send(f"Daily Challenge - {daily_info['date']}", embed = embed)
+        topics = "||" + ",".join(info['problem']['topics']) + "||"
+        embed.add_field(
+            name = "Topics",
+            value = topics,
+            inline = False
+        )
+        display_date = info['generatedDate'].strftime("%b %d, %Y")
+        await interaction.followup.send(f"Daily Challenge - {display_date}", embed = embed)
 
     ### Dev stuff
     @daily.error
