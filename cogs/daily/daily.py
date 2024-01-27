@@ -3,11 +3,14 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-import database.api as api
 import os
 import asyncio
 import traceback
 import datetime
+
+# really need better ways to place this arg :)
+from database_api_layer.api import DatabaseAPILayer
+db_api = DatabaseAPILayer()
 
 # Check if it's the first monday of the month
 def is_monthly_reset_time():
@@ -108,9 +111,7 @@ class daily(commands.Cog):
     async def _daily(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         
-        # daily_info = self.client.DBClient['LC_db']['LC_daily'].find_one()['daily_challenge']
-        # info = LC_utils.get_problem_info(daily_info['title_slug'])
-        info = api.getLatestDaily()
+        info = db_api.getLatestDaily()
         url = f"https://leetcode.com/problems/{info['problem']['titleSlug']}"
         difficulty = info['problem']['difficulty']
         color = Assets.easy if difficulty == 'Easy' else Assets.medium if difficulty == 'Medium' else Assets.hard

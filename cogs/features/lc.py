@@ -4,96 +4,66 @@ from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from typing import Optional
-      
+
+# really need better ways to place this arg :)
+from database_api_layer.api import DatabaseAPILayer
+db_api = DatabaseAPILayer()
+
 class lc(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    # will add feature to get from username next!
     @app_commands.command(name = 'profile', description = "Returns a Leetcode profile")
-    @app_commands.describe(username = "Specify a username. Left empty if you want to check yours")
     @app_commands.describe(member = "Specify a member. Left empty if you want to check yours")
-    async def _profile(self, interaction: discord.Interaction, username: Optional[str] = None, member: Optional[discord.Member] = None):
+    async def _profile(self, interaction: discord.Interaction, member: Optional[discord.Member] = None):
         await interaction.response.defer(thinking = True)
 
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        lc_result = None
-        if username == None and member == None:
-            lc_query = {'discord_id': interaction.user.id}
-            lc_result = lc_col.find_one(lc_query)
-            if not lc_result:
-                await interaction.followup.send(f"{Assets.red_tick} **Please specify an username, a member, or link your account with `/link`**")
-                return
-            else: username = lc_result['lc_username']
-        elif username and member:
-            await interaction.followup.send(f"{Assets.red_tick} **Choose either not both :woozy_face:**")
-            return
-        elif member:
-            lc_query = {'discord_id': member.id}
-            lc_result = lc_col.find_one(lc_query)
-            if not lc_result:
-                await interaction.followup.send(f"{Assets.red_tick} **This member hasn't linked an account yet**")
-                return
-            else: username = lc_result['lc_username']
+        result = None
+        if member == None:
+            discord_id = str(interaction.user.id)
+            result = db_api.getProfile(member = str(discord_id))
+            # What if result is not available?
         else:
-            lc_query = {'lc_username': username}
-            lc_result = lc_col.find_one(lc_query)
+            result = db_api.getProfile(member = str(member.id))
+            # This also?
         
-        info = LC_utils.get_user_profile(username)
+        # Will wait for leetcode layer to add more info
+        # missing: streak, server rank
         embed = discord.Embed(
             description = f"""
-            ▸ **Name:** {info['profile']['name'] if info['profile']['name'] != "" else "N/A"}
-            ▸ **Location:** {info['profile']['country']}
-            ▸ **Total active days:** {info['calendar']['total_active_days']}
-            ▸ **Max active days streak:** {info['calendar']['streak']}
+            Type `/help profile` to further understand how this feature works!
             """,
             color = 0xffffff
         )
         embed.add_field(
-            name = "📝 Problems",
+            name = "🏡 Server Profile",
             value = f"""
-            ▸ **Rank:** #{info['profile']['rank'] if info['profile']['rank'] != "" else "N/A"}
-            ▸ **Solved:** {info['problem']['solved']['all']}/{info['problem']['total_problem']['all']} ({info['problem']['percentage']['all']}%)
-            {Assets.blank} ▸ **Easy:** {info['problem']['solved']['easy']}/{info['problem']['total_problem']['easy']} ({info['problem']['percentage']['easy']}%)
-            {Assets.blank} ▸ **Medium:** {info['problem']['solved']['medium']}/{info['problem']['total_problem']['medium']} ({info['problem']['percentage']['medium']}%)
-            {Assets.blank} ▸ **Hard:** {info['problem']['solved']['hard']}/{info['problem']['total_problem']['hard']} ({info['problem']['percentage']['hard']}%)
-            """,
-            inline = True
-            # Special space characters
-        )
-        embed.add_field(
-            name = "📊 Contests",
-            value = f"""
-            ▸ **Rank:** {'#' + str(info['contest']['global_rank']) if info['contest']['global_rank'] else "N/A"}
-            ▸ **Rating:** {info['contest']['rating'] if info['contest']['rating'] else "N/A"}
-            ▸ **Top:** {str(info['contest']['top_percentage']) + '%' if info['contest']['top_percentage'] else "N/A"}
-            ▸ **Attended contest:** {info['contest']['contest_count'] if info['contest']['contest_count'] else 0}
-            """,
-            inline = True
-        )
-        if lc_result:   
-            embed.add_field(
-                name = "🏡 In-server",
-                value = f"""
-                ▸ **All-time**:
-                {Assets.blank} ▸ **Max daily streak:** {lc_result['all_time']['max_daily_streak']}
-                {Assets.blank} ▸ **Current daily streak:** {lc_result['all_time']['current_daily_streak']}
-                {Assets.blank} ▸ **Score:** {lc_result['all_time']['score']}
+            ▸ **Leetcode ID**: {result['leetcodeUsername']}
+            ▸ **Date Joined**: {result['createdAt'].strftime("%b %d, %Y")}
 
-                ▸ **Current month**:
-                {Assets.blank} ▸ **Max daily streak:** {lc_result['current_month']['max_daily_streak']}
-                {Assets.blank} ▸ **Current daily streak:** {lc_result['current_month']['current_daily_streak']}
-                {Assets.blank} ▸ **Score:** {lc_result['current_month']['score']}
-                """,
-                inline = False
-            )
+            ▸ **Current month**:
+            {Assets.blank} ▸ **Score:** {result['monthly']['score']}
+            {Assets.blank} ▸ **Rank:** {result['monthly']['rank']}
+
+            ▸ **Today progress**:
+            {Assets.blank} ▸ **Score:** {result['daily']['scoreEarned']}
+            {Assets.blank} ▸ **Solved Daily:** {result['daily']['solvedDaily']}
+            {Assets.blank} ▸ **Practiced Easy:** {result['daily']['solvedEasy']}
+            {Assets.blank} ▸ **Practiced Medium:** {result['daily']['solvedMedium']}
+            {Assets.blank} ▸ **Practiced Hard:** {result['daily']['solvedHard']}
+            {Assets.blank} ▸ **Rank:** {result['daily']['rank']}
+            """,
+            inline = False
+        )
         embed.set_author(
-            name = f"LeetCode profile for {username}",
+            name = f"LeetCode profile for {interaction.user}",
             icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
-            url = info['profile']['link']
+            url = result['link']
         )
-        embed.set_thumbnail(
-            url = info['profile']['avatar']
-        )
+        # embed.set_thumbnail(
+        #     url = info['profile']['avatar']
+        # )
         await interaction.followup.send(embed = embed)
 
     @app_commands.command(name = 'verify', description = "Sets a role for verified members")
