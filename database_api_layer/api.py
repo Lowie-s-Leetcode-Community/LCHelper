@@ -3,6 +3,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 import database_api_layer.models as db
 from typing import Optional
 
@@ -36,29 +37,31 @@ class DatabaseAPILayer:
   # Will need another class only with function to call
   def getProfile(self, member):
     dbObject = select(db.User).where(db.User.discordId == member)
-    profile = self.session.scalars(dbObject).one()
+    try:
+      profile = self.session.scalars(dbObject).one()
+      result = profile.__dict__
 
-    result = profile.__dict__
+      monthly_data = {
+        'score': 0,
+        'rank': 69
+      }
+      daily_data = {
+        'scoreEarned': 0,
+        'solvedDaily': 0,
+        'solvedEasy': 0,
+        'solvedMedium': 0,
+        'solvedHard': 0,
+        'rank': 69
+      }
+      # TODO: write command to get today daily, monthly
+      # case: daily, monthly not generated (case user haven't do anything)
 
-    monthly_data = {
-      'score': 0,
-      'rank': 69
-    }
-    daily_data = {
-      'scoreEarned': 0,
-      'solvedDaily': 0,
-      'solvedEasy': 0,
-      'solvedMedium': 0,
-      'solvedHard': 0,
-      'rank': 69
-    }
-    # TODO: write command to get today daily, monthly
-    # case: daily, monthly not generated (case user haven't do anything)
-
-    result['daily'] = daily_data
-    result['monthly'] = monthly_data
-    result['link'] = f"https://leetcode.com/{profile.leetcodeUsername}"
-    return result
+      result['daily'] = daily_data
+      result['monthly'] = monthly_data
+      result['link'] = f"https://leetcode.com/{profile.leetcodeUsername}"
+      return result
+    except NoResultFound:
+      return None
 
   def getLeaderboard():
     return {}

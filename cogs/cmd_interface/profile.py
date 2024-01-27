@@ -27,44 +27,49 @@ class Profile(commands.Cog):
         if member == None:
             discord_id = interaction.user.id
             result = db_api.getProfile(member = str(discord_id))
-            # What if result is not available?
-            # are you verified?
+            if result == None:
+                embed = discord.Embed(
+                    title = "Error",
+                    description = "Are *you* verified? Type `/verify` to (re)verify yourself immediately!",
+                    color = 0xef4743
+                )
         else:
             result = db_api.getProfile(member = str(member.id))
-            # This also?
-            # Is this user verified?
+            if result == None:
+                embed = discord.Embed(
+                    title = "Error",
+                    description = "Is this person verified?",
+                    color = 0xef4743
+                )
         
         # Will wait for leetcode layer to add more info
-        # missing: streak, server rank
-        
-        embed.add_field(
-            name = "🏡 Server Profile",
-            value = f"""
-            ▸ **Leetcode ID**: {result['leetcodeUsername']}
-            ▸ **Date Joined**: {result['createdAt'].strftime("%b %d, %Y")}
+        # missing: streak
+        if result != None:
+            embed.add_field(
+                name = "🏡 Server Profile",
+                value = f"""
+                ▸ **Leetcode ID**: {result['leetcodeUsername']}
+                ▸ **Date Joined**: {result['createdAt'].strftime("%b %d, %Y")}
 
-            ▸ **Current month**:
-            {Assets.blank} ▸ **Score:** {result['monthly']['score']}
-            {Assets.blank} ▸ **Rank:** {result['monthly']['rank']}
+                ▸ **Current month**:
+                {Assets.blank} ▸ **Score:** {result['monthly']['score']}
+                {Assets.blank} ▸ **Rank:** {result['monthly']['rank']}
 
-            ▸ **Today progress**:
-            {Assets.blank} ▸ **Score:** {result['daily']['scoreEarned']}
-            {Assets.blank} ▸ **Solved Daily:** {result['daily']['solvedDaily']}
-            {Assets.blank} ▸ **Practiced Easy:** {result['daily']['solvedEasy']}
-            {Assets.blank} ▸ **Practiced Medium:** {result['daily']['solvedMedium']}
-            {Assets.blank} ▸ **Practiced Hard:** {result['daily']['solvedHard']}
-            {Assets.blank} ▸ **Rank:** {result['daily']['rank']}
-            """,
-            inline = False
-        )
-        embed.set_author(
-            name = f"LeetCode profile for {interaction.user}",
-            icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
-            url = result['link']
-        )
-        # embed.set_thumbnail(
-        #     url = info['profile']['avatar']
-        # )
+                ▸ **Today progress**:
+                {Assets.blank} ▸ **Score:** {result['daily']['scoreEarned']}
+                {Assets.blank} ▸ **Solved Daily:** {result['daily']['solvedDaily']}
+                {Assets.blank} ▸ **Practiced Easy:** {result['daily']['solvedEasy']}
+                {Assets.blank} ▸ **Practiced Medium:** {result['daily']['solvedMedium']}
+                {Assets.blank} ▸ **Practiced Hard:** {result['daily']['solvedHard']}
+                {Assets.blank} ▸ **Rank:** {result['daily']['rank']}
+                """,
+                inline = False
+            )
+            embed.set_author(
+                name = f"LeetCode profile for {interaction.user}",
+                icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
+                url = result['link']
+            )
         await interaction.followup.send(embed = embed)
 
     @app_commands.command(name = 'verify', description = "Sets a role for verified members")
