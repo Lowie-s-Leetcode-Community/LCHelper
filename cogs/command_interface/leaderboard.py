@@ -22,7 +22,7 @@ def get_discord_username(interaction, discord_id: int):
         return member.name 
     else:
         return None
-   
+
 def purify_members(interaction, lc_users: list):
     res_list = []
     for user in lc_users:
@@ -262,7 +262,7 @@ class RankingView(discord.ui.View):
         await interaction.followup.send(f"{item} - {error}")
     
 
-class ranking(commands.Cog):
+class Leaderboard(commands.Cog):
     def __init__(self, client):
         self.client = client
 
@@ -336,4 +336,4 @@ class ranking(commands.Cog):
 
     
 async def setup(client):
-    await client.add_cog(ranking(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Leaderboard(client), guilds=[discord.Object(id=1085444549125611530)])

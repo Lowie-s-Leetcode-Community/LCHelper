@@ -19,7 +19,7 @@ def is_monthly_reset_time():
         return True
     return False
 
-class daily(commands.Cog):
+class DailyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True": 
@@ -107,40 +107,6 @@ class daily(commands.Cog):
                 await asyncio.sleep(3)
             await log_channel.send(f'Monthly task completed. Reset the monthly data of {str(len(users))} LLC members!')
 
-    @app_commands.command(name = 'daily', description = "Returns Leetcode's Daily Challenge")
-    async def _daily(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
-        
-        info = db_api.getLatestDaily()
-        url = f"https://leetcode.com/problems/{info['problem']['titleSlug']}"
-        difficulty = info['problem']['difficulty']
-        color = Assets.easy if difficulty == 'Easy' else Assets.medium if difficulty == 'Medium' else Assets.hard
-
-        embed = discord.Embed(
-            title = f"**{info['problem']['id']}. {info['problem']['title']}**",
-            url = f"{url}",
-            color = color
-        )
-        embed.add_field(
-            name = "Difficulty",
-            value = difficulty,
-            inline = True
-        )
-        embed.add_field(
-            name = "AC Rate",
-            value = "100%",
-            inline = True,
-        )
-
-        topics = "||" + ",".join(info['problem']['topics']) + "||"
-        embed.add_field(
-            name = "Topics",
-            value = topics,
-            inline = False
-        )
-        display_date = info['generatedDate'].strftime("%b %d, %Y")
-        await interaction.followup.send(f"Daily Challenge - {display_date}", embed = embed)
-
     ### Dev stuff
     @daily.error
     async def on_error(self, exception):
@@ -163,5 +129,5 @@ class daily(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Daily task started.**")
 
 async def setup(client):
-    await client.add_cog(daily(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=1085444549125611530)])
     #await client.add_cog(daily(client))

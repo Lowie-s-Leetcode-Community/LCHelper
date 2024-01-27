@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from ..features.tasks import task
+from ..command_interface.task import Task
 import os
 import asyncio
 import traceback
@@ -134,7 +134,7 @@ class crawl(commands.Cog):
                         recent_solved.append(submission['titleSlug'])
 
                         # Updating daily earnable scores
-                        await task.on_problem_completed(task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
+                        await Task.on_problem_completed(Task(self.client), member = discord_member, lc_user = user, problem_title_slug = submission['titleSlug'], is_daily = is_daily_challenge)
 
                 else:
                     break

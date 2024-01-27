@@ -4,13 +4,13 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from ..logging.logging import logging
+from ..automation.logging.logging import logging
 
-class task(commands.Cog):
+class Task(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @app_commands.command(name = 'tasks', description = "[BETA] Earn score by doing daily tasks")
+    @app_commands.command(name = 'task', description = "[BETA] Earn score by doing daily tasks")
     async def _task(self, interaction):
         await interaction.response.defer(thinking = True)
         lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
@@ -154,5 +154,4 @@ class task(commands.Cog):
         lc_col.update_one({'discord_id': member.id}, lc_query)
     
 async def setup(client):
-    await client.add_cog(task(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(task(client))
+    await client.add_cog(Task(client), guilds=[discord.Object(id=1085444549125611530)])

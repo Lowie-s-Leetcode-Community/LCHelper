@@ -4,7 +4,7 @@ import datetime
 import time
 from discord.ext import commands, tasks
 from utils.asset import Assets
-from ..logging.logging import logging
+from ...automation.logging.logging import logging
 import os
 
 class event(commands.Cog):

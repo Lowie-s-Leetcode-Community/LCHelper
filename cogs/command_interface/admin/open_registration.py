@@ -44,7 +44,7 @@ def get_registration_announce_msg(message):
     
     return textwrap.dedent(reg_msg)
 
-class daily_reg(commands.Cog):
+class OpenRegistration(commands.Cog):
     def __init__(self, client):
         self.client = client
 
@@ -69,4 +69,4 @@ class daily_reg(commands.Cog):
         
 
 async def setup(client):
-    await client.add_cog(daily_reg(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(OpenRegistration(client), guilds=[discord.Object(id=1085444549125611530)])

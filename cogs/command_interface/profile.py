@@ -9,7 +9,7 @@ from typing import Optional
 from database_api_layer.api import DatabaseAPILayer
 db_api = DatabaseAPILayer()
 
-class lc(commands.Cog):
+class Profile(commands.Cog):
     def __init__(self, client):
         self.client = client
 
@@ -116,5 +116,4 @@ class lc(commands.Cog):
         await interaction.followup.send(embed = embed)
 
 async def setup(client):
-    await client.add_cog(lc(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(lc(client))
+    await client.add_cog(Profile(client), guilds=[discord.Object(id=1085444549125611530)])
