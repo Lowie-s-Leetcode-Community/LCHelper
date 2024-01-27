@@ -8,6 +8,7 @@ from utils.asset import Assets
 import traceback
 import aiohttp
 import json
+from database_api_layer.api import db_api
 
 duration_type_list = ['current_month', 'all_time']
 duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
@@ -16,71 +17,43 @@ rank_frontend_list = ['score', 'current streak', 'max streak']
 color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
 
-def get_discord_username(interaction, discord_id: int):
-    member = discord.utils.find(lambda m: m.id == discord_id, interaction.guild.members)
-    if member: 
-        return member.name 
-    else:
-        return None
-
-def purify_members(interaction, lc_users: list):
-    res_list = []
-    for user in lc_users:
-        username = get_discord_username(interaction, user['discord_id'])
-        if username:
-            value_list = []
-            for duration_type in range(2):
-                value_list.append([])
-                for rank_type in range(3):
-                    value_list[duration_type].append(user[duration_type_list[duration_type]][rank_type_list[rank_type]])
-
-            res_list.append({
-                "lc_username": user['lc_username'],
-                "discord_username": username,
-                "link": f"https://leetcode.com/{user['lc_username']}",
-                "value": value_list,  
-            })
-    return res_list
+# will recover this feature to get hovering back
+# def get_discord_username(interaction, discord_id: int):
+#     member = discord.utils.find(lambda m: m.id == discord_id, interaction.guild.members)
+#     if member: 
+#         return member.name 
+#     else:
+#         return None
 
 def get_user_list(interaction, DBClient, lc_users = None):
-    if lc_users == None:
-        lc_col = DBClient['LC_db']['LC_users']
-        lc_users = list(lc_col.find())
-
-    # Removes members that have already left and sorts
-    user_list = purify_members(
-        interaction = interaction, 
-        lc_users = lc_users
-    ) 
+    user_list = db_api.getCurrentMonthLeaderboard()
 
     return user_list
 
 def get_index(user_list: list, expected_discord_username: str):
     idx = 1
     for user in user_list:
-        if user['discord_username'] == expected_discord_username:
+        if user['discordId'] == expected_discord_username:
             return idx
         idx += 1
 
-    return None
+    return 1
 
 def get_ranking_embed(interaction, user_list, duration_type: int, rank_type: int, page_number: int, page_number_limit: int, embed_limit: int):
-    # Removes members that have already left and sorts
-    user_list.sort(key = lambda x: -x['value'][duration_type][rank_type])
-
     # The embed description content
+    def format_display_string(user, idx):
+        rank_idx = medal_list[idx - 1] if idx <= len(medal_list) else f"``#{idx}``"
+        return f"{rank_idx} [``{user['leetcodeUsername']}``](https://leetcode.com/{user['leetcodeUsername']}): {user['scoreEarned']}\n"
     response = ""
     for idx in range(embed_limit * (page_number - 1) + 1, min(embed_limit * page_number, len(user_list)) + 1):
         user = user_list[idx - 1]
-        rank_idx = medal_list[idx - 1] if idx < 4 else f"``#{idx}``"
-        response += f"{rank_idx} [``{user['lc_username']}``]({user['link']} '{user['discord_username']}'): {user['value'][duration_type][rank_type]}\n"
+        response += format_display_string(user, idx)
 
     response += "---\n"
 
     # interaction author's ranking
-    interaction_author_ranking = get_index(user_list = user_list, expected_discord_username = interaction.user.name)
-    rank_idx = medal_list[interaction_author_ranking - 1] if interaction_author_ranking < 4 else f"``#{interaction_author_ranking}``"
-    response += f"{rank_idx} [``{user_list[interaction_author_ranking - 1]['lc_username']}``]({user_list[interaction_author_ranking - 1]['link']} '{user_list[interaction_author_ranking - 1]['discord_username']}'): {user_list[interaction_author_ranking - 1]['value'][duration_type][rank_type]}"
+    interaction_author_ranking = get_index(user_list = user_list, expected_discord_username = str(interaction.user.id))
+    response += format_display_string(user_list[interaction_author_ranking - 1], interaction_author_ranking)
 
     embed = discord.Embed(
         title = f"{duration_frontend_list[duration_type]} {rank_frontend_list[rank_type]} ranking",
@@ -91,14 +64,14 @@ def get_ranking_embed(interaction, user_list, duration_type: int, rank_type: int
     embed.set_thumbnail(
         url = interaction.guild.icon.url
     )
-    embed.set_footer(text = f"Hover for Discord usernames • Page {page_number}/{page_number_limit}")
+    embed.set_footer(text = f"Hover for nothing :D • Page {page_number}/{page_number_limit}")
     return embed
 
 class DurationDropdown(discord.ui.Select['RankingView']):
     def __init__(self):
         options = [
             discord.SelectOption(label='Current month', value = "0", description="Current month's leaderboard", emoji='📅', default=True),
-            discord.SelectOption(label='All time', value = "1", description="All time's leaderboard", emoji='🗓️'),
+            # discord.SelectOption(label='All time', value = "1", description="All time's leaderboard", emoji='🗓️'),
         ]
         super().__init__(min_values = 1, max_values = 1, options = options)
 
@@ -130,8 +103,8 @@ class RankDropdown(discord.ui.Select['RankingView']):
     def __init__(self):
         options = [
             discord.SelectOption(label='Score', value = "0", description="Score leaderboard", emoji='🏆', default=True),
-            discord.SelectOption(label='Current streak', value = "1", description="Current streak leaderboard", emoji='🏅'),
-            discord.SelectOption(label="Max streak", value = "2", description="Max streak leaderboard", emoji='🎖️')
+            # discord.SelectOption(label='Current streak', value = "1", description="Current streak leaderboard", emoji='🏅'),
+            # discord.SelectOption(label="Max streak", value = "2", description="Max streak leaderboard", emoji='🎖️')
         ]
         super().__init__(min_values = 1, max_values = 1, options = options)
 
@@ -274,49 +247,7 @@ class Leaderboard(commands.Cog):
         # Update current month name
         global duration_frontend_list
         duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
-        user_list = get_user_list(interaction = interaction, DBClient = self.client.DBClient)
-        embed_limit = 10
-        page_number_limit = (len(user_list) + (embed_limit - 1)) // embed_limit
-        view = RankingView(user_list, page_number_limit, embed_limit)
-        await interaction.followup.send(
-            embed = get_ranking_embed(
-                interaction = interaction, 
-                user_list = user_list,
-                duration_type = 0,
-                rank_type = 0,
-                page_number = 1,
-                page_number_limit = page_number_limit,
-                embed_limit = embed_limit
-            ),
-            view = view
-        )
-        view.response = await interaction.original_response()
-
-    @rank_group.command(name = "backup", description = "View rankings from a backup file")
-    async def _rank_backup(self, interaction: discord.Interaction, backup_message_id: str):
-        await interaction.response.defer(thinking = True)
-        
-        backup_message_id = int(backup_message_id)
-
-        lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
-        backup_channel_id = lc_query['backup_channel_id']
-        backup_channel = await interaction.guild.fetch_channel(backup_channel_id)
-        backup_message = await backup_channel.fetch_message(backup_message_id)
-        backup_attachment_link = backup_message.attachments[0].url
-
-        print(backup_attachment_link)
-        async with aiohttp.ClientSession() as cs:
-            async with cs.get(backup_attachment_link) as res:
-                await res.read()
-        
-        backup_file = open("backup.json")
-        data = json.load(backup_file)
-        user_list = data['LC_users']
-
-        # And everything below is (almost) the same as the above command
-        global duration_frontend_list
-        duration_frontend_list = [f"{datetime.datetime.now().strftime('%B')}'s", "All-time"]
-        user_list = get_user_list(interaction = interaction, DBClient = self.client.DBClient, lc_users = user_list)
+        user_list = db_api.getCurrentMonthLeaderboard()
         embed_limit = 10
         page_number_limit = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, page_number_limit, embed_limit)
