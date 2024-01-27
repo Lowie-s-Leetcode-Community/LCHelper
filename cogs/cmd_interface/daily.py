@@ -8,9 +8,7 @@ import asyncio
 import traceback
 import datetime
 
-# really need better ways to place this arg :)
-from database_api_layer.api import DatabaseAPILayer
-db_api = DatabaseAPILayer()
+from database_api_layer.api import db_api
 
 class Daily(commands.Cog):
     def __init__(self, client):

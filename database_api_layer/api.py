@@ -63,6 +63,7 @@ class DatabaseAPILayer:
   def getLeaderboard():
     return {}
 
+db_api = DatabaseAPILayer()
 # test = DatabaseAPILayer()
 # print(test.getProfile("318049602160951297"))
 ## Features to be refactoring

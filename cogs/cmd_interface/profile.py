@@ -5,9 +5,7 @@ from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from typing import Optional
 
-# really need better ways to place this arg :)
-from database_api_layer.api import DatabaseAPILayer
-db_api = DatabaseAPILayer()
+from database_api_layer.api import db_api
 
 class Profile(commands.Cog):
     def __init__(self, client):
@@ -20,22 +18,25 @@ class Profile(commands.Cog):
         await interaction.response.defer(thinking = True)
 
         result = None
-        if member == None:
-            discord_id = str(interaction.user.id)
-            result = db_api.getProfile(member = str(discord_id))
-            # What if result is not available?
-        else:
-            result = db_api.getProfile(member = str(member.id))
-            # This also?
-        
-        # Will wait for leetcode layer to add more info
-        # missing: streak, server rank
         embed = discord.Embed(
             description = f"""
             Type `/help profile` to further understand how this feature works!
             """,
             color = 0xffffff
         )
+        if member == None:
+            discord_id = interaction.user.id
+            result = db_api.getProfile(member = str(discord_id))
+            # What if result is not available?
+            # are you verified?
+        else:
+            result = db_api.getProfile(member = str(member.id))
+            # This also?
+            # Is this user verified?
+        
+        # Will wait for leetcode layer to add more info
+        # missing: streak, server rank
+        
         embed.add_field(
             name = "🏡 Server Profile",
             value = f"""

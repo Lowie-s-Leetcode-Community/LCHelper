@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from ..command_interface.task import Task
+from ..cmd_interface.task import Task
 import os
 import asyncio
 import traceback
