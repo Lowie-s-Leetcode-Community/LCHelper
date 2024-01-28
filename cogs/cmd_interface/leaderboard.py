@@ -18,12 +18,12 @@ color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
 
 # will recover this feature to get hovering back
-# def get_discord_username(interaction, discord_id: int):
-#     member = discord.utils.find(lambda m: m.id == discord_id, interaction.guild.members)
-#     if member: 
-#         return member.name 
-#     else:
-#         return None
+def get_discord_username(interaction, discord_id: str):
+    member = discord.utils.find(lambda m: str(m.id) == discord_id, interaction.guild.members)
+    if member: 
+        return member.name 
+    else:
+        return None
 
 def get_user_list(interaction, DBClient, lc_users = None):
     user_list = db_api.getCurrentMonthLeaderboard()
@@ -43,7 +43,9 @@ def get_ranking_embed(interaction, user_list, duration_type: int, rank_type: int
     # The embed description content
     def format_display_string(user, idx):
         rank_idx = medal_list[idx - 1] if idx <= len(medal_list) else f"``#{idx}``"
-        return f"{rank_idx} [``{user['leetcodeUsername']}``](https://leetcode.com/{user['leetcodeUsername']}): {user['scoreEarned']}\n"
+        discord_username = get_discord_username(interaction, user['discordId'])
+        leetcode_url = f"https://leetcode.com/{user['leetcodeUsername']}"
+        return f"{rank_idx} [``{user['leetcodeUsername']}``]({leetcode_url} '{discord_username}'): {user['scoreEarned']}\n"
     response = ""
     for idx in range(embed_limit * (page_number - 1) + 1, min(embed_limit * page_number, len(user_list)) + 1):
         user = user_list[idx - 1]

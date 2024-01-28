@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 import database_api_layer.models as db
 from typing import Optional
+from datetime import datetime, timedelta
 
 class DatabaseAPILayer:
   engine = None
@@ -25,12 +26,10 @@ class DatabaseAPILayer:
     result = None
     with Session(self.engine) as session:
       daily = session.scalars(query).one()
+      problem = daily.problem
       result = daily.__dict__
-    problem = daily.problem
-
-    result["problem"] = problem.__dict__
-    result["problem"]["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
-
+      result["problem"] = problem.__dict__
+      result["problem"]["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
     return result
 
   # We disable getting data from random user for now.
@@ -66,7 +65,12 @@ class DatabaseAPILayer:
 
   # Stub, need to move somewhere else also
   def getFirstDayOfMonth(self):
-    return '2024-01-01'
+    first_day_of_month = datetime(datetime.now().year, datetime.now().month, 1)
+    days_to_monday = (0 - first_day_of_month.weekday() + 7) % 7
+
+    first_monday = first_day_of_month + timedelta(days=days_to_monday)
+
+    return first_monday
 
   # Currently, just return user with a monthly object
   def getCurrentMonthLeaderboard(self):
@@ -82,7 +86,7 @@ class DatabaseAPILayer:
     return result
 
 db_api = DatabaseAPILayer()
-
+# print(db_api.getCurrentMonthLeaderboard())
 ## Features to be refactoring
 # tasks
 # gimme
