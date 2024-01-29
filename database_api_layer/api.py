@@ -64,19 +64,39 @@ class DatabaseAPILayer:
     return result
 
   # Stub, need to move somewhere else also
-  def getFirstDayOfMonth(self):
-    first_day_of_month = datetime(datetime.now().year, datetime.now().month, 1)
-    days_to_monday = (0 - first_day_of_month.weekday() + 7) % 7
+  def get_first_day_of_current_month(self):
+    today = datetime.now()
+    monday = today - timedelta(days=today.weekday())
+    day_in_week_1 = datetime(monday.year, monday.month, 7)
+    result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
 
-    first_monday = first_day_of_month + timedelta(days=days_to_monday)
+    return result
 
-    return first_monday
+  def get_first_day_of_previous_month(self):
+    current_first_day = self.get_first_day_of_current_month()
+    monday = current_first_day - timedelta(days=7)
+    day_in_week_1 = datetime(monday.year, monday.month, 7)
+    result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
+
+    return result
 
   # Currently, just return user with a monthly object
   def getCurrentMonthLeaderboard(self):
     query = select(db.UserMonthlyObject, db.User).join_from(
       db.UserMonthlyObject, db.User).where(
-      db.UserMonthlyObject.firstDayOfMonth == self.getFirstDayOfMonth()
+      db.UserMonthlyObject.firstDayOfMonth == self.get_first_day_of_current_month()
+    ).order_by(db.UserMonthlyObject.scoreEarned.desc())
+    result = []
+    with Session(self.engine) as session:
+      queryResult = session.execute(query).all()
+      for res in queryResult:
+        result.append({**res.User.__dict__, **res.UserMonthlyObject.__dict__})
+    return result
+  
+  def getLastMonthLeaderboard(self):
+    query = select(db.UserMonthlyObject, db.User).join_from(
+      db.UserMonthlyObject, db.User).where(
+      db.UserMonthlyObject.firstDayOfMonth == self.get_first_day_of_previous_month()
     ).order_by(db.UserMonthlyObject.scoreEarned.desc())
     result = []
     with Session(self.engine) as session:
@@ -86,7 +106,6 @@ class DatabaseAPILayer:
     return result
 
 db_api = DatabaseAPILayer()
-# print(db_api.getCurrentMonthLeaderboard())
 ## Features to be refactoring
 # tasks
 # gimme
