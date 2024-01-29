@@ -2,12 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
-import database_api_layer.models as db
 from typing import Optional
 import os
 import asyncio
 from dotenv import load_dotenv
 from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today
+import database_api_layer.models as db
 
 class DatabaseAPILayer:
   engine = None
@@ -42,6 +42,7 @@ class DatabaseAPILayer:
       profile = session.scalars(query).one_or_none()
       if profile == None:
         return None
+      # try to optimize using sql filter next time! filter by python is very unoptimized!
       daily_objs = list(filter(lambda obj: obj.dailyObject.generatedDate == get_today(), profile.userDailyObjects))
 
       result = profile.__dict__
@@ -59,7 +60,6 @@ class DatabaseAPILayer:
         result['daily']['rank'] = "N/A"
 
       monthly_objs = list(filter(lambda obj: obj.firstDayOfMonth == get_first_day_of_current_month(), profile.userMonthlyObjects))
-      # print(monthly_objs, get_first_day_of_current_month())
       if len(monthly_objs) == 0:
         result['monthly'] = {
           'scoreEarned': 0,
@@ -96,8 +96,26 @@ class DatabaseAPILayer:
       for res in queryResult:
         result.append({**res.User.__dict__, **res.UserMonthlyObject.__dict__})
     return result
+  
+  # Desc: return one random problem, with difficulty filter + tags filter
+  def get_gimme(self, difficulty, tags_1, tags_2, premium = False):
+    return {}
+
+  # Desc: update to DB and send a log
+  def update_score(self, memberDiscordId, delta):
+    return {}
+
 
 db_api = DatabaseAPILayer()
+# fake_user = {
+#   'discordId': "97813641364873723",
+#   'leetcodeUsername': "fakeshit",
+#   'mostRecentSubId': 129,
+#   'userSolvedProblems': ["median-of-two-sorted-arrays", "longest-palindromic-substring",
+#     "two-sum", "search-in-rotated-sorted-array","roman-to-integer","jump-game-ii"
+#   ]
+# }
+# db_api.add_user(fake_user)
 ## Features to be refactoring
 # tasks
 # gimme
