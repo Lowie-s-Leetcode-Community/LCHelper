@@ -1,5 +1,3 @@
-########################### Testing-zone ##########################
-
 from sqlalchemy import create_engine
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,7 +7,7 @@ from typing import Optional
 import os
 import asyncio
 from dotenv import load_dotenv
-from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month
+from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today
 
 class DatabaseAPILayer:
   engine = None
@@ -36,33 +34,41 @@ class DatabaseAPILayer:
     return result
 
   # We disable getting data from random user for now.
-  # Will need another class only with function to call
-  def get_profile(self, member):
-    query = select(db.User).where(db.User.discordId == member)
-    profile = None
+  def get_profile(self, memberDiscordId):
+    query = select(db.User).where(db.User.discordId == memberDiscordId)
+    server_count = 192
+    result = None
     with Session(self.engine) as session:
       profile = session.scalars(query).one_or_none()
-    if profile == None:
-      return None
-    result = profile.__dict__
-    
-    monthly_data = {
-      'score': 0,
-      'rank': 69
-    }
-    daily_data = {
-      'scoreEarned': 0,
-      'solvedDaily': 0,
-      'solvedEasy': 0,
-      'solvedMedium': 0,
-      'solvedHard': 0,
-      'rank': 69
-    }
-    # TODO: write command to get today daily, monthly
-    # case: daily, monthly not generated (case user haven't do anything)
+      if profile == None:
+        return None
+      daily_objs = list(filter(lambda obj: obj.dailyObject.generatedDate == get_today(), profile.userDailyObjects))
 
-    result['daily'] = daily_data
-    result['monthly'] = monthly_data
+      result = profile.__dict__
+      if len(daily_objs) == 0:
+        result['daily'] = {
+          'scoreEarned': 0,
+          'solvedDaily': 0,
+          'solvedEasy': 0,
+          'solvedMedium': 0,
+          'solvedHard': 0,
+          'rank': "N/A"
+        }
+      else:
+        result['daily'] = daily_objs[0].__dict__
+        result['daily']['rank'] = "N/A"
+
+      monthly_objs = list(filter(lambda obj: obj.firstDayOfMonth == get_first_day_of_current_month(), profile.userMonthlyObjects))
+      # print(monthly_objs, get_first_day_of_current_month())
+      if len(monthly_objs) == 0:
+        result['monthly'] = {
+          'scoreEarned': 0,
+          'rank': "N/A"
+        }
+      else:
+        result['monthly'] = monthly_objs[0].__dict__
+        result['monthly']['rank'] = "N/A"
+
     result['link'] = f"https://leetcode.com/{profile.leetcodeUsername}"
     return result
 

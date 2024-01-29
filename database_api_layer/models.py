@@ -94,7 +94,7 @@ class DailyObject(Base):
     updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
     problemId = mapped_column(Integer, ForeignKey("Problem.id"))
     isToday = mapped_column(Boolean)
-    generatedDate = mapped_column(DateTime)
+    generatedDate = mapped_column(Date)
     problem: Mapped[Problem] = relationship(back_populates="dailyObjects")
     userDailyObjects: Mapped[List[UserDailyObject]] = relationship(back_populates="dailyObject")
 
