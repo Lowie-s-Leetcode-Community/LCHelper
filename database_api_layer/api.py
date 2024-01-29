@@ -6,14 +6,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 import database_api_layer.models as db
 from typing import Optional
-from datetime import datetime, timedelta
+import os
+import asyncio
+from dotenv import load_dotenv
+from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month
 
 class DatabaseAPILayer:
   engine = None
   def __init__(self):
-    dbschema='lc_db'
+    dbschema = os.getenv('POSTGRESQL_SCHEMA')
     self.engine = create_engine(
-      "postgresql://postgres:12345678@localhost:5432/lc_db", 
+      os.getenv('POSTGRESQL_CRED'), 
       connect_args={'options': '-csearch_path={}'.format(dbschema)}, echo=True)
 
   # Missing infos in SQL comparing to previous features:
@@ -21,7 +24,7 @@ class DatabaseAPILayer:
   # - Like & Dislike
   # Infos to be added:
   # - # Comm members solves
-  def getLatestDaily(self):
+  def get_latest_daily(self):
     query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
     result = None
     with Session(self.engine) as session:
@@ -34,7 +37,7 @@ class DatabaseAPILayer:
 
   # We disable getting data from random user for now.
   # Will need another class only with function to call
-  def getProfile(self, member):
+  def get_profile(self, member):
     query = select(db.User).where(db.User.discordId == member)
     profile = None
     with Session(self.engine) as session:
@@ -63,28 +66,11 @@ class DatabaseAPILayer:
     result['link'] = f"https://leetcode.com/{profile.leetcodeUsername}"
     return result
 
-  # Stub, need to move somewhere else also
-  def get_first_day_of_current_month(self):
-    today = datetime.now()
-    monday = today - timedelta(days=today.weekday())
-    day_in_week_1 = datetime(monday.year, monday.month, 7)
-    result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
-
-    return result
-
-  def get_first_day_of_previous_month(self):
-    current_first_day = self.get_first_day_of_current_month()
-    monday = current_first_day - timedelta(days=7)
-    day_in_week_1 = datetime(monday.year, monday.month, 7)
-    result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
-
-    return result
-
   # Currently, just return user with a monthly object
-  def getCurrentMonthLeaderboard(self):
+  def get_current_month_leaderboard(self):
     query = select(db.UserMonthlyObject, db.User).join_from(
       db.UserMonthlyObject, db.User).where(
-      db.UserMonthlyObject.firstDayOfMonth == self.get_first_day_of_current_month()
+      db.UserMonthlyObject.firstDayOfMonth == get_first_day_of_current_month()
     ).order_by(db.UserMonthlyObject.scoreEarned.desc())
     result = []
     with Session(self.engine) as session:
@@ -93,10 +79,10 @@ class DatabaseAPILayer:
         result.append({**res.User.__dict__, **res.UserMonthlyObject.__dict__})
     return result
   
-  def getLastMonthLeaderboard(self):
+  def get_last_month_leaderboard(self):
     query = select(db.UserMonthlyObject, db.User).join_from(
       db.UserMonthlyObject, db.User).where(
-      db.UserMonthlyObject.firstDayOfMonth == self.get_first_day_of_previous_month()
+      db.UserMonthlyObject.firstDayOfMonth == get_first_day_of_previous_month()
     ).order_by(db.UserMonthlyObject.scoreEarned.desc())
     result = []
     with Session(self.engine) as session:

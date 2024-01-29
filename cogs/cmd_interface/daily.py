@@ -17,7 +17,7 @@ class Daily(commands.Cog):
     @app_commands.command(name = 'daily', description = "Returns Leetcode's Daily Challenge")
     async def _daily(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
-        info = db_api.getLatestDaily()
+        info = db_api.get_latest_daily()
         url = f"https://leetcode.com/problems/{info['problem']['titleSlug']}"
         difficulty = info['problem']['difficulty']
         color = Assets.easy if difficulty == 'Easy' else Assets.medium if difficulty == 'Medium' else Assets.hard

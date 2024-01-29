@@ -22,7 +22,7 @@ def get_discord_username(interaction, discord_id: str):
         return None
 
 def get_user_list(interaction, DBClient, lc_users = None):
-    user_list = db_api.getCurrentMonthLeaderboard()
+    user_list = db_api.get_current_month_leaderboard()
     return user_list
 
 def get_index(user_list: list, expected_discord_username: str):
@@ -168,7 +168,7 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_current(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        user_list = db_api.getCurrentMonthLeaderboard()
+        user_list = db_api.get_current_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, pages_count, embed_limit)
@@ -188,7 +188,7 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_previous(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        user_list = db_api.getLastMonthLeaderboard()
+        user_list = db_api.get_last_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, pages_count, embed_limit)
