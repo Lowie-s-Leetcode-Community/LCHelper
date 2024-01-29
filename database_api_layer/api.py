@@ -36,7 +36,6 @@ class DatabaseAPILayer:
   # We disable getting data from random user for now.
   def get_profile(self, memberDiscordId):
     query = select(db.User).where(db.User.discordId == memberDiscordId)
-    server_count = 192
     result = None
     with Session(self.engine) as session:
       profile = session.scalars(query).one_or_none()
@@ -105,17 +104,65 @@ class DatabaseAPILayer:
   def update_score(self, memberDiscordId, delta):
     return {}
 
+  # Desc: add user basic information into the database
+  def add_user(self, user_obj):
+    """
+    {
+      discordId: str
+      leetcodeUsername: str
+      mostRecentSubId: str
+      userSolvedProblems: [...] - next, should optimize info with extra query
+    }
+    """
+    problems = user_obj['userSolvedProblems']
+    problems_query = select(db.Problem).filter(db.Problem.titleSlug.in_(problems))
+    with Session(self.engine) as session:
+      queryResult = session.execute(problems_query).all()
+
+      # have to refactor the "get min id" function to get for later :)
+      min_available_user_id = (
+        session.query(func.min(db.User.id + 1))
+          .filter(~(db.User.id + 1).in_(session.query(db.User.id)))
+          .scalar()
+      ) or 1
+
+      new_user = db.User(
+        id=min_available_user_id,
+        discordId=user_obj['discordId'],
+        leetcodeUsername=user_obj['leetcodeUsername'],
+        mostRecentSubId=user_obj['mostRecentSubId'],
+        userSolvedProblems=[]
+      )
+
+      available_solved_problem_ids = (
+        session.query(func.min(db.UserSolvedProblem.id + 1).label("min_id"))
+          .filter(~(db.UserSolvedProblem.id + 1).in_(session.query(db.UserSolvedProblem.id)))
+          .all()
+      )
+      usp_id = 0
+      idx = 0
+      for problem in queryResult:
+        id = usp_id
+
+        if (idx < len(available_solved_problem_ids)):
+          id = available_solved_problem_ids[idx].min_id
+          usp_id = available_solved_problem_ids[idx].min_id + 1
+          idx += 1
+        else:
+          usp_id += 1
+        user_solved_problem = db.UserSolvedProblem(
+          id=id,
+          problemId=problem.Problem.id,
+          submissionId=123
+        )
+        new_user.userSolvedProblems.append(user_solved_problem)
+      session.add(new_user)
+      result = new_user.id
+      session.commit()
+
+    return { "id": result }
 
 db_api = DatabaseAPILayer()
-# fake_user = {
-#   'discordId': "97813641364873723",
-#   'leetcodeUsername': "fakeshit",
-#   'mostRecentSubId': 129,
-#   'userSolvedProblems': ["median-of-two-sorted-arrays", "longest-palindromic-substring",
-#     "two-sum", "search-in-rotated-sorted-array","roman-to-integer","jump-game-ii"
-#   ]
-# }
-# db_api.add_user(fake_user)
 ## Features to be refactoring
 # tasks
 # gimme

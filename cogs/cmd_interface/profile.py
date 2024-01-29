@@ -72,23 +72,6 @@ class Profile(commands.Cog):
             )
         await interaction.followup.send(embed = embed)
 
-    @app_commands.command(name = 'verify', description = "Sets a role for verified members")
-    @app_commands.describe(role = "Choose a role")
-    @app_commands.checks.has_permissions(administrator = True)
-    async def _verify(self, interaction: discord.Interaction, role: discord.Role):
-        await interaction.response.defer(thinking = True)
-
-        lc_db = self.client.DBClient['LC_db']
-        lc_col = lc_db['LC_config']
-        lc_query = {}
-        lc_result = lc_col.find_one(lc_query)
-        if lc_result:
-            lc_update = {'$set': {'verified_role_id': role.id}}
-            lc_col.update_one(lc_query, lc_update)
-        else:
-            lc_col.insert_one({'server_id': interaction.guild_id, 'verified_role_id': role.id})
-        await interaction.followup.send(f"{Assets.green_tick} **Verified role has been set to {role.mention}**")
-
     # @app_commands.command(name = 'serverstats', description = "Server statistics fof LLC")
     # @app_commands.checks.has_permissions(administrator = True)
     # async def _serverstats(self, interaction: discord.Interaction):

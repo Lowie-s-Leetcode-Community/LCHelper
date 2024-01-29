@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, text
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import Integer
@@ -35,9 +35,9 @@ _MissionToProblem = Table(
 
 class User(Base):
     __tablename__ = "User"
-    id = mapped_column(Integer, primary_key=True)
+    id = mapped_column(Integer, primary_key=True, server_default=text("nextval('User'::regclass)"))
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.now())
     discordId = mapped_column(String, nullable=False, unique=True)
     leetcodeUsername = mapped_column(String, nullable=False, unique=True)
     mostRecentSubId = mapped_column(Integer)
@@ -69,7 +69,7 @@ class UserSolvedProblem(Base):
     __tablename__ = "UserSolvedProblem"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.now())
     submissionId = mapped_column(Integer)
     problemId = mapped_column(Integer, ForeignKey("Problem.id"))
     userId = mapped_column(Integer, ForeignKey("User.id"))
