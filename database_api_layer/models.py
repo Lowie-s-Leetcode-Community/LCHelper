@@ -35,7 +35,7 @@ _MissionToProblem = Table(
 
 class User(Base):
     __tablename__ = "User"
-    id = mapped_column(Integer, primary_key=True, server_default=text("nextval('User'::regclass)"))
+    id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
     updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.now())
     discordId = mapped_column(String, nullable=False, unique=True)

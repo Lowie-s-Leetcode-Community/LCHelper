@@ -8,7 +8,7 @@ from utils.asset import Assets
 import traceback
 import aiohttp
 import json
-from database_api_layer.api import db_api
+from database_api_layer.api import DatabaseAPILayer
 
 color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
@@ -20,10 +20,6 @@ def get_discord_username(interaction, discord_id: str):
         return member.name 
     else:
         return None
-
-def get_user_list(interaction, DBClient, lc_users = None):
-    user_list = db_api.read_current_month_leaderboard()
-    return user_list
 
 def get_index(user_list: list, expected_discord_username: str):
     idx = 1
@@ -162,13 +158,14 @@ class RankingView(discord.ui.View):
 class Leaderboard(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.db_api = DatabaseAPILayer(client)
 
     rank_group = app_commands.Group(name = "leaderboard", description = "Ranking Group")
     @rank_group.command(name = "current", description = "Take a look at LLC's Hall of Fame")
     async def _leaderboard_current(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        user_list = db_api.read_current_month_leaderboard()
+        user_list = self.db_api.read_current_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, pages_count, embed_limit)
@@ -188,7 +185,7 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_previous(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        user_list = db_api.read_last_month_leaderboard()
+        user_list = self.db_api.read_last_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, pages_count, embed_limit)

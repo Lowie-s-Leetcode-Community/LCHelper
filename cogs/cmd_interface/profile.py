@@ -5,11 +5,12 @@ from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from typing import Optional
 
-from database_api_layer.api import db_api
+from database_api_layer.api import DatabaseAPILayer
 
 class Profile(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.db_api = DatabaseAPILayer(client)
 
     # will add feature to get from username next!
     @app_commands.command(name = 'profile', description = "Returns a Leetcode profile")
@@ -26,7 +27,7 @@ class Profile(commands.Cog):
         )
         if member == None:
             discord_id = interaction.user.id
-            result = db_api.read_profile(memberDiscordId = str(discord_id))
+            result = self.db_api.read_profile(memberDiscordId = str(discord_id))
             if result == None:
                 embed = discord.Embed(
                     title = "Error",
@@ -34,7 +35,7 @@ class Profile(commands.Cog):
                     color = 0xef4743
                 )
         else:
-            result = db_api.read_profile(memberDiscordId = str(member.id))
+            result = self.db_api.read_profile(memberDiscordId = str(member.id))
             if result == None:
                 embed = discord.Embed(
                     title = "Error",

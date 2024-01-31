@@ -8,10 +8,6 @@ import asyncio
 import traceback
 import datetime
 
-# really need better ways to place this arg :)
-from database_api_layer.api import DatabaseAPILayer
-db_api = DatabaseAPILayer()
-
 # Check if it's the first monday of the month
 def is_monthly_reset_time():
     d = datetime.date.today()

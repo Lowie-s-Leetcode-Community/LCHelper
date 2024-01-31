@@ -7,7 +7,7 @@ from typing import Optional
 import random
 import string
 import datetime
-from database_api_layer.api import db_api
+from database_api_layer.api import DatabaseAPILayer
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
@@ -17,6 +17,7 @@ class ConfirmView(discord.ui.View):
         self.username = username
         self.user_id = user_id
         self.response = None
+        self.db_api = DatabaseAPILayer(client)
     
     async def on_timeout(self):
         for child in self.children:
@@ -53,7 +54,7 @@ class ConfirmView(discord.ui.View):
             verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
             unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
             try:
-                db_api.create_user(user_obj)
+                await self.db_api.create_user(user_obj)
             except:
                 await interaction.followup.send(content = f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
             else: 
@@ -67,12 +68,13 @@ class ConfirmView(discord.ui.View):
 class verify(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.db_api = DatabaseAPILayer(client)
 
     @app_commands.command(name = 'link', description = "Links your Discord with a LeetCode account")
     @app_commands.describe(username = "Specify a username")
     async def _link(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking = True)
-        user_profile = db_api.read_profile(str(interaction.user.id))
+        user_profile = self.db_api.read_profile(str(interaction.user.id))
         if user_profile != None:
             await interaction.followup.send(f"You've already linked your profile.\
                 Please contact Core members for support if you want to re-link to another profile!")

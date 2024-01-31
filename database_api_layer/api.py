@@ -5,15 +5,28 @@ from typing import Optional
 import os
 from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today
 import database_api_layer.models as db
+from utils.logger import Logger
 from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
 
 class DatabaseAPILayer:
   engine = None
-  def __init__(self):
+  def __init__(self, client):
     dbschema = os.getenv('POSTGRESQL_SCHEMA')
     self.engine = create_engine(
       os.getenv('POSTGRESQL_CRED'), 
       connect_args={'options': '-csearch_path={}'.format(dbschema)}, echo=True)
+    self.client = client
+    self.logger = Logger(client)
+  
+  # generalize all session commits behavior
+  async def commit(self, session, context):
+    try:
+      session.commit()
+    except Exception as e:
+      await self.logger.on_db_update(False, context, e)
+    else:
+      await self.logger.on_db_update(True, context, "")
+    return
 
   # Missing infos in SQL comparing to previous features:
   # - AC Count & Rate
@@ -102,7 +115,8 @@ class DatabaseAPILayer:
   def update_score(self, memberDiscordId, delta):
     return {}
 
-  def create_user(self, user_obj):
+  # Can we split this fn into 2?
+  async def create_user(self, user_obj):
     problems = user_obj['userSolvedProblems']
     problems_query = select(db.Problem).filter(db.Problem.titleSlug.in_(problems))
     with Session(self.engine) as session:
@@ -127,11 +141,10 @@ class DatabaseAPILayer:
         idx += 1
       session.add(new_user)
       result = new_user.id
-      session.commit()
+      await self.commit(session, "User")
 
     return { "id": result }
 
-db_api = DatabaseAPILayer()
 ## Features to be refactoring
 # tasks
 # gimme
