@@ -18,12 +18,13 @@ class DatabaseAPILayer:
     self.client = client
     self.logger = Logger(client)
   
-  # generalize all session commits behavior
+  # Generalize all session commits behavior
   async def commit(self, session, context):
     try:
       session.commit()
     except Exception as e:
       await self.logger.on_db_update(False, context, e)
+      raise
     else:
       await self.logger.on_db_update(True, context, "")
     return
