@@ -26,7 +26,7 @@ class Profile(commands.Cog):
         )
         if member == None:
             discord_id = interaction.user.id
-            result = db_api.get_profile(memberDiscordId = str(discord_id))
+            result = db_api.read_profile(memberDiscordId = str(discord_id))
             if result == None:
                 embed = discord.Embed(
                     title = "Error",
@@ -34,7 +34,7 @@ class Profile(commands.Cog):
                     color = 0xef4743
                 )
         else:
-            result = db_api.get_profile(memberDiscordId = str(member.id))
+            result = db_api.read_profile(memberDiscordId = str(member.id))
             if result == None:
                 embed = discord.Embed(
                     title = "Error",

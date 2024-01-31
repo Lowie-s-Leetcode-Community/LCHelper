@@ -20,7 +20,7 @@ class DatabaseAPILayer:
   # - Like & Dislike
   # Infos to be added:
   # - # Comm members solves
-  def get_latest_daily(self):
+  def read_latest_daily(self):
     query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
     result = None
     with Session(self.engine) as session:
@@ -32,7 +32,7 @@ class DatabaseAPILayer:
     return result
 
   # We disable getting data from random user for now.
-  def get_profile(self, memberDiscordId):
+  def read_profile(self, memberDiscordId):
     query = select(db.User).where(db.User.discordId == memberDiscordId)
     result = None
     with Session(self.engine) as session:
@@ -70,7 +70,7 @@ class DatabaseAPILayer:
     return result
 
   # Currently, just return user with a monthly object
-  def get_current_month_leaderboard(self):
+  def read_current_month_leaderboard(self):
     query = select(db.UserMonthlyObject, db.User).join_from(
       db.UserMonthlyObject, db.User).where(
       db.UserMonthlyObject.firstDayOfMonth == get_first_day_of_current_month()
@@ -82,7 +82,7 @@ class DatabaseAPILayer:
         result.append({**res.User.__dict__, **res.UserMonthlyObject.__dict__})
     return result
   
-  def get_last_month_leaderboard(self):
+  def read_last_month_leaderboard(self):
     query = select(db.UserMonthlyObject, db.User).join_from(
       db.UserMonthlyObject, db.User).where(
       db.UserMonthlyObject.firstDayOfMonth == get_first_day_of_previous_month()
@@ -95,14 +95,14 @@ class DatabaseAPILayer:
     return result
   
   # Desc: return one random problem, with difficulty filter + tags filter
-  def get_gimme(self, difficulty, tags_1, tags_2, premium = False):
+  def read_gimme(self, difficulty, tags_1, tags_2, premium = False):
     return {}
 
   # Desc: update to DB and send a log
   def update_score(self, memberDiscordId, delta):
     return {}
 
-  def add_user(self, user_obj):
+  def create_user(self, user_obj):
     problems = user_obj['userSolvedProblems']
     problems_query = select(db.Problem).filter(db.Problem.titleSlug.in_(problems))
     with Session(self.engine) as session:

@@ -53,7 +53,7 @@ class ConfirmView(discord.ui.View):
             verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
             unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
             try:
-                db_api.add_user(user_obj)
+                db_api.create_user(user_obj)
             except:
                 await interaction.followup.send(content = f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
             else: 
@@ -72,7 +72,7 @@ class verify(commands.Cog):
     @app_commands.describe(username = "Specify a username")
     async def _link(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking = True)
-        user_profile = db_api.get_profile(str(interaction.user.id))
+        user_profile = db_api.read_profile(str(interaction.user.id))
         if user_profile != None:
             await interaction.followup.send(f"You've already linked your profile.\
                 Please contact Core members for support if you want to re-link to another profile!")
