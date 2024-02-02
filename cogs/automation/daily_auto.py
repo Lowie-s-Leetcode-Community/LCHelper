@@ -8,10 +8,6 @@ import asyncio
 import traceback
 import datetime
 
-# really need better ways to place this arg :)
-from database_api_layer.api import DatabaseAPILayer
-db_api = DatabaseAPILayer()
-
 # Check if it's the first monday of the month
 def is_monthly_reset_time():
     d = datetime.date.today()
@@ -28,7 +24,7 @@ class DailyAutomation(commands.Cog):
     def cog_unload(self):
         self.daily.cancel()
 
-    @tasks.loop(seconds = 600)
+    @tasks.loop(hours = 1)
     async def daily(self):
         # Waiting for internal cache, I suppose.
         await self.client.wait_until_ready()
@@ -91,22 +87,6 @@ class DailyAutomation(commands.Cog):
             await asyncio.sleep(3)
         await log_channel.send('Daily task completed.')
 
-        # Checking (and starting monthly task)
-        if is_monthly_reset_time():
-            lc_col = self.client.DBClient['LC_db']['LC_users']
-            await log_channel.send('Monthly task started.')
-            users = list(lc_col.find())
-            for user in users:
-                user['previous_month'], user['current_month'] = user['current_month'], user['previous_month']
-                user['current_month']['max_daily_streak'] = 0
-                user['current_month']['current_daily_streak'] = 0
-                user['current_month']['score'] = 0
-
-                lc_query = {'$set': user}
-                lc_col.update_one({'discord_id': user['discord_id']}, lc_query)
-                await asyncio.sleep(3)
-            await log_channel.send(f'Monthly task completed. Reset the monthly data of {str(len(users))} LLC members!')
-
     ### Dev stuff
     @daily.error
     async def on_error(self, exception):
@@ -130,4 +110,3 @@ class DailyAutomation(commands.Cog):
 
 async def setup(client):
     await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(daily(client))

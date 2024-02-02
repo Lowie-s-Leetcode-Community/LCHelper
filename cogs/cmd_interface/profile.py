@@ -5,11 +5,12 @@ from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from typing import Optional
 
-from database_api_layer.api import db_api
+from database_api_layer.api import DatabaseAPILayer
 
 class Profile(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.db_api = DatabaseAPILayer(client)
 
     # will add feature to get from username next!
     @app_commands.command(name = 'profile', description = "Returns a Leetcode profile")
@@ -26,7 +27,7 @@ class Profile(commands.Cog):
         )
         if member == None:
             discord_id = interaction.user.id
-            result = db_api.get_profile(memberDiscordId = str(discord_id))
+            result = self.db_api.read_profile(memberDiscordId = str(discord_id))
             if result == None:
                 embed = discord.Embed(
                     title = "Error",
@@ -34,14 +35,13 @@ class Profile(commands.Cog):
                     color = 0xef4743
                 )
         else:
-            result = db_api.get_profile(memberDiscordId = str(member.id))
+            result = self.db_api.read_profile(memberDiscordId = str(member.id))
             if result == None:
                 embed = discord.Embed(
                     title = "Error",
                     description = "Is this person verified?",
                     color = 0xef4743
                 )
-        
         # Will wait for leetcode layer to add more info
         # missing: streak
         if result != None:
@@ -71,55 +71,6 @@ class Profile(commands.Cog):
                 url = result['link']
             )
         await interaction.followup.send(embed = embed)
-
-    @app_commands.command(name = 'verify', description = "Sets a role for verified members")
-    @app_commands.describe(role = "Choose a role")
-    @app_commands.checks.has_permissions(administrator = True)
-    async def _verify(self, interaction: discord.Interaction, role: discord.Role):
-        await interaction.response.defer(thinking = True)
-
-        lc_db = self.client.DBClient['LC_db']
-        lc_col = lc_db['LC_config']
-        lc_query = {}
-        lc_result = lc_col.find_one(lc_query)
-        if lc_result:
-            lc_update = {'$set': {'verified_role_id': role.id}}
-            lc_col.update_one(lc_query, lc_update)
-        else:
-            lc_col.insert_one({'server_id': interaction.guild_id, 'verified_role_id': role.id})
-        await interaction.followup.send(f"{Assets.green_tick} **Verified role has been set to {role.mention}**")
-
-    # @app_commands.command(name = 'serverstats', description = "Server statistics fof LLC")
-    # @app_commands.checks.has_permissions(administrator = True)
-    # async def _serverstats(self, interaction: discord.Interaction):
-    #     await interaction.response.defer(thinking = True)
-
-    #     lc_db = self.client.DBClient['LC_db']
-    #     lc_col = lc_db['LC_users']
-    #     embed = discord.Embed(
-    #         title = "Server stats",
-    #         color = discord.Color.blue()
-    #     )
-    #     embed.add_field(
-    #         name = "Total members", 
-    #         value = f"{interaction.guild.member_count}"
-    #     )
-    #     role = discord.utils.find(lambda m: m.id == 1087761988068855890, interaction.guild.roles)
-    #     embed.add_field(
-    #         name = "Verified members",
-    #         value = len(role.members)
-    #     )
-    #     lc_member = list(lc_col.find())
-    #     active_member_count = 0
-    #     for member in lc_member:
-    #         if member['current_month']['score'] > 0: active_member_count += 1
-        
-    #     embed.add_field(
-    #         name = "Active members",
-    #         value = f"{active_member_count}"
-    #     )
-    
-    #     await interaction.followup.send(embed = embed)
 
 async def setup(client):
     await client.add_cog(Profile(client), guilds=[discord.Object(id=1085444549125611530)])

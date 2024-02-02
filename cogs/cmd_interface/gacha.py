@@ -2,12 +2,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
-from ..automation.logging.logging import logging
+from utils.logger import Logger
 import random
 
 class Gacha(commands.Cog):
   def __init__(self, client):
     self.client = client
+    self.logger = Logger(client)
 
   @app_commands.command(name="gacha", description="Random bonus point")
   async def _gacha(self, interaction: discord.Interaction):
@@ -32,7 +33,7 @@ class Gacha(commands.Cog):
         color=0x03cffc,
         timestamp=interaction.created_at
       )
-      await logging.on_score_add(logging(self.client), member=member, score=bonus, reason='Gacha!')
+      await self.logger.on_score_add(member=member, score=bonus, reason='Gacha!')
     elif lc_daily_finished and lc_gacha is True:
       embed = discord.Embed(
         description=f"You already got your bonus point today!",

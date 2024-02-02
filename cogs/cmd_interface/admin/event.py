@@ -4,7 +4,7 @@ import datetime
 import time
 from discord.ext import commands, tasks
 from utils.asset import Assets
-from ...automation.logging.logging import logging
+from utils.logger import Logger
 import os
 
 class event(commands.Cog):
@@ -12,6 +12,7 @@ class event(commands.Cog):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True":
             self.member_prune.start()
+        self.logger = Logger(client)
 
     def cog_unload(self):
         self.member_prune.cancel()
@@ -68,7 +69,7 @@ class event(commands.Cog):
                 kicked_reason = "Unverified for 7 days"
 
                 # Logging 
-                await logging.on_member_remove(logging(self.client), member = member, reason = kicked_reason)
+                await self.logger.on_member_remove(logger, member = member, reason = kicked_reason)
 
                 # Wait for the log to be post
                 await asyncio.sleep(5)
