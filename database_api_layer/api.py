@@ -20,13 +20,16 @@ class DatabaseAPILayer:
   
   # Generalize all session commits behavior
   async def commit(self, session, context):
+    result = None
     try:
       session.commit()
     except Exception as e:
       await self.logger.on_db_update(False, context, e)
-      raise
+      result = False
     else:
       await self.logger.on_db_update(True, context, "")
+      result = True
+    print(f"~~konichiiwa~~ commit: {context}, result: {result}")
     return
 
   # Missing infos in SQL comparing to previous features:
@@ -136,13 +139,57 @@ class DatabaseAPILayer:
         user_solved_problem = db.UserSolvedProblem(
           id=available_solved_problem_ids[idx],
           problemId=problem.Problem.id,
-          submissionId=123
+          submissionId=-1
         )
         new_user.userSolvedProblems.append(user_solved_problem)
         idx += 1
       session.add(new_user)
       result = new_user.id
       await self.commit(session, "User")
+
+    return { "id": result }
+
+  async def create_monthly_object(self, userId, firstDayOfMonth):
+    with Session(self.engine) as session:
+      new_obj = db.UserMonthlyObject(
+        id=get_min_available_id(session, db.UserMonthlyObject),
+        userId=userId,
+        firstDayOfMonth=firstDayOfMonth,
+        scoreEarned=0
+      )
+      session.add(new_obj)
+      result = new_obj.id
+      await self.commit(session, f"UserMonthlyObject<id:{result}>")
+
+    return { "id": result }
+
+  def read_problems_all(self):
+    query = select(db.Problem).order_by(db.Problem.id)
+    result = []
+    with Session(self.engine) as session:
+      queryResult = session.execute(query).all()
+      for res in queryResult:
+        result.append(res.Problem.__dict__)
+    return result
+
+  async def create_problem(self, problem):
+    topic_list = list(map(lambda topic: topic['name'], problem['topicTags']))
+    query = select(db.Topic).filter(db.Topic.topicName.in_(topic_list))
+    with Session(self.engine) as session:
+      queryResult = session.execute(query).all()
+      print(queryResult)
+      new_obj = db.Problem(
+        id=get_min_available_id(session, db.Problem),
+        title=problem['title'],
+        titleSlug=problem['titleSlug'],
+        difficulty=problem['difficulty'],
+        isPremium=problem['paidOnly'],
+        topics=[row.Topic for row in queryResult]
+      )
+
+      session.add(new_obj)
+      result = new_obj.id
+      await self.commit(session, f"Problem<id:{result}>")
 
     return { "id": result }
 

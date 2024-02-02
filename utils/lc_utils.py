@@ -202,6 +202,12 @@ class LC_utils:
             'total_submissions': tmp['totalSubmission'],
             'topics': tag_list
         }
+    
+    def crawl_problem_list():
+        payload = {"query": QUERY_QUESTION_LIST, "variables": {'categorySlug': "", 'skip': 0, 'limit': 3600, 'filters': {}}}
+        response = requests.post(API_URL, json = payload)
+        tmp = json.loads(response.content)
+        return tmp['data']['problemsetQuestionList']['questions']
 
     def get_daily_challenge_info():
         payload = {"query": QUERY_DAILY_CHALLENGE}

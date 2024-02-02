@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
+import traceback
 
 class Logger:
     def __init__(self, client):
@@ -30,6 +31,7 @@ class Logger:
                 await log_channel.send(embed = embed)
         except Exception as e:
             print(traceback.format_exc())
+            raise
         return
     
     # All fn below will be changed into on_message fetches
