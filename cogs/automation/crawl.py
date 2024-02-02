@@ -17,7 +17,7 @@ class crawl(commands.Cog):
     def cog_unload(self):
         self.crawling.cancel()
 
-    @tasks.loop(seconds = 100000000) # this interval is like 100x shorter than the process of crawling data of everyone now q:
+    @tasks.loop(seconds = 10) # this interval is like 100x shorter than the process of crawling data of everyone now q:
     async def crawling(self):
         # Waiting for internal cache, I suppose
         await self.client.wait_until_ready()

@@ -19,7 +19,7 @@ class MonthlyAutomation(commands.Cog):
     def cog_unload(self):
         self.monthly.cancel()
     
-    @tasks.loop(seconds = 21600)
+    @tasks.loop(hours = 6)
     async def monthly(self):
         await self.update_leaderboard()
         await self.update_problems_list()

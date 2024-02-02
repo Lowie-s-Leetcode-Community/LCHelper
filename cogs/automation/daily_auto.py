@@ -24,7 +24,7 @@ class DailyAutomation(commands.Cog):
     def cog_unload(self):
         self.daily.cancel()
 
-    @tasks.loop(seconds = 3600)
+    @tasks.loop(hours = 1)
     async def daily(self):
         # Waiting for internal cache, I suppose.
         await self.client.wait_until_ready()
