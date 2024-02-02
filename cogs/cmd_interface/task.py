@@ -4,11 +4,12 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from ..automation.logging.logging import logging
+from utils.logger import Logger
 
 class Task(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.logger = Logger(client)
 
     @app_commands.command(name = 'task', description = "[BETA] Earn score by doing daily tasks")
     async def _task(self, interaction):
@@ -126,9 +127,8 @@ class Task(commands.Cog):
             lc_user['current_month']['score'] += earned_score
             lc_user['all_time']['score'] += earned_score
 
-            # Logging
             if earned_score:
-                await logging.on_score_add(logging(self.client), member = member, score = earned_score, reason = f"Self-practice: {lc_problem['difficulty']} problem")
+                await self.logger.on_score_add(member = member, score = earned_score, reason = f"Self-practice: {lc_problem['difficulty']} problem")
 
         # (Daily challenge) Updating streaks and scores
         if is_daily and not lc_user['daily_task']['finished_today_daily']:
@@ -143,12 +143,12 @@ class Task(commands.Cog):
             lc_user['all_time']['score'] += 2
             
             # Updating score
-            await logging.on_score_add(logging(self.client), member = member, score = 2, reason = "Daily AC")
+            await self.logger.on_score_add(member = member, score = 2, reason = "Daily AC")
 
             if lc_user['current_month']['max_daily_streak'] % 7 == 0:
                 lc_user['current_month']['score'] += 4
                 lc_user['all_time']['score'] += 4
-                await logging.on_score_add(logging(self.client), member = member, score = 4, reason = "Monthly task completed")
+                await self.logger.on_score_add(member = member, score = 4, reason = "Monthly task completed")
         
         lc_query = {'$set': lc_user}
         lc_col.update_one({'discord_id': member.id}, lc_query)

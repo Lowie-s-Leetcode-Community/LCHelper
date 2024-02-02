@@ -7,6 +7,7 @@ from typing import Optional
 import random
 import string
 import datetime
+from database_api_layer.api import DatabaseAPILayer
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
@@ -16,6 +17,7 @@ class ConfirmView(discord.ui.View):
         self.username = username
         self.user_id = user_id
         self.response = None
+        self.db_api = DatabaseAPILayer(client)
     
     async def on_timeout(self):
         for child in self.children:
@@ -24,92 +26,60 @@ class ConfirmView(discord.ui.View):
             child.emoji = "⏰"
         await self.response.edit(view = self)
 
-
+    # TODO: handle "update user"
     @discord.ui.button(label = "Verify Me!", style = discord.ButtonStyle.primary)
     async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
         assert interaction.user.id == self.user_id
         await interaction.response.defer(thinking = True)
         user_info = LC_utils.get_user_profile(self.username)
         if len(user_info['profile']['summary']) >= 5 and user_info['profile']['summary'][0:5] == self.code:
-            lc_db = self.client.DBClient['LC_db']
-            lc_col = lc_db['LC_users']
-            lc_query = {'discord_id': interaction.user.id}
-            lc_result = lc_col.find_one(lc_query)
-            if lc_result:
-                lc_update = {'$set': {'lc_username': self.username}}
-                lc_col.update_one(lc_query, lc_update)
-            else:
-                lc_col.insert_one({'discord_id': interaction.user.id, 'lc_username': self.username})
-
-            # Also updating the necessary info
-            recent_info = LC_utils.get_recent_ac(self.username, 20)
-            tmp_query = {
-                'all_time': {
-                    'max_daily_streak': 0,
-                    'current_daily_streak': 0,
-                    'score': 0
-                },
-                'current_month': {
-                    'max_daily_streak': 0,
-                    'current_daily_streak': 0,
-                    'score': 0
-                },
-                'previous_month': {
-                    'max_daily_streak': 0,
-                    'current_daily_streak': 0,
-                    'score': 0
-                },
-                'daily_task': {
-                    'finished_today_daily': False,
-                    'scores_earned_excluding_daily': 0,
-                    'easy_solved': 0,
-                    'medium_solved': 0,
-                    'hard_solved': 0
-                },
-                'solved': []
+            user_obj = {
+                'discordId': str(interaction.user.id),
+                'leetcodeUsername': self.username,
+                'mostRecentSubId': -1,
+                'userSolvedProblems': []
             }
-            if len(recent_info) == 0:
-                tmp_query['recent_ac'] = {
-                    "id": None,
-                    "title": None,
-                    "titleSlug": None,
-                    "timestamp": str(int(datetime.datetime.timestamp(datetime.datetime.now())))
-                }
-            else: tmp_query['recent_ac'] = recent_info[0]
-        
-            lc_update = {'$set': tmp_query}
-            lc_col.update_one(lc_query, lc_update)
-            
-            lc_query = {}
-            lc_result = lc_db['LC_config'].find_one(lc_query)
-            verified_role_id = lc_result['verified_role_id']
-            unverified_role_id = lc_result['unverified_role_id']
+
+            # append missing info:
+            recent_info = LC_utils.get_recent_ac(self.username, 20)
+            if len(recent_info) > 0:
+                user_obj['mostRecentSubId'] = recent_info[0]['id']
+                for info in recent_info:
+                    user_obj['userSolvedProblems'].append(info['titleSlug'])
             member = await interaction.guild.fetch_member(interaction.user.id)
+
+            # TODO: refactor to lc_config in db
+            verified_role_id = 1087761988068855890
+            unverified_role_id = 1157694438152347758
             verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
             unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
-            await member.add_roles(verified_role)
             try:
-                # in case the role was already manually removed
-                await member.remove_roles(unverified_role)
+                await self.db_api.create_user(user_obj)
             except:
-                pass
-
-            await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
-
+                await interaction.followup.send(content = f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
+            else: 
+                await member.add_roles(verified_role)
+                await member.remove_roles(unverified_role)
+                await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
         else: await interaction.followup.send(content = f"{Assets.red_tick} **Unmatched code. Please try again.**")
-
-        
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
         await interaction.followup.send(error)
         
 class verify(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.db_api = DatabaseAPILayer(client)
 
     @app_commands.command(name = 'link', description = "Links your Discord with a LeetCode account")
     @app_commands.describe(username = "Specify a username")
     async def _link(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking = True)
+        user_profile = self.db_api.read_profile(str(interaction.user.id))
+        if user_profile != None:
+            await interaction.followup.send(f"You've already linked your profile.\
+                Please contact Core members for support if you want to re-link to another profile!")
+            return
+
         user_info = LC_utils.get_user_profile(username)
         if user_info:
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))   
@@ -121,4 +91,3 @@ class verify(commands.Cog):
 
 async def setup(client):
     await client.add_cog(verify(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(verify(client))

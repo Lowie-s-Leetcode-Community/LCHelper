@@ -173,4 +173,3 @@ class crawl(commands.Cog):
 
 async def setup(client):
     await client.add_cog(crawl(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(crawl(client))

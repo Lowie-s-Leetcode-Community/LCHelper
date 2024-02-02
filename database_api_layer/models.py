@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, text
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import Integer
@@ -37,7 +37,7 @@ class User(Base):
     __tablename__ = "User"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.now())
     discordId = mapped_column(String, nullable=False, unique=True)
     leetcodeUsername = mapped_column(String, nullable=False, unique=True)
     mostRecentSubId = mapped_column(Integer)
@@ -52,7 +52,7 @@ class Problem(Base):
     __tablename__ = "Problem"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     title = mapped_column(String, nullable=False)
     titleSlug = mapped_column(String, nullable=False)
     difficulty = mapped_column(String, nullable=False)
@@ -69,7 +69,7 @@ class UserSolvedProblem(Base):
     __tablename__ = "UserSolvedProblem"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.now())
     submissionId = mapped_column(Integer)
     problemId = mapped_column(Integer, ForeignKey("Problem.id"))
     userId = mapped_column(Integer, ForeignKey("User.id"))
@@ -80,7 +80,7 @@ class Topic(Base):
     __tablename__ = "Topic"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     topicName = mapped_column(String, unique=True)
     problems: Mapped[List[Problem]] = relationship(secondary=_ProblemToTopic, back_populates="topics")
 
@@ -91,7 +91,7 @@ class DailyObject(Base):
     __tablename__ = "DailyObject"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     problemId = mapped_column(Integer, ForeignKey("Problem.id"))
     isToday = mapped_column(Boolean)
     generatedDate = mapped_column(Date)
@@ -102,7 +102,7 @@ class UserDailyObject(Base):
     __tablename__ = "UserDailyObject"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
 
     userId = mapped_column(Integer, ForeignKey("User.id"))
     dailyObjectId = mapped_column(Integer, ForeignKey("DailyObject.id"))
@@ -119,7 +119,7 @@ class UserMonthlyObject(Base):
     __tablename__ = "UserMonthlyObject"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     userId = mapped_column(Integer, ForeignKey("User.id"))
     scoreEarned = mapped_column(Integer)
     firstDayOfMonth = mapped_column(Date)
@@ -129,7 +129,7 @@ class Mission(Base):
     __tablename__ = "Mission"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     name = mapped_column(String)
     description = mapped_column(String)
     rewardImageURL: Mapped[Optional[str]]
@@ -143,7 +143,7 @@ class DiscordQuiz(Base):
     __tablename__ = "DiscordQuiz"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     category = mapped_column(String)
     question = mapped_column(String)
     difficulty = mapped_column(String)
@@ -154,7 +154,7 @@ class DiscordQuizAnswer(Base):
     __tablename__ = "DiscordQuizAnswer"
     id = mapped_column(Integer, primary_key=True)
     createdAt = mapped_column(DateTime, insert_default=func.now())
-    updatedAt = mapped_column(DateTime, server_default=func.now(), onupdate=func.current_timestamp())
+    updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     answer = mapped_column(String)
     discordQuizId = mapped_column(Integer, ForeignKey("DiscordQuiz.id"))
     discordQuiz: Mapped[DiscordQuiz] = relationship(back_populates="discordQuizAnswer")

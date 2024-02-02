@@ -2,11 +2,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
-from ...automation.logging.logging import logging
+from utils.logger import Logger
 import random
+
 class score(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.logger = Logger(client)
 
     score_group = app_commands.Group(name = "score", description = "Scoring system")
     @score_group.command(name = 'add', description = "Adds score")
@@ -23,7 +25,7 @@ class score(commands.Cog):
         lc_user['all_time']['score'] += score
         lc_query = {'$set': lc_user}
         lc_col.update_one({'discord_id': member.id}, lc_query)
-        await logging.on_score_add(logging(self.client), member = member, score = score, reason = reason)
+        await self.logger.on_score_add(member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
         
     @score_group.command(name = 'deduct', description = "Deducts score")
@@ -40,7 +42,7 @@ class score(commands.Cog):
         lc_user['all_time']['score'] -= score
         lc_query = {'$set': lc_user}
         lc_col.update_one({'discord_id': member.id}, lc_query)
-        await logging.on_score_deduct(logging(self.client), member = member, score = score, reason = reason)
+        await self.logger.on_score_deduct(member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score deducted.**")
 
 async def setup(client):
