@@ -138,6 +138,13 @@ class DatabaseAPILayer:
     session.add(new_obj)
     return
 
+  def __update_user_sub_id(self, session, userId, submissionId):
+    update_query = update(db.User)\
+      .where(db.User.id == userId)\
+      .values(mostRecentSubId = submissionId)
+    session.execute(update_query)
+    return
+
   # Missing infos in SQL comparing to previous features:
   # - AC Count & Rate
   # - Like & Dislike
@@ -322,7 +329,6 @@ class DatabaseAPILayer:
     return { "id": result }
 
   async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
-    # next: deciding whether to not updating using 2 condition: problem solved & not Daily
     sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
     sub_query = select(db.UserSolvedProblem)\
       .where(db.UserSolvedProblem.userId == userId)\
@@ -330,9 +336,12 @@ class DatabaseAPILayer:
     with Session(self.engine, autoflush=False) as session:
       submission = session.execute(sub_query).one_or_none()
       problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
-      if not sub_info["is_daily"] or submission == None:
+      if (not sub_info["is_daily"]) and submission == None:
+        return
+      if submission == None:
         self.__create_submission(session, userId, problemId, submissionId)
       self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
+      self.__update_user_sub_id(session, userId, submissionId)
       await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, \
         Score<ScoreEarned={sub_info['score']}, SubmissionId={submissionId}>, \
         Daily<id={dailyObjectId}, type={problem_type}> \
