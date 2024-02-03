@@ -30,7 +30,6 @@ class Crawl(commands.Cog):
                 continue
 
             for submission in recent_info:
-                print(f"~~Konichiiwa: {submission}")
                 timestamp = submission['timestamp']
                 date = get_date_from_timestamp(int(timestamp))
                 daily_obj = self.db_api.read_daily_object(date)
