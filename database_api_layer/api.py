@@ -42,6 +42,7 @@ class DatabaseAPILayer:
     query3 = select(db.DailyObject)\
       .where(db.DailyObject.id == dailyObjectId)
     score = 0
+    warn = None
     is_daily = False
     with Session(self.engine) as session:
       user_daily_obj = session.execute(query1).one_or_none()
@@ -54,6 +55,7 @@ class DatabaseAPILayer:
         if user_daily_obj != None:
           if user_daily_obj.UserDailyObject.solvedDaily >= 1:
             score = 0
+            warn = "Daily points have already been counted"
       else:
         practice_cap = 6
         practice_earned = 0
@@ -66,7 +68,9 @@ class DatabaseAPILayer:
         elif problem_diff == "Hard":
           problem_score = 3
         score = min(practice_cap - practice_earned, problem_score)
-    return { "score": score, "is_daily": is_daily, "difficulty": problem_diff }
+        if (score == 0):
+          warn = "Point cap reached"
+    return { "score": score, "is_daily": is_daily, "difficulty": problem_diff, "warn": warn }
 
   def __update_user_score(self, session, userId, dailyObjectId, score, problem_type = None):
     user_daily_query = select(db.UserDailyObject)\
@@ -318,6 +322,7 @@ class DatabaseAPILayer:
     return { "id": result }
 
   async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
+    # next: deciding whether to not updating using 2 condition: problem solved & not Daily
     sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
     sub_query = select(db.UserSolvedProblem)\
       .where(db.UserSolvedProblem.userId == userId)\
@@ -328,7 +333,10 @@ class DatabaseAPILayer:
       if not sub_info["is_daily"] or submission == None:
         self.__create_submission(session, userId, problemId, submissionId)
       self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
-      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, Score<ScoreEarned={sub_info['score']}, SubmissionId={submissionId}>, Daily<id={dailyObjectId}, type={problem_type}>")
+      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, \
+        Score<ScoreEarned={sub_info['score']}, SubmissionId={submissionId}>, \
+        Daily<id={dailyObjectId}, type={problem_type}> \
+        {('Warning: ' + sub_info['warn']) if sub_info['warn'] else ''}")
     return
 
 ## Features to be refactoring
