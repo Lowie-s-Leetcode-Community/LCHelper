@@ -162,7 +162,13 @@ class DatabaseAPILayer:
 
   # Desc: update to DB and send a log
   def update_score(self, memberDiscordId, delta):
-    return {}
+    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId)
+    find_user_
+    with Session(self.engine) as session:
+      queryResult = session.execute(find_user_query).all()
+      print(len(queryResult))
+      print(queryResult)
+      
 
   # Can we split this fn into 2?
   async def create_user(self, user_obj):

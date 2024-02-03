@@ -5,10 +5,13 @@ from utils.asset import Assets
 from utils.logger import Logger
 import random
 
+from database_api_layer.api import DatabaseAPILayer
+
 class score(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.logger = Logger(client)
+        self.db_api = DatabaseAPILayer(client)
 
     score_group = app_commands.Group(name = "score", description = "Scoring system")
     @score_group.command(name = 'add', description = "Adds score")
@@ -18,6 +21,8 @@ class score(commands.Cog):
     @app_commands.checks.has_permissions(administrator = True)
     async def _score_add(self, interaction: discord.Interaction, member: discord.Member, score: int, reason: str):
         await interaction.response.defer(thinking = True)
+
+        self.db_api.update_score(member.id, score)
 
         lc_col = self.client.DBClient['LC_db']['LC_users']
         lc_user = lc_col.find_one({'discord_id': member.id})
