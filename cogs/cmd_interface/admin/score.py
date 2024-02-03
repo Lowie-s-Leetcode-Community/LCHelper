@@ -22,14 +22,17 @@ class score(commands.Cog):
     async def _score_add(self, interaction: discord.Interaction, member: discord.Member, score: int, reason: str):
         await interaction.response.defer(thinking = True)
 
-        self.db_api.update_score(member.id, score)
+        daily_obj = self.db_api.update_score(str(member.id), score)
+        if (daily_obj == None):
+            await interaction.followup.send(f"The bot is bug-ed in score add, contact bot dev")
+            return
 
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        lc_user = lc_col.find_one({'discord_id': member.id})
-        lc_user['current_month']['score'] += score
-        lc_user['all_time']['score'] += score
-        lc_query = {'$set': lc_user}
-        lc_col.update_one({'discord_id': member.id}, lc_query)
+        # lc_col = self.client.DBClient['LC_db']['LC_users']
+        # lc_user = lc_col.find_one({'discord_id': member.id})
+        # lc_user['current_month']['score'] += score
+        # lc_user['all_time']['score'] += score
+        # lc_query = {'$set': lc_user}
+        # lc_col.update_one({'discord_id': member.id}, lc_query)
         await self.logger.on_score_add(member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
         
@@ -40,13 +43,12 @@ class score(commands.Cog):
     @app_commands.checks.has_permissions(administrator = True)
     async def _score_deduct(self, interaction: discord.Interaction, member: discord.Member, score: int, reason: str):
         await interaction.response.defer(thinking = True)
+        
+        daily_obj = self.db_api.update_score(str(member.id), -score)
+        if (daily_obj == None):
+            await interaction.followup.send(f"The bot is bug-ed in score deduct, contact bot dev")
+            return
 
-        lc_col = self.client.DBClient['LC_db']['LC_users']
-        lc_user = lc_col.find_one({'discord_id': member.id})
-        lc_user['current_month']['score'] -= score
-        lc_user['all_time']['score'] -= score
-        lc_query = {'$set': lc_user}
-        lc_col.update_one({'discord_id': member.id}, lc_query)
         await self.logger.on_score_deduct(member = member, score = score, reason = reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score deducted.**")
 

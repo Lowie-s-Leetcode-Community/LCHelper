@@ -275,13 +275,16 @@ class DatabaseAPILayer:
 
   # Desc: update to DB and send a log
   def update_score(self, memberDiscordId, delta):
-    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId)
-    find_user_
+    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId).limit(1)
+    find_daily_object = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
+    result = None
     with Session(self.engine) as session:
-      queryResult = session.execute(find_user_query).all()
-      print(len(queryResult))
-      print(queryResult)
-      
+      user = session.execute(find_user_query).one()
+      daily = session.scalars(find_daily_object).one()
+      result = self.__update_user_score(session, user.User.id, daily.id, delta)
+      # print("User id: " + str(user.User.id))
+      # print("Daily id: "+ str(daily.id))
+    return result
 
   # Can we split this fn into 2?
   async def create_user(self, user_obj):
