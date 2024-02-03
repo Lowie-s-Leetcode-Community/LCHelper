@@ -37,7 +37,7 @@ class Crawl(commands.Cog):
                 problem = self.db_api.read_problem_from_slug(submission['titleSlug'])
                 await self.db_api.register_new_submission(user['userId'], problem['id'], submission['id'], daily_obj['id'])
 
-    @tasks.loop(seconds = 10) # this interval is like 100x shorter than the process of crawling data of everyone now q:
+    @tasks.loop(minutes = 1) # this interval is like 100x shorter than the process of crawling data of everyone now q:
     async def crawling(self):
         await self.submissions()
 
@@ -45,7 +45,7 @@ class Crawl(commands.Cog):
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(1085444549125611530)
         channel = await guild.fetch_channel(1091763595777409025)
-        await channel.send(f"Crawling error```py\n{exception}```")
+        await channel.send(f"Crawling error```py\n{traceback.format_exc()[:500]}```")
 
         self.crawling.restart()
 

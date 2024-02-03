@@ -12,7 +12,7 @@ from utils.llc_datetime import get_first_day_of_current_month
 class MonthlyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True": 
+        if os.getenv('START_UP_TASKS') != "True": 
             self.monthly.start()
         self.db_api = DatabaseAPILayer(client)
 

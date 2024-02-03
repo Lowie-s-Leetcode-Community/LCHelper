@@ -9,7 +9,6 @@ from utils.logger import Logger
 from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
 from sqlalchemy.exc import SQLAlchemyError
 import asyncio
-import traceback
 
 class DatabaseAPILayer:
   engine = None
@@ -34,61 +33,73 @@ class DatabaseAPILayer:
       result = True
     return result
 
-    def __calculate_submission_score(self, userId, dailyObjectId, problemId):
-      query1 = select(db.UserDailyObject)\
-        .where(db.UserDailyObject.userId == userId)\
-        .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
-      query2 = select(db.Problem.difficulty)\
-        .where(db.Problem.id == problemId)
-      query3 = select(db.DailyObject)\
-        .where(db.DailyObject.id == dailyObjectId)
-      score = 0
-      is_daily = 0
-      with Session(self.engine) as session:
-        user_daily_obj = session.execute(query1).one_or_none()
-        problem_diff = session.execute(query2).one().difficulty
-        daily_obj = session.execute(query3).one()
+  def __calculate_submission_score(self, userId, dailyObjectId, problemId):
+    query1 = select(db.UserDailyObject)\
+      .where(db.UserDailyObject.userId == userId)\
+      .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
+    query2 = select(db.Problem.difficulty)\
+      .where(db.Problem.id == problemId)
+    query3 = select(db.DailyObject)\
+      .where(db.DailyObject.id == dailyObjectId)
+    score = 0
+    is_daily = False
+    with Session(self.engine) as session:
+      user_daily_obj = session.execute(query1).one_or_none()
+      problem_diff = session.execute(query2).one().difficulty
+      daily_obj = session.execute(query3).one()
 
-        if daily_obj.DailyObject.problemId == problemId:
-          result = 2
-          is_daily = True
-          if user_daily_obj.solvedDaily:
-            result = 0
-        else:
-          practice_cap = 6
-          practice_earned = 0
-          if user_daily_obj != None:
-            info = user_daily_obj.UserDailyObject
-            practice_earned = info.solvedEasy * 1 + info.solvedMedium * 2 + info.solvedHard * 3
-          problem_score = 1
-          if problem_diff == "Medium":
-            problem_score = 2
-          elif problem_diff == "Hard":
-            problem_score = 3
-          result = min(practice_cap - practice_earned, problem_score)
-      return { "score": score, "is_daily": is_daily }
+      if daily_obj.DailyObject.problemId == problemId:
+        score = 2
+        is_daily = True
+        if user_daily_obj != None:
+          if user_daily_obj.UserDailyObject.solvedDaily >= 1:
+            score = 0
+      else:
+        practice_cap = 6
+        practice_earned = 0
+        if user_daily_obj != None:
+          info = user_daily_obj.UserDailyObject
+          practice_earned = min(info.solvedEasy * 1 + info.solvedMedium * 2 + info.solvedHard * 3, practice_cap)
+        problem_score = 1
+        if problem_diff == "Medium":
+          problem_score = 2
+        elif problem_diff == "Hard":
+          problem_score = 3
+        score = min(practice_cap - practice_earned, problem_score)
+    return { "score": score, "is_daily": is_daily, "difficulty": problem_diff }
 
-  # this will be invoked by any function that needs update of score
-  # make sure this will be in the same commit as other changes
-  # this do not invoke session.commit
-  def __update_user_score(self, session, userId, dailyObjectId, score):
+  def __update_user_score(self, session, userId, dailyObjectId, score, problem_type = None):
     user_daily_query = select(db.UserDailyObject)\
       .where(db.UserDailyObject.userId == userId)\
       .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
     user_daily_obj = session.execute(user_daily_query).one_or_none()
+
+    solvedEasy = 1 if problem_type == "Easy" else 0
+    solvedMedium = 1 if problem_type == "Medium" else 0
+    solvedHard = 1 if problem_type == "Hard" else 0
+    solvedDaily = 1 if problem_type == "Daily" else 0
+
     if user_daily_obj == None:
-      new_obj = db.UserDailyObject(
+      user_daily_obj = db.UserDailyObject(
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
         dailyObjectId=dailyObjectId,
-        scoreEarned=0
+        scoreEarned=0,
+        solvedDaily=solvedDaily,
+        solvedEasy=solvedEasy,
+        solvedMedium=solvedMedium,
+        solvedHard=solvedHard
       )
       session.add(new_obj)
     else:
       update_query = update(db.UserDailyObject)\
         .where(db.UserDailyObject.userId == userId)\
         .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
-        .values(scoreEarned = user_daily_obj.UserDailyObject.scoreEarned + score)
+        .values(scoreEarned = user_daily_obj.UserDailyObject.scoreEarned + score)\
+        .values(solvedEasy = user_daily_obj.UserDailyObject.solvedEasy + solvedEasy)\
+        .values(solvedMedium = user_daily_obj.UserDailyObject.solvedMedium + solvedMedium)\
+        .values(solvedHard = user_daily_obj.UserDailyObject.solvedHard + solvedHard)\
+        .values(solvedDaily = min(1, user_daily_obj.UserDailyObject.solvedDaily + solvedDaily))
       session.execute(update_query)
 
     first_day_of_month = get_first_day_of_current_month()
@@ -111,7 +122,7 @@ class DatabaseAPILayer:
         .where(db.UserMonthlyObject.firstDayOfMonth == first_day_of_month)\
         .values(scoreEarned = user_monthly_obj.UserMonthlyObject.scoreEarned + score)
       session.execute(update_query)
-    return
+    return user_daily_obj
   
   def __create_submission(self, session, userId, problemId, submissionId):
     new_obj = db.UserSolvedProblem(
@@ -305,8 +316,6 @@ class DatabaseAPILayer:
       await self.__commit(session, f"Problem<id:{result}>")
 
     return { "id": result }
-  
-
 
   async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
     sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
@@ -315,10 +324,11 @@ class DatabaseAPILayer:
       .where(db.UserSolvedProblem.problemId == problemId)
     with Session(self.engine, autoflush=False) as session:
       submission = session.execute(sub_query).one_or_none()
+      problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
       if not sub_info["is_daily"] or submission == None:
         self.__create_submission(session, userId, problemId, submissionId)
-      self.__update_user_score(session, userId, dailyObjectId, 2)
-      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, Score<ScoreEarned={2}, SubmissionId={submissionId}>, {dailyObjectId}")
+      self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
+      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, Score<ScoreEarned={sub_info['score']}, SubmissionId={submissionId}>, Daily<id={dailyObjectId}, type={problem_type}>")
     return
 
 ## Features to be refactoring
