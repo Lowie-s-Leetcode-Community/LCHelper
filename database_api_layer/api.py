@@ -34,30 +34,60 @@ class DatabaseAPILayer:
       result = True
     return result
 
+    def __calculate_submission_score(self, userId, dailyObjectId, problemId):
+      query1 = select(db.UserDailyObject)\
+        .where(db.UserDailyObject.userId == userId)\
+        .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
+      query2 = select(db.Problem.difficulty)\
+        .where(db.Problem.id == problemId)
+      query3 = select(db.DailyObject)\
+        .where(db.DailyObject.id == dailyObjectId)
+      score = 0
+      is_daily = 0
+      with Session(self.engine) as session:
+        user_daily_obj = session.execute(query1).one_or_none()
+        problem_diff = session.execute(query2).one().difficulty
+        daily_obj = session.execute(query3).one()
+
+        if daily_obj.DailyObject.problemId == problemId:
+          result = 2
+          is_daily = True
+          if user_daily_obj.solvedDaily:
+            result = 0
+        else:
+          practice_cap = 6
+          practice_earned = 0
+          if user_daily_obj != None:
+            info = user_daily_obj.UserDailyObject
+            practice_earned = info.solvedEasy * 1 + info.solvedMedium * 2 + info.solvedHard * 3
+          problem_score = 1
+          if problem_diff == "Medium":
+            problem_score = 2
+          elif problem_diff == "Hard":
+            problem_score = 3
+          result = min(practice_cap - practice_earned, problem_score)
+      return { "score": score, "is_daily": is_daily }
+
   # this will be invoked by any function that needs update of score
   # make sure this will be in the same commit as other changes
   # this do not invoke session.commit
-  def __update_user_score(self, session, userId, score):
-    daily_obj_query = select(db.DailyObject)\
-      .where(db.DailyObject.generatedDate == get_today())
-    daily_obj = session.execute(daily_obj_query).one()
+  def __update_user_score(self, session, userId, dailyObjectId, score):
     user_daily_query = select(db.UserDailyObject)\
       .where(db.UserDailyObject.userId == userId)\
-      .where(db.UserDailyObject.dailyObjectId == daily_obj.DailyObject.id)
+      .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
     user_daily_obj = session.execute(user_daily_query).one_or_none()
     if user_daily_obj == None:
       new_obj = db.UserDailyObject(
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
-        dailyObjectId=daily_obj.DailyObject.id,
+        dailyObjectId=dailyObjectId,
         scoreEarned=0
       )
       session.add(new_obj)
     else:
-      daily_id = daily_obj.DailyObject.id
       update_query = update(db.UserDailyObject)\
         .where(db.UserDailyObject.userId == userId)\
-        .where(db.UserDailyObject.dailyObjectId == daily_id)\
+        .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
         .values(scoreEarned = user_daily_obj.UserDailyObject.scoreEarned + score)
       session.execute(update_query)
 
@@ -243,12 +273,24 @@ class DatabaseAPILayer:
       result = queryResult.Problem.__dict__
     return result
 
+  def read_daily_object(self, date):
+    query = select(db.DailyObject).where(db.DailyObject.generatedDate == date)
+    result = None
+    with Session(self.engine) as session:
+      daily = session.scalars(query).one_or_none()
+      if daily == None:
+        daily = self.read_latest_daily()
+        result = daily
+      else:
+        result = daily.__dict__
+
+    return result
+
   async def create_problem(self, problem):
     topic_list = list(map(lambda topic: topic['name'], problem['topicTags']))
     query = select(db.Topic).filter(db.Topic.topicName.in_(topic_list))
     with Session(self.engine, autoflush=False) as session:
       queryResult = session.execute(query).all()
-      print(queryResult)
       new_obj = db.Problem(
         id=get_min_available_id(session, db.Problem),
         title=problem['title'],
@@ -264,18 +306,23 @@ class DatabaseAPILayer:
 
     return { "id": result }
   
-  async def register_new_submission(self, userId, problemId, submissionId):
+
+
+  async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
+    sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
+    sub_query = select(db.UserSolvedProblem)\
+      .where(db.UserSolvedProblem.userId == userId)\
+      .where(db.UserSolvedProblem.problemId == problemId)
     with Session(self.engine, autoflush=False) as session:
-      self.__create_submission(session, userId, problemId, submissionId)
-      self.__update_user_score(session, userId, 2)
-      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, Score<ScoreEarned={2}, SubmissionId={submissionId}>")
+      submission = session.execute(sub_query).one_or_none()
+      if not sub_info["is_daily"] or submission == None:
+        self.__create_submission(session, userId, problemId, submissionId)
+      self.__update_user_score(session, userId, dailyObjectId, 2)
+      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, Score<ScoreEarned={2}, SubmissionId={submissionId}>, {dailyObjectId}")
     return
 
 ## Features to be refactoring
-# tasks
-# gimme
 
 # onboard info - need database
-#
 
 # qa

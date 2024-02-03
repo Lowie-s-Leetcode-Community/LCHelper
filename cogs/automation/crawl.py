@@ -8,6 +8,7 @@ import os
 import asyncio
 import traceback
 from database_api_layer.api import DatabaseAPILayer
+from utils.llc_datetime import get_date_from_timestamp
 
 class Crawl(commands.Cog):
     def __init__(self, client):
@@ -29,8 +30,13 @@ class Crawl(commands.Cog):
                 continue
 
             for submission in recent_info:
+                print(f"~~Konichiiwa: {submission}")
+                timestamp = submission['timestamp']
+                date = get_date_from_timestamp(int(timestamp))
+                daily_obj = self.db_api.read_daily_object(date)
+
                 problem = self.db_api.read_problem_from_slug(submission['titleSlug'])
-                await self.db_api.register_new_submission(user['userId'], problem['id'] ,submission['id'])
+                await self.db_api.register_new_submission(user['userId'], problem['id'], submission['id'], daily_obj['id'])
 
     @tasks.loop(seconds = 10) # this interval is like 100x shorter than the process of crawling data of everyone now q:
     async def crawling(self):

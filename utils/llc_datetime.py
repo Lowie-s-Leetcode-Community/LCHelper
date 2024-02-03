@@ -1,11 +1,15 @@
 from datetime import datetime, timedelta
 import pytz
+
+def get_date_from_timestamp(ts):
+  current_utc_time = datetime.fromtimestamp(ts)
+  result = current_utc_time.date()
+
+  return result
+
 def get_today():
   current_utc_time = datetime.now(pytz.utc)
   result = current_utc_time.date()
-  # for debugging
-  fake_today = datetime(2024, 1, 17, 0, 0, 0)
-  result = fake_today.date()
   return result
 
 def get_first_day_of_current_month():
