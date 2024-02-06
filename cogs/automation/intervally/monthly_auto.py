@@ -31,8 +31,9 @@ class MonthlyAutomation(commands.Cog):
         first_day_of_current_month = get_first_day_of_current_month()
         if len(leaderboard) > 0:
             return
+        leaderboard = self.db_api.read_last_month_leaderboard()
         for user in leaderboard:
-            await self.db_api.create_monthly_object(userId=user.id, firstDayOfMonth=first_day_of_current_month)
+            await self.db_api.create_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
         return
     
     # Update the problem list, as there are new problems on the site every month

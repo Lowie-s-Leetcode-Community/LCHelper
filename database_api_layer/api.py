@@ -8,6 +8,7 @@ import database_api_layer.models as db
 from utils.logger import Logger
 from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
 from sqlalchemy.exc import SQLAlchemyError
+import utils.api_utils as api_utils
 import asyncio
 
 class DatabaseAPILayer:
@@ -16,20 +17,21 @@ class DatabaseAPILayer:
     dbschema = os.getenv('POSTGRESQL_SCHEMA')
     self.engine = create_engine(
       os.getenv('POSTGRESQL_CRED'), 
-      connect_args={'options': '-csearch_path={}'.format(dbschema)}, echo=True)
+      connect_args={'options': '-csearch_path={}'.format(dbschema)})
     self.client = client
     self.logger = Logger(client)
   
   # Generalize all session commits behavior
-  async def __commit(self, session, context):
+  async def __commit(self, session, context, json_desc):
     result = None
     try:
       session.commit()
     except Exception as e:
-      await self.logger.on_db_update(False, context, e)
+      json_desc["error"] = e
+      await self.logger.on_db_update(False, context, json_desc)
       result = False
     else:
-      await self.logger.on_db_update(True, context, "")
+      await self.logger.on_db_update(True, context, json_desc)
       result = True
     return result
 
@@ -136,7 +138,7 @@ class DatabaseAPILayer:
       submissionId=submissionId
     )
     session.add(new_obj)
-    return
+    return new_obj
 
   def __update_user_sub_id(self, session, userId, submissionId):
     update_query = update(db.User)\
@@ -258,7 +260,7 @@ class DatabaseAPILayer:
         idx += 1
       session.add(new_user)
       result = new_user.id
-      await self.__commit(session, "User")
+      await self.__commit(session, "User", "\{\}")
 
     return { "id": result }
 
@@ -272,7 +274,7 @@ class DatabaseAPILayer:
       )
       session.add(new_obj)
       result = new_obj.id
-      await self.__commit(session, f"UserMonthlyObject<id:{result}>")
+      await self.__commit(session, f"UserMonthlyObject<id:{result}>", "\{\}")
 
     return { "id": result }
 
@@ -324,7 +326,7 @@ class DatabaseAPILayer:
 
       session.add(new_obj)
       result = new_obj.id
-      await self.__commit(session, f"Problem<id:{result}>")
+      await self.__commit(session, f"Problem<id:{result}>", "\{\}")
 
     return { "id": result }
 
@@ -342,10 +344,14 @@ class DatabaseAPILayer:
         self.__create_submission(session, userId, problemId, submissionId)
       self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
       self.__update_user_sub_id(session, userId, submissionId)
-      await self.__commit(session, f"UserSolvedProblem<userId={userId},problemId={problemId}>, \
-        Score<ScoreEarned={sub_info['score']}, SubmissionId={submissionId}>, \
-        Daily<id={dailyObjectId}, type={problem_type}> \
-        {('Warning: ' + sub_info['warn']) if sub_info['warn'] else ''}")
+      obj = {}
+      obj["submissionId"] = submissionId
+      obj["userId"] = userId
+      obj["problemId"] = problemId
+      obj["warn"] = ('Warning: ' + sub_info['warn']) if sub_info['warn'] else ''
+      obj["is_daily"] = sub_info["is_daily"]
+
+      await self.__commit(session, "UserSolvedProblem", api_utils.submission_jstr(obj))
     return
 
 ## Features to be refactoring
