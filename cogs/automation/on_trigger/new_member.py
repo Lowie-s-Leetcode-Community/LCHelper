@@ -10,8 +10,8 @@ import os
 class event(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True":
-            self.member_prune.start()
+        # if os.getenv('START_UP_TASKS') == "True":
+        #     self.member_prune.start()
         self.logger = Logger(client)
 
     def cog_unload(self):
