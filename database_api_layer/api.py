@@ -10,6 +10,7 @@ from database_api_layer.db_utils import get_min_available_id, get_multiple_avail
 from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
 import asyncio
+import json
 
 class DatabaseAPILayer:
   engine = None
@@ -27,8 +28,8 @@ class DatabaseAPILayer:
     try:
       session.commit()
     except Exception as e:
-      json_desc["error"] = e
-      await self.logger.on_db_update(False, context, json_desc)
+      obj = { "action": json_desc, "error": e }
+      await self.logger.on_db_update(False, context, json.dump(obj, default=str))
       result = False
     else:
       await self.logger.on_db_update(True, context, json_desc)
@@ -74,10 +75,10 @@ class DatabaseAPILayer:
           warn = "Point cap reached"
     return { "score": score, "is_daily": is_daily, "difficulty": problem_diff, "warn": warn }
 
-  def __update_user_score(self, session, userId, dailyObject, score, problem_type = None):
+  def __update_user_score(self, session, userId: int, dailyObject: dict, score: int, problem_type = None):
     user_daily_query = select(db.UserDailyObject)\
       .where(db.UserDailyObject.userId == userId)\
-      .where(db.UserDailyObject.dailyObjectId == dailyObject.id)
+      .where(db.UserDailyObject.dailyObjectId == dailyObject['id'])
     user_daily_obj = session.execute(user_daily_query).one_or_none()
 
     solvedEasy = 1 if problem_type == "Easy" else 0
@@ -89,18 +90,18 @@ class DatabaseAPILayer:
       user_daily_obj = db.UserDailyObject(
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
-        dailyObjectId=dailyObject.id,
-        scoreEarned=0,
+        dailyObjectId=dailyObject['id'],
+        scoreEarned=score,
         solvedDaily=solvedDaily,
         solvedEasy=solvedEasy,
         solvedMedium=solvedMedium,
         solvedHard=solvedHard
       )
-      session.add(new_obj)
+      session.add(user_daily_obj)
     else:
       update_query = update(db.UserDailyObject)\
         .where(db.UserDailyObject.userId == userId)\
-        .where(db.UserDailyObject.dailyObjectId == dailyObject.id)\
+        .where(db.UserDailyObject.dailyObjectId == dailyObject['id'])\
         .values(scoreEarned = user_daily_obj.UserDailyObject.scoreEarned + score)\
         .values(solvedEasy = user_daily_obj.UserDailyObject.solvedEasy + solvedEasy)\
         .values(solvedMedium = user_daily_obj.UserDailyObject.solvedMedium + solvedMedium)\
@@ -108,7 +109,7 @@ class DatabaseAPILayer:
         .values(solvedDaily = min(1, user_daily_obj.UserDailyObject.solvedDaily + solvedDaily))
       session.execute(update_query)
 
-    first_day_of_month = get_fdom_by_timestamp(dailyObject.generatedDate)
+    first_day_of_month = get_fdom_by_timestamp(dailyObject['generatedDate'])
     user_monthly_query = select(db.UserMonthlyObject)\
       .where(db.UserMonthlyObject.userId == userId)\
       .where(db.UserMonthlyObject.firstDayOfMonth == first_day_of_month)
@@ -287,7 +288,7 @@ class DatabaseAPILayer:
     result = None
     with Session(self.engine) as session:
       user = session.execute(find_user_query).one()
-      daily = session.scalars(find_daily_object).one()
+      daily = session.scalars(find_daily_object).one().__dict__
       result = self.__update_user_score(session, user.User.id, daily, delta)
 
       await self.__commit(session, "UserDailyObject",\
@@ -344,7 +345,7 @@ class DatabaseAPILayer:
 
     return { "id": result }
 
-  async def create_monthly_object(self, userId, firstDayOfMonth):
+  async def create_user_monthly_object(self, userId, firstDayOfMonth):
     with Session(self.engine, autoflush=False) as session:
       new_obj = db.UserMonthlyObject(
         id=get_min_available_id(session, db.UserMonthlyObject),
@@ -355,7 +356,19 @@ class DatabaseAPILayer:
       session.add(new_obj)
       result = new_obj.id
       await self.__commit(session, f"UserMonthlyObject<id:{result}>", "[]")
-
+    return { "id": result }
+  
+  async def create_daily_object(self, problemId, date):
+    with Session(self.engine, autoflush=False) as session:
+      new_obj = db.DailyObject(
+        id=get_min_available_id(session, db.DailyObject),
+        problemId=problemId,
+        generatedDate=date,
+        isToday=False
+      )
+      session.add(new_obj)
+      result = new_obj.id
+      await self.__commit(session, f"DailyObject<id:{result}, date:{date}>", "[]")
     return { "id": result }
 
   def read_problems_all(self):

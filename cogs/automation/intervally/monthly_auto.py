@@ -31,7 +31,7 @@ class MonthlyAutomation(commands.Cog):
             return
         leaderboard = self.client.db_api.read_last_month_leaderboard()
         for user in leaderboard:
-            await self.client.db_api.create_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
+            await self.client.db_api.create_user_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
         return
 
     # Update the problem list, as there are new problems on the site every month
