@@ -8,17 +8,14 @@ import asyncio
 import traceback
 import datetime
 
-from database_api_layer.api import DatabaseAPILayer
-
 class Daily(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.db_api = DatabaseAPILayer(client)
 
     @app_commands.command(name = 'daily', description = "Returns Leetcode's Daily Challenge")
     async def _daily(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
-        info = self.db_api.read_latest_daily()
+        info = self.client.db_api.read_latest_daily()
         url = f"https://leetcode.com/problems/{info['problem']['titleSlug']}"
         difficulty = info['problem']['difficulty']
         color = Assets.easy if difficulty == 'Easy' else Assets.medium if difficulty == 'Medium' else Assets.hard

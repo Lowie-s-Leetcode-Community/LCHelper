@@ -11,6 +11,7 @@ from pymongo import MongoClient
 import traceback
 from pathlib import Path
 import logging
+from database_api_layer.api import DatabaseAPILayer
 
 load_dotenv()
 
@@ -22,6 +23,9 @@ tree = client.tree
 DBClient = MongoClient(os.getenv('MONGODB_LOGIN_CRED'))
 client.DBClient = DBClient
 log_handler = logging.FileHandler(filename = "discord.log", encoding = "utf-8", mode = "w")
+
+db_api = DatabaseAPILayer(client)
+client.db_api = db_api
 
 async def main():
     async with client:
@@ -48,7 +52,7 @@ async def on_app_command_error(interaction: Interaction, error: AppCommandError)
     elif isinstance(error, app_commands.CommandNotFound):
         return
     else:
-        await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
+        await interaction.followup.send(f"```py\n{traceback.format_exc()[:800]}```")
     print(error)
 
 @tree.error
@@ -59,6 +63,6 @@ async def on_error(interaction: Interaction, error: AppCommandError):
         return
     else:
         print(traceback.format_exc())
-        await interaction.followup.send(f"```py\n{traceback.format_exc()}```")
+        await interaction.followup.send(f"```py\n{traceback.format_exc()[:800]}```")
 
 asyncio.run(main())

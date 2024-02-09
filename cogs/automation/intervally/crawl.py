@@ -7,7 +7,6 @@ from cogs.cmd_interface.task import Task
 import os
 import asyncio
 import traceback
-from database_api_layer.api import DatabaseAPILayer
 from utils.llc_datetime import get_date_from_timestamp
 from datetime import datetime
 import time
@@ -17,14 +16,13 @@ class Crawl(commands.Cog):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True":
             self.crawling.start()
-        self.db_api = DatabaseAPILayer(client)
 
     def cog_unload(self):
         self.crawling.cancel()
     
     async def submissions(self):
         # flaw: this only returns user that are shown on leaderboard???
-        leaderboard = self.db_api.read_current_month_leaderboard()
+        leaderboard = self.client.db_api.read_current_month_leaderboard()
         # benchmarking
         # guild = await self.client.fetch_guild(1085444549125611530)
         # log_channel = await guild.fetch_channel(1202180199060615168)
@@ -42,10 +40,10 @@ class Crawl(commands.Cog):
                 if int(submission['id']) <= user['mostRecentSubId']:
                     break
                 date = get_date_from_timestamp(int(submission['timestamp']))
-                daily_obj = self.db_api.read_daily_object(date)
+                daily_obj = self.client.db_api.read_daily_object(date)
 
-                problem = self.db_api.read_problem_from_slug(submission['titleSlug'])
-                await self.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj['id'])
+                problem = self.client.db_api.read_problem_from_slug(submission['titleSlug'])
+                await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj['id'])
         # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
 
     @tasks.loop(minutes = 20)

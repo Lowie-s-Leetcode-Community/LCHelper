@@ -6,7 +6,6 @@ from utils.lc_utils import LC_utils
 import os
 import traceback
 import datetime
-from database_api_layer.api import DatabaseAPILayer
 from utils.llc_datetime import get_first_day_of_current_month
 
 class MonthlyAutomation(commands.Cog):
@@ -14,7 +13,6 @@ class MonthlyAutomation(commands.Cog):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True": 
             self.monthly.start()
-        self.db_api = DatabaseAPILayer(client)
 
     def cog_unload(self):
         self.monthly.cancel()
@@ -27,18 +25,18 @@ class MonthlyAutomation(commands.Cog):
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
         # maybe send a message to update last month leaderboard on #general?
-        leaderboard = self.db_api.read_current_month_leaderboard()
+        leaderboard = self.client.db_api.read_current_month_leaderboard()
         first_day_of_current_month = get_first_day_of_current_month()
         if len(leaderboard) > 0:
             return
-        leaderboard = self.db_api.read_last_month_leaderboard()
+        leaderboard = self.client.db_api.read_last_month_leaderboard()
         for user in leaderboard:
-            await self.db_api.create_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
+            await self.client.db_api.create_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
         return
     
     # Update the problem list, as there are new problems on the site every month
     async def update_problems_list(self):
-        db_problems_list = self.db_api.read_problems_all()
+        db_problems_list = self.client.db_api.read_problems_all()
         # assuming that graphql result has sorted problem properly
         lc_problem_list = LC_utils.crawl_problem_list()
         new_problems = []
@@ -65,7 +63,7 @@ class MonthlyAutomation(commands.Cog):
               # handling if problem changes slug?
         for problem in new_problems:
           print(problem)
-          await self.db_api.create_problem(problem)
+          await self.client.db_api.create_problem(problem)
 
         # add warning msg for removed_problem?
         return
