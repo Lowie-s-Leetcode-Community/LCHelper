@@ -53,7 +53,7 @@ class Crawl(commands.Cog):
     @crawling.error
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(1091763595777409025)
+        channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
 
         time.sleep(90)

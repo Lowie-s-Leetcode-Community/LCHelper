@@ -412,8 +412,7 @@ class DatabaseAPILayer:
 
   def read_latest_configs(self):
     query = select(db.SystemConfiguration)\
-      .order_by(db.SystemConfiguration.id.desc())\
-      .limit(1)
+      .where(db.SystemConfiguration.id == 1)
     with Session(self.engine) as session:
       queryResult = session.scalars(query).one()
       cfg = queryResult.as_dict()
