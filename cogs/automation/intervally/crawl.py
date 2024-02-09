@@ -47,7 +47,7 @@ class Crawl(commands.Cog):
                 await self.db_api.register_new_submission(user['userId'], problem['id'], int(submission['id']), daily_obj['id'])
         # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
 
-    @tasks.loop(minutes = 15)
+    @tasks.loop(minutes = 20)
     async def crawling(self):
         await self.submissions()
 
@@ -57,6 +57,7 @@ class Crawl(commands.Cog):
         channel = await guild.fetch_channel(1091763595777409025)
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
 
+        time.sleep(90)
         self.crawling.restart()
 
     @commands.command()

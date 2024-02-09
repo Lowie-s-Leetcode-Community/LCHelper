@@ -227,12 +227,72 @@ class DatabaseAPILayer:
     return result
   
   # Desc: return one random problem, with difficulty filter + tags filter
-  def read_gimme(self, difficulty, tags_1, tags_2, premium = False):
-    return {}
+  def read_gimme(self, lc_query):
+    # getting the choices, including difficulty, premium, included tags, excluded tags
+    difficulty = ""
+    if 'difficulty' in lc_query: difficulty = lc_query['difficulty']
+    premium = False
+    if 'premium' in lc_query: premium = lc_query['premium']
+    tags_1 = []
+    tags_2 = []
+    if 'topics' in lc_query:
+      if '$all' in lc_query['topics']:
+        tags_1.extend(lc_query['topics']['$all'])
+      if '$not' in lc_query['topics']:
+        tags_2.extend(lc_query['topics']['$not']['$all'])
+    # query the database, filter difficulty and premium
+    if difficulty != "" :
+      query = select(db.Problem).where(
+        db.Problem.difficulty == difficulty,
+        db.Problem.isPremium == premium
+      ).order_by(db.Problem.id)
+    else :
+      query = select(db.Problem).where(
+        db.Problem.isPremium == premium
+      ).order_by(db.Problem.id)
+    result = []
+    
+    with Session(self.engine) as session:
+      queryResult = session.execute(query).all()
+      # filter tags
+      for res in queryResult:
+        topic_list = []
+        for topic in res.Problem.topics:
+          topic_list.append(topic.topicName)
+        result.append(res.Problem)
+    return result
 
   # Desc: update to DB and send a log
-  def update_score(self, memberDiscordId, delta):
-    return {}
+  async def update_score(self, memberDiscordId, delta, reason):
+    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId).limit(1)
+    find_daily_object = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
+    result = None
+    with Session(self.engine) as session:
+      user = session.execute(find_user_query).one()
+      daily = session.scalars(find_daily_object).one()
+      result = self.__update_user_score(session, user.User.id, daily.id, delta)
+
+      await self.__commit(session, "UserDailyObject",\
+        api_utils.score_update_jstr(memberDiscordId, delta, reason))
+    return result
+
+  async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
+    sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
+    sub_query = select(db.UserSolvedProblem)\
+      .where(db.UserSolvedProblem.userId == userId)\
+      .where(db.UserSolvedProblem.problemId == problemId)
+    with Session(self.engine, autoflush=False) as session:
+      submission = session.execute(sub_query).one_or_none()
+      problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
+      if (not sub_info["is_daily"]) and submission == None:
+        return
+      if submission == None:
+        self.__create_submission(session, userId, problemId, submissionId)
+      self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
+      self.__update_user_sub_id(session, userId, submissionId)
+      await self.__commit(session, "UserSolvedProblem",\
+        api_utils.submission_jstr(submissionId, userId, problemId, sub_info["warn"], sub_info["is_daily"]))
+    return
 
   # Can we split this fn into 2?
   async def create_user(self, user_obj):
@@ -329,30 +389,6 @@ class DatabaseAPILayer:
       await self.__commit(session, f"Problem<id:{result}>", "\{\}")
 
     return { "id": result }
-
-  async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
-    sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
-    sub_query = select(db.UserSolvedProblem)\
-      .where(db.UserSolvedProblem.userId == userId)\
-      .where(db.UserSolvedProblem.problemId == problemId)
-    with Session(self.engine, autoflush=False) as session:
-      submission = session.execute(sub_query).one_or_none()
-      problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
-      if (not sub_info["is_daily"]) and submission == None:
-        return
-      if submission == None:
-        self.__create_submission(session, userId, problemId, submissionId)
-      self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
-      self.__update_user_sub_id(session, userId, submissionId)
-      obj = {}
-      obj["submissionId"] = submissionId
-      obj["userId"] = userId
-      obj["problemId"] = problemId
-      obj["warn"] = ('Warning: ' + sub_info['warn']) if sub_info['warn'] else ''
-      obj["is_daily"] = sub_info["is_daily"]
-
-      await self.__commit(session, "UserSolvedProblem", api_utils.submission_jstr(obj))
-    return
 
 ## Features to be refactoring
 

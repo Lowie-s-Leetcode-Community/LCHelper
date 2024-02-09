@@ -1,15 +1,26 @@
 import json
 
-def submission_jstr(submission_obj):
+# these include functions to format objects to compatible json, use for public forwarding
+def submission_jstr(submissionId, userId, problemId, warn, is_daily):
   result = {
     "type": "Submission",
-    "content": submission_obj
+    "content": {
+      "submissionId": submissionId,
+      "userId": userId,
+      "problemId": problemId,
+      "warn": ('Warning: ' + warn) if warn else '',
+      "is_daily": is_daily
+    }
   }
   return json.dumps(result)
 
-def score_update_jstr(daily_obj):
+def score_update_jstr(memberDiscordId, delta, reason):
   result = {
     "type": "Score",
-    "content": daily_obj
+    "content": {
+      "member_mention": f"<@{memberDiscordId}>",
+      "delta": delta,
+      "reason": reason
+    }
   }
   return json.dumps(result)

@@ -34,7 +34,7 @@ class Logger:
                 )
                 await log_channel.send(msg, embed = embed)
         except Exception as e:
-            print(traceback.format_exc())
+            print(traceback.format_exc()[:800])
             raise
         return
     
@@ -50,12 +50,12 @@ class Logger:
         )
         await log_channel.send(embed = embed)
 
-    async def on_score_deduct(self, member: discord.Member, score: int, reason: str):
+    async def on_score_deduct(self, member_mention: str, score: int, reason: str):
         guild = await self.client.fetch_guild(1085444549125611530)
         log_channel = await guild.fetch_channel(1089391914664603648)
         embed = discord.Embed(
             description = f"""
-            ▸ **Score deducted:** {member.mention} **-{score}**
+            ▸ **Score deducted:** {member_mention} **-{abs(score)}**
             ▸ **Reason:** {reason}
             """,
             color = Assets.hard
