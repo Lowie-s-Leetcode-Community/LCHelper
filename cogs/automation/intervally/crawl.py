@@ -25,7 +25,7 @@ class Crawl(commands.Cog):
         leaderboard = self.client.db_api.read_current_month_leaderboard()
         # benchmarking
         # guild = await self.client.fetch_guild(self.client.config['serverId'])
-        # log_channel = await guild.fetch_channel(1202180199060615168)
+        # log_channel = await guild.fetch_channel(self.client.config['databaseLogId'])
         # start_time = datetime.now()
         # await log_channel.send(f"Start crawling. Timestamp: {start_time}")
         for user in leaderboard:

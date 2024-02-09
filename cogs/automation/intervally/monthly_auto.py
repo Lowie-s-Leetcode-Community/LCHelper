@@ -21,7 +21,7 @@ class MonthlyAutomation(commands.Cog):
     async def monthly(self):
         await self.update_leaderboard()
         await self.update_problems_list()
-    
+
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
         # maybe send a message to update last month leaderboard on #general?
@@ -33,7 +33,7 @@ class MonthlyAutomation(commands.Cog):
         for user in leaderboard:
             await self.client.db_api.create_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
         return
-    
+
     # Update the problem list, as there are new problems on the site every month
     async def update_problems_list(self):
         db_problems_list = self.client.db_api.read_problems_all()

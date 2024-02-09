@@ -340,7 +340,7 @@ class DatabaseAPILayer:
         idx += 1
       session.add(new_user)
       result = new_user.id
-      await self.__commit(session, "User", "\{\}")
+      await self.__commit(session, "User", "[]")
 
     return { "id": result }
 
@@ -354,7 +354,7 @@ class DatabaseAPILayer:
       )
       session.add(new_obj)
       result = new_obj.id
-      await self.__commit(session, f"UserMonthlyObject<id:{result}>", "\{\}")
+      await self.__commit(session, f"UserMonthlyObject<id:{result}>", "[]")
 
     return { "id": result }
 
@@ -406,7 +406,7 @@ class DatabaseAPILayer:
 
       session.add(new_obj)
       result = new_obj.id
-      await self.__commit(session, f"Problem<id:{result}>", "\{\}")
+      await self.__commit(session, f"Problem<id:{result}>", "[]")
 
     return { "id": result }
 

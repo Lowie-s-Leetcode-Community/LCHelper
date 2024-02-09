@@ -46,9 +46,8 @@ class ConfirmView(discord.ui.View):
                     user_obj['userSolvedProblems'].append(info['titleSlug'])
             member = await interaction.guild.fetch_member(interaction.user.id)
 
-            # TODO: refactor to lc_config in db
-            verified_role_id = 1087761988068855890
-            unverified_role_id = 1157694438152347758
+            verified_role_id = self.client.config["verifiedRoleId"]
+            unverified_role_id = self.client.config["unverifiedRoleId"]
             verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
             unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
             try:

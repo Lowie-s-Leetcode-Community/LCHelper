@@ -53,7 +53,7 @@ class DailyAutomation(commands.Cog):
     
         # Creating daily thread
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
+        channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         #channel = await guild.fetch_channel(1089769159807733831)
         name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
         await channel.create_thread(name = name, type = discord.ChannelType.public_thread)

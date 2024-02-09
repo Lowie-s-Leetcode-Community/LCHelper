@@ -12,7 +12,7 @@ class Logger:
     async def on_db_update(self, success, context, message):
         try:
             guild = await self.client.fetch_guild(self.client.config['serverId'])
-            log_channel = await guild.fetch_channel(1202180199060615168)
+            log_channel = await guild.fetch_channel(self.client.config['databaseLogId'])
             if success:
                 msg = f"""
                 {os.getenv('LOGGING_PREFIX')}db_log
@@ -40,7 +40,7 @@ class Logger:
     
     async def on_score_add(self, member_mention: str, score: int, reason: str):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        log_channel = await guild.fetch_channel(1089391914664603648)
+        log_channel = await guild.fetch_channel(self.client.config['scoreLogChannelId'])
         embed = discord.Embed(
             description = f"""
             ▸ **Score added:** {member_mention} **+{score}**
@@ -52,7 +52,7 @@ class Logger:
 
     async def on_score_deduct(self, member_mention: str, score: int, reason: str):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        log_channel = await guild.fetch_channel(1089391914664603648)
+        log_channel = await guild.fetch_channel(self.client.config['scoreLogChannelId'])
         embed = discord.Embed(
             description = f"""
             ▸ **Score deducted:** {member_mention} **-{abs(score)}**
@@ -64,7 +64,7 @@ class Logger:
 
     async def on_submission(self, user, problem, submission, is_daily):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        log_channel = await guild.fetch_channel(1087786510817964112)
+        log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
         embed_color = Assets.easy if problem['difficulty'] == 'Easy' else Assets.medium if problem['difficulty'] == 'Medium' else Assets.hard
         submission_str = f"▸ **Submitted:** <t:{int(submission['timestamp'])}:R>"
         if is_daily:
