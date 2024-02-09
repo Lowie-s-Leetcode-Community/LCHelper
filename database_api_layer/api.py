@@ -35,7 +35,7 @@ class DatabaseAPILayer:
       result = True
     return result
 
-  def __calculate_submission_score(self, userId, dailyObjectId, problemId):
+  def __calculate_submission_infos(self, userId, dailyObjectId, problemId):
     query1 = select(db.UserDailyObject)\
       .where(db.UserDailyObject.userId == userId)\
       .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
@@ -140,12 +140,30 @@ class DatabaseAPILayer:
     session.add(new_obj)
     return new_obj
 
-  def __update_user_sub_id(self, session, userId, submissionId):
+  def __update_user_sub_id(self, session, userId, submissionId: int):
     update_query = update(db.User)\
       .where(db.User.id == userId)\
       .values(mostRecentSubId = submissionId)
     session.execute(update_query)
     return
+  
+  def __read_user_from_id(self, session, userId):
+    query = select(db.User)\
+      .where(db.User.id == userId)
+    user = session.scalars(query).one_or_none()
+    if user == None:
+      return {}
+    return user.as_dict()
+
+  def __read_problem_from_id(self, session, problemId):
+    query = select(db.Problem)\
+      .where(db.Problem.id == problemId)
+    problem = session.scalars(query).one_or_none()
+    if problem == None:
+      return {}
+    result = problem.as_dict()
+    result["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
+    return result
 
   # Missing infos in SQL comparing to previous features:
   # - AC Count & Rate
@@ -276,22 +294,24 @@ class DatabaseAPILayer:
         api_utils.score_update_jstr(memberDiscordId, delta, reason))
     return result
 
-  async def register_new_submission(self, userId, problemId, submissionId, dailyObjectId):
-    sub_info = self.__calculate_submission_score(userId, dailyObjectId, problemId)
+  async def register_new_submission(self, userId, problemId, submission, dailyObjectId):
+    sub_info = self.__calculate_submission_infos(userId, dailyObjectId, problemId)
     sub_query = select(db.UserSolvedProblem)\
       .where(db.UserSolvedProblem.userId == userId)\
       .where(db.UserSolvedProblem.problemId == problemId)
     with Session(self.engine, autoflush=False) as session:
-      submission = session.execute(sub_query).one_or_none()
+      old_submission = session.execute(sub_query).one_or_none()
       problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
-      if (not sub_info["is_daily"]) and submission == None:
+      if (not sub_info["is_daily"]) and old_submission != None:
         return
-      if submission == None:
-        self.__create_submission(session, userId, problemId, submissionId)
+      if old_submission == None:
+        self.__create_submission(session, userId, problemId, submission["id"])
       self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
-      self.__update_user_sub_id(session, userId, submissionId)
+      self.__update_user_sub_id(session, userId, submission["id"])
+      user = self.__read_user_from_id(session, userId)
+      problem = self.__read_problem_from_id(session, problemId)
       await self.__commit(session, "UserSolvedProblem",\
-        api_utils.submission_jstr(submissionId, userId, problemId, sub_info["warn"], sub_info["is_daily"]))
+        api_utils.submission_jstr(submission, user, problem, sub_info))
     return
 
   # Can we split this fn into 2?

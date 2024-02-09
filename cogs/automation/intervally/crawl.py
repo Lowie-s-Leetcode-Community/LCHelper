@@ -10,6 +10,7 @@ import traceback
 from database_api_layer.api import DatabaseAPILayer
 from utils.llc_datetime import get_date_from_timestamp
 from datetime import datetime
+import time
 
 class Crawl(commands.Cog):
     def __init__(self, client):
@@ -44,7 +45,7 @@ class Crawl(commands.Cog):
                 daily_obj = self.db_api.read_daily_object(date)
 
                 problem = self.db_api.read_problem_from_slug(submission['titleSlug'])
-                await self.db_api.register_new_submission(user['userId'], problem['id'], int(submission['id']), daily_obj['id'])
+                await self.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj['id'])
         # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
 
     @tasks.loop(minutes = 20)

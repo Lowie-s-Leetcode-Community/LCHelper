@@ -37,10 +37,11 @@ class PublicLogForwarding(commands.Cog):
         elif delta < 0:
           await self.logger.on_score_deduct(mention, delta, reason)
       elif json_log["type"] == "Submission":
-        userId = content["userId"]
-        problemId = content["problemId"]
         is_daily = content["is_daily"]
-        await self.logger.on_submission(userId, problemId, is_daily)
+        await self.logger.on_submission(content["user"], content["problem"], content["submission"], is_daily)
+        score_obj = content["score"]
+        if score_obj["delta"] > 0:
+          await self.logger.on_score_add(score_obj["mention"], score_obj["delta"], score_obj["reason"])
 
 async def setup(client):
     await client.add_cog(PublicLogForwarding(client))

@@ -45,6 +45,9 @@ class User(Base):
     userDailyObjects: Mapped[List[UserDailyObject]] = relationship(back_populates="user")
     userMonthlyObjects: Mapped[List[UserMonthlyObject]] = relationship(back_populates="user")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, discordId={self.discordId!r}, leetcodeUsername={self.leetcodeUsername!r})"
 
@@ -61,6 +64,9 @@ class Problem(Base):
     userSolvedProblems: Mapped[List[UserSolvedProblem]] = relationship(back_populates="problem")
     topics: Mapped[List[Topic]] = relationship(secondary=_ProblemToTopic, back_populates="problems")
     missions: Mapped[List[Mission]] = relationship(secondary=_MissionToProblem, back_populates="problems")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self) -> str:
         return f"Problem(id={self.id!r}, title={self.title!r}, titleSlug={self.titleSlug!r}, difficulty={self.difficulty!r})"
