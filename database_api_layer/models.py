@@ -1,19 +1,8 @@
 from __future__ import annotations
 
-from typing import List
-from typing import Optional
-from sqlalchemy import ForeignKey, text
-from sqlalchemy import Column
-from sqlalchemy import String
-from sqlalchemy import Integer
-from sqlalchemy import Table
-from sqlalchemy import Boolean
-from sqlalchemy import DateTime
-from sqlalchemy import Date
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from typing import List, Optional
+from sqlalchemy import ForeignKey, Column, String, Integer, Table, Boolean, DateTime, Date
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 class Base(DeclarativeBase):

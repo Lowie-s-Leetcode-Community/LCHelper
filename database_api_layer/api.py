@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from typing import Optional
 import os
-from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today
+from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_timestamp
 import database_api_layer.models as db
 from utils.logger import Logger
 from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
@@ -74,10 +74,10 @@ class DatabaseAPILayer:
           warn = "Point cap reached"
     return { "score": score, "is_daily": is_daily, "difficulty": problem_diff, "warn": warn }
 
-  def __update_user_score(self, session, userId, dailyObjectId, score, problem_type = None):
+  def __update_user_score(self, session, userId, dailyObject, score, problem_type = None):
     user_daily_query = select(db.UserDailyObject)\
       .where(db.UserDailyObject.userId == userId)\
-      .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
+      .where(db.UserDailyObject.dailyObjectId == dailyObject.id)
     user_daily_obj = session.execute(user_daily_query).one_or_none()
 
     solvedEasy = 1 if problem_type == "Easy" else 0
@@ -89,7 +89,7 @@ class DatabaseAPILayer:
       user_daily_obj = db.UserDailyObject(
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
-        dailyObjectId=dailyObjectId,
+        dailyObjectId=dailyObject.id,
         scoreEarned=0,
         solvedDaily=solvedDaily,
         solvedEasy=solvedEasy,
@@ -100,7 +100,7 @@ class DatabaseAPILayer:
     else:
       update_query = update(db.UserDailyObject)\
         .where(db.UserDailyObject.userId == userId)\
-        .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
+        .where(db.UserDailyObject.dailyObjectId == dailyObject.id)\
         .values(scoreEarned = user_daily_obj.UserDailyObject.scoreEarned + score)\
         .values(solvedEasy = user_daily_obj.UserDailyObject.solvedEasy + solvedEasy)\
         .values(solvedMedium = user_daily_obj.UserDailyObject.solvedMedium + solvedMedium)\
@@ -108,7 +108,7 @@ class DatabaseAPILayer:
         .values(solvedDaily = min(1, user_daily_obj.UserDailyObject.solvedDaily + solvedDaily))
       session.execute(update_query)
 
-    first_day_of_month = get_first_day_of_current_month()
+    first_day_of_month = get_fdom_by_timestamp(dailyObject.generatedDate)
     user_monthly_query = select(db.UserMonthlyObject)\
       .where(db.UserMonthlyObject.userId == userId)\
       .where(db.UserMonthlyObject.firstDayOfMonth == first_day_of_month)
@@ -288,14 +288,14 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       user = session.execute(find_user_query).one()
       daily = session.scalars(find_daily_object).one()
-      result = self.__update_user_score(session, user.User.id, daily.id, delta)
+      result = self.__update_user_score(session, user.User.id, daily, delta)
 
       await self.__commit(session, "UserDailyObject",\
         api_utils.score_update_jstr(memberDiscordId, delta, reason))
     return result
 
-  async def register_new_submission(self, userId, problemId, submission, dailyObjectId):
-    sub_info = self.__calculate_submission_infos(userId, dailyObjectId, problemId)
+  async def register_new_submission(self, userId, problemId, submission, dailyObject):
+    sub_info = self.__calculate_submission_infos(userId, dailyObject['id'], problemId)
     sub_query = select(db.UserSolvedProblem)\
       .where(db.UserSolvedProblem.userId == userId)\
       .where(db.UserSolvedProblem.problemId == problemId)
@@ -306,7 +306,7 @@ class DatabaseAPILayer:
         return
       if old_submission == None:
         self.__create_submission(session, userId, problemId, submission["id"])
-      self.__update_user_score(session, userId, dailyObjectId, sub_info["score"], problem_type)
+      self.__update_user_score(session, userId, dailyObject, sub_info["score"], problem_type)
       self.__update_user_sub_id(session, userId, submission["id"])
       user = self.__read_user_from_id(session, userId)
       problem = self.__read_problem_from_id(session, problemId)

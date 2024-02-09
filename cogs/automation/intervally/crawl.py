@@ -43,7 +43,7 @@ class Crawl(commands.Cog):
                 daily_obj = self.client.db_api.read_daily_object(date)
 
                 problem = self.client.db_api.read_problem_from_slug(submission['titleSlug'])
-                await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj['id'])
+                await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj)
         # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
 
     @tasks.loop(minutes = 20)
