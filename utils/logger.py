@@ -108,32 +108,3 @@ class Logger:
         )
 
         await log_channel.send(f":new: AC Alert!", embed = embed)
-
-    # All fn below will be changed into on_message fetches
-    async def on_member_remove(self, member: discord.Member, reason: str):
-        lc_col = self.client.DBClient['LC_db']['LC_config']
-        lc_guild = lc_col.find_one({})
-        log_channel = await member.guild.fetch_channel(lc_guild['event_channel_id'])
-        embed = discord.Embed(
-            color = Assets.hard
-        )
-        embed.add_field(
-            name = "Member",
-            value = f"{member.name} ({member.mention})"
-        )
-        embed.add_field(
-            name = "ID",
-            value = f"{member.id}"
-        )
-        embed.add_field(
-            name = "Member count",
-            value = f"{member.guild.member_count - 1}"
-        )
-        embed.add_field(
-            name = "Reason",
-            value = reason
-        )
-        embed.set_author(
-            name = "Member kicked"
-        )
-        await log_channel.send(embed = embed)
