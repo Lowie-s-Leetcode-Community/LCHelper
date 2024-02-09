@@ -46,4 +46,4 @@ class Daily(commands.Cog):
         await interaction.followup.send(f"Daily Challenge - {display_date}", embed = embed)
 
 async def setup(client):
-    await client.add_cog(Daily(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Daily(client), guilds=[discord.Object(id=client.config['serverId'])])

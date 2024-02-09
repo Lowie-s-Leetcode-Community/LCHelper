@@ -24,7 +24,7 @@ class Crawl(commands.Cog):
         # flaw: this only returns user that are shown on leaderboard???
         leaderboard = self.client.db_api.read_current_month_leaderboard()
         # benchmarking
-        # guild = await self.client.fetch_guild(1085444549125611530)
+        # guild = await self.client.fetch_guild(self.client.config['serverId'])
         # log_channel = await guild.fetch_channel(1202180199060615168)
         # start_time = datetime.now()
         # await log_channel.send(f"Start crawling. Timestamp: {start_time}")
@@ -52,7 +52,7 @@ class Crawl(commands.Cog):
 
     @crawling.error
     async def on_error(self, exception):
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(1091763595777409025)
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
 
@@ -72,4 +72,4 @@ class Crawl(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
 
 async def setup(client):
-    await client.add_cog(Crawl(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Crawl(client), guilds=[discord.Object(id=client.config['serverId'])])

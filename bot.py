@@ -26,6 +26,7 @@ log_handler = logging.FileHandler(filename = "discord.log", encoding = "utf-8", 
 
 db_api = DatabaseAPILayer(client)
 client.db_api = db_api
+client.config = db_api.read_latest_configs()
 
 async def main():
     async with client:
@@ -43,7 +44,7 @@ async def main():
 
         # Loading Discord client
         await client.start(token)
-            
+
 
 @tree.error
 async def on_app_command_error(interaction: Interaction, error: AppCommandError):

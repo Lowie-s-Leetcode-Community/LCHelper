@@ -11,7 +11,7 @@ class Logger:
     
     async def on_db_update(self, success, context, message):
         try:
-            guild = await self.client.fetch_guild(1085444549125611530)
+            guild = await self.client.fetch_guild(self.client.config['serverId'])
             log_channel = await guild.fetch_channel(1202180199060615168)
             if success:
                 msg = f"""
@@ -39,7 +39,7 @@ class Logger:
         return
     
     async def on_score_add(self, member_mention: str, score: int, reason: str):
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(1089391914664603648)
         embed = discord.Embed(
             description = f"""
@@ -51,7 +51,7 @@ class Logger:
         await log_channel.send(embed = embed)
 
     async def on_score_deduct(self, member_mention: str, score: int, reason: str):
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(1089391914664603648)
         embed = discord.Embed(
             description = f"""
@@ -63,7 +63,7 @@ class Logger:
         await log_channel.send(embed = embed)
 
     async def on_submission(self, user, problem, submission, is_daily):
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(1087786510817964112)
         embed_color = Assets.easy if problem['difficulty'] == 'Easy' else Assets.medium if problem['difficulty'] == 'Medium' else Assets.hard
         submission_str = f"▸ **Submitted:** <t:{int(submission['timestamp'])}:R>"

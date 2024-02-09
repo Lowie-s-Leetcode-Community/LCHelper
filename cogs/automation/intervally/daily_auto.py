@@ -45,14 +45,14 @@ class DailyAutomation(commands.Cog):
         lc_col_daily.update_one({'_id': 1}, lc_update)
 
         # Sending a message to the Discord channel log
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         lc_col = self.client.DBClient['LC_db']['LC_config']
         lc_result = lc_col.find_one({})
         log_channel = await guild.fetch_channel(lc_result['event_channel_id'])
         await log_channel.send("Daily task started.")
     
         # Creating daily thread
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(lc_result['daily_thread_channel_id'])
         #channel = await guild.fetch_channel(1089769159807733831)
         name = f"{daily_challenge_info['date']}. LeetCode P{daily_challenge_info['id']}"
@@ -90,8 +90,8 @@ class DailyAutomation(commands.Cog):
     ### Dev stuff
     @daily.error
     async def on_error(self, exception):
-        guild = await self.client.fetch_guild(1085444549125611530)
-        channel = await guild.fetch_channel(1091763595777409025)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        channel = await guild.fetch_channel(self.client.config['serverId'])
         await channel.send(f"```py\n{traceback.format_exc()}```")
 
         self.daily.restart()
@@ -109,4 +109,4 @@ class DailyAutomation(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Daily task started.**")
 
 async def setup(client):
-    await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])

@@ -165,4 +165,28 @@ class DiscordQuizAnswer(Base):
     discordQuizId = mapped_column(Integer, ForeignKey("DiscordQuiz.id"))
     discordQuiz: Mapped[DiscordQuiz] = relationship(back_populates="discordQuizAnswer")
 
+class SystemConfiguration(Base):
+    __tablename__ = "SystemConfiguration"
+    id = mapped_column(Integer, primary_key=True)
+    serverId = mapped_column(String)
+    verifiedRoleId = mapped_column(String)
+    unverifiedRoleId = mapped_column(String)
+    timeBeforeKick = mapped_column(Integer)
+    dailySolveScore = mapped_column(Integer, default=2)
+    easySolveScore = mapped_column(Integer, default=1)
+    mediumSolveScore = mapped_column(Integer, default=2)
+    hardSolveScore = mapped_column(Integer, default=3)
+    practiceScoreCap = mapped_column(Integer, default=6)
+    streakBonus = mapped_column(Integer, default=4)
+    submissionChannelId = mapped_column(String)
+    scoreLogChannelId = mapped_column(String)
+    dailyThreadChannelId = mapped_column(String)
+    devErrorLogId = mapped_column(String)
+    databaseLogId = mapped_column(String)
+    backupChannelId = mapped_column(String)
+    eventLoggingId = mapped_column(String)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 # missing: SystemConfiguration

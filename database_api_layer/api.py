@@ -410,6 +410,15 @@ class DatabaseAPILayer:
 
     return { "id": result }
 
+  def read_latest_configs(self):
+    query = select(db.SystemConfiguration)\
+      .order_by(db.SystemConfiguration.id.desc())\
+      .limit(1)
+    with Session(self.engine) as session:
+      queryResult = session.scalars(query).one()
+      cfg = queryResult.as_dict()
+    return cfg
+
 ## Features to be refactoring
 
 # onboard info - need database

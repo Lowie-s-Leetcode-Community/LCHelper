@@ -43,4 +43,4 @@ class SetLogging(commands.Cog):
         await interaction.followup.send(f"{Assets.green_tick} **Score updates channel has been set to {channel.mention}**")
 
 async def setup(client):
-    await client.add_cog(SetLogging(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(SetLogging(client), guilds=[discord.Object(id=client.config['serverId'])])

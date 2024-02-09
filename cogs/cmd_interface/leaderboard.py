@@ -201,4 +201,4 @@ class Leaderboard(commands.Cog):
     # will definitely need a help guide. Also streak count, ...
 
 async def setup(client):
-    await client.add_cog(Leaderboard(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Leaderboard(client), guilds=[discord.Object(id=client.config['serverId'])])

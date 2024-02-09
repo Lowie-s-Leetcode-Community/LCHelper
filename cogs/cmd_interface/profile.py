@@ -70,4 +70,4 @@ class Profile(commands.Cog):
         await interaction.followup.send(embed = embed)
 
 async def setup(client):
-    await client.add_cog(Profile(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Profile(client), guilds=[discord.Object(id=client.config['serverId'])])

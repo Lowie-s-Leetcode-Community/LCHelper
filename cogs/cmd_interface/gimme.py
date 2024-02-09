@@ -133,4 +133,4 @@ class Gimme(commands.Cog):
         ][:25]
     
 async def setup(client):
-    await client.add_cog(Gimme(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Gimme(client), guilds=[discord.Object(id=client.config['serverId'])])

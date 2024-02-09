@@ -70,7 +70,7 @@ class MonthlyAutomation(commands.Cog):
 
     @monthly.error
     async def on_error(self, exception):
-        guild = await self.client.fetch_guild(1085444549125611530)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(1091763595777409025)
         await channel.send(f"Monthly crawl error```py\n{exception}```")
 
@@ -89,4 +89,4 @@ class MonthlyAutomation(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Monthly task started.**")
 
 async def setup(client):
-    await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])

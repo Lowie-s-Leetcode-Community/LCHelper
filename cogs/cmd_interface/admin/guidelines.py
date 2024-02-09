@@ -316,5 +316,5 @@ class gl(commands.Cog):
 
     
 async def setup(client):
-    await client.add_cog(gl(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(gl(client), guilds=[discord.Object(id=client.config['serverId'])])
     #await client.add_cog(gl(client))
