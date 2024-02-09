@@ -16,7 +16,6 @@ class PublicLogForwarding(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-      print(f"Handle message: {message}")
       if not message.content.startswith(f"{os.getenv('LOGGING_PREFIX')}db_log"):
         return
 
@@ -29,18 +28,19 @@ class PublicLogForwarding(commands.Cog):
         return
 
       content = json_log["content"]
-      print(json_log["content"])
       if json_log["type"] == "Score":
         mention = content["member_mention"]
-        score = content["score"]
-        log_message = content["description"]        
-        await self.logger.on_score_add(mention, score, log_message)
+        delta = content["delta"]
+        reason = content["reason"]
+        if delta > 0:
+          await self.logger.on_score_add(mention, delta, reason)
+        elif delta < 0:
+          await self.logger.on_score_deduct(mention, delta, reason)
       elif json_log["type"] == "Submission":
         userId = content["userId"]
         problemId = content["problemId"]
         is_daily = content["is_daily"]
         await self.logger.on_submission(userId, problemId, is_daily)
-      # await message.channel.send('~~Log successful')
 
 async def setup(client):
     await client.add_cog(PublicLogForwarding(client))

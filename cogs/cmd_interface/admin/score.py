@@ -7,7 +7,7 @@ import random
 
 from database_api_layer.api import DatabaseAPILayer
 
-class score(commands.Cog):
+class Score(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.logger = Logger(client)
@@ -21,19 +21,10 @@ class score(commands.Cog):
     @app_commands.checks.has_permissions(administrator = True)
     async def _score_add(self, interaction: discord.Interaction, member: discord.Member, score: int, reason: str):
         await interaction.response.defer(thinking = True)
-
-        daily_obj = self.db_api.update_score(str(member.id), score)
-        if (daily_obj == None):
-            await interaction.followup.send(f"The bot is bug-ed in score add, contact bot dev")
+        if score <= 0:
+            await interaction.followup.send(f"{Assets.red_tick} **`Score` should be positive. Use `/score deduct` instead.**")
             return
-
-        # lc_col = self.client.DBClient['LC_db']['LC_users']
-        # lc_user = lc_col.find_one({'discord_id': member.id})
-        # lc_user['current_month']['score'] += score
-        # lc_user['all_time']['score'] += score
-        # lc_query = {'$set': lc_user}
-        # lc_col.update_one({'discord_id': member.id}, lc_query)
-        await self.logger.on_score_add(member = member, score = score, reason = reason)
+        daily_obj = await self.db_api.update_score(str(member.id), score, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
         
     @score_group.command(name = 'deduct', description = "Deducts score")
@@ -43,15 +34,12 @@ class score(commands.Cog):
     @app_commands.checks.has_permissions(administrator = True)
     async def _score_deduct(self, interaction: discord.Interaction, member: discord.Member, score: int, reason: str):
         await interaction.response.defer(thinking = True)
-        
-        daily_obj = self.db_api.update_score(str(member.id), -score)
-        if (daily_obj == None):
-            await interaction.followup.send(f"The bot is bug-ed in score deduct, contact bot dev")
+        if score <= 0:
+            await interaction.followup.send(f"{Assets.red_tick} **`Score` should be positive. Use `/score add` instead.**")
             return
 
-        await self.logger.on_score_deduct(member = member, score = score, reason = reason)
+        daily_obj = await self.db_api.update_score(str(member.id), -score, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score deducted.**")
 
 async def setup(client):
-    await client.add_cog(score(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(score(client))
+    await client.add_cog(Score(client), guilds=[discord.Object(id=1085444549125611530)])

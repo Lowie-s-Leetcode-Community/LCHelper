@@ -47,10 +47,6 @@ class Gimme(commands.Cog):
         premium: app_commands.Choice[str] = None
     ):
         await interaction.response.defer(thinking = True)
-        # lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
-        # lc_col = self.client.DBClient['LC_db']['LC_problems']
-        # print(lc_col)
-        # self.db_api.read_problems_all()
         lc_query = {}
 
         # Difficulty
@@ -84,8 +80,6 @@ class Gimme(commands.Cog):
         elif premium and premium.name == "False": lc_query['premium'] = False
 
         # Finds and returns the problem
-
-        # lc_result = list(lc_col.find(lc_query))
         lc_result = self.db_api.read_gimme(lc_query)
         if len(lc_result) == 0:
             await interaction.followup.send(f"{Assets.red_tick} **No problem matched your query.**")
