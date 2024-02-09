@@ -22,6 +22,7 @@ class Crawl(commands.Cog):
         self.crawling.cancel()
     
     async def submissions(self):
+        # flaw: this only returns user that are shown on leaderboard???
         leaderboard = self.db_api.read_current_month_leaderboard()
         # benchmarking
         # guild = await self.client.fetch_guild(1085444549125611530)
@@ -54,7 +55,7 @@ class Crawl(commands.Cog):
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(1085444549125611530)
         channel = await guild.fetch_channel(1091763595777409025)
-        await channel.send(f"Crawling error```py\n{traceback.format_exc()[:500]}```")
+        await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
 
         self.crawling.restart()
 
