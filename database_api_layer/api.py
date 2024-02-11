@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from typing import Optional
 import os
-from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_timestamp
+from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_datestamp
 import database_api_layer.models as db
 from utils.logger import Logger
 from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
@@ -109,7 +109,7 @@ class DatabaseAPILayer:
         .values(solvedDaily = min(1, user_daily_obj.UserDailyObject.solvedDaily + solvedDaily))
       session.execute(update_query)
 
-    first_day_of_month = get_fdom_by_timestamp(dailyObject['generatedDate'])
+    first_day_of_month = get_fdom_by_datestamp(dailyObject['generatedDate'])
     user_monthly_query = select(db.UserMonthlyObject)\
       .where(db.UserMonthlyObject.userId == userId)\
       .where(db.UserMonthlyObject.firstDayOfMonth == first_day_of_month)
@@ -189,8 +189,8 @@ class DatabaseAPILayer:
     daily = session.scalars(query).one_or_none()
     return daily
 
-  def read_user_progress(self, memberDiscordId):
-    query = select(db.User).where(db.User.discordId == str(memberDiscordId))
+  def read_user_progress(self, memberDiscordId: str):
+    query = select(db.User).where(db.User.discordId == memberDiscordId)
     with Session(self.engine) as session:
       user = session.scalars(query).one_or_none()
       monthly_obj = self.__read_user_monthly_object(session, user.id)
@@ -221,7 +221,7 @@ class DatabaseAPILayer:
     return result
 
   # We disable getting data from random user for now.
-  def read_profile(self, memberDiscordId):
+  def read_profile(self, memberDiscordId: str):
     query = select(db.User).where(db.User.discordId == memberDiscordId)
     result = None
     with Session(self.engine) as session:
@@ -320,18 +320,42 @@ class DatabaseAPILayer:
     return result
 
   # Desc: update to DB and send a log
-  async def update_score(self, memberDiscordId, delta, reason):
-    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId).limit(1)
-    find_daily_object = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
+  async def update_score(self, memberDiscordId: str, delta, reason):
+    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId)
     result = None
     with Session(self.engine) as session:
-      user = session.execute(find_user_query).one()
-      daily = session.scalars(find_daily_object).one().__dict__
-      result = self.__update_user_score(session, user.User.id, daily, delta)
+      daily = self.__read_daily_object(session)
+      user = session.scalars(find_user_query).one()
+      result = self.__update_user_score(session, user.id, daily.as_dict(), delta)
 
       await self.__commit(session, "UserDailyObject",\
         api_utils.score_update_jstr(memberDiscordId, delta, reason))
     return result
+
+  # 90% same as fn above but also update gacha column
+  async def update_gacha_score(self, memberDiscordId: str, delta):
+    find_user_query = select(db.User).where(db.User.discordId == memberDiscordId)
+    result = None
+    reason = "Gacha roll!"
+    with Session(self.engine) as session:
+      daily = self.__read_daily_object(session)
+      if daily == None:
+        query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
+        daily = session.scalars(query).one()
+      user = session.scalars(find_user_query).one()
+      result = self.__update_user_score(session, user.id, daily.as_dict(), delta)
+      update_query = update(db.UserDailyObject)\
+        .where(db.UserDailyObject.userId == user.id)\
+        .where(db.UserDailyObject.dailyObjectId == daily.id)\
+        .values(scoreGacha = delta)
+      session.execute(update_query)
+      status = await self.__commit(session, "UserDailyObject",\
+        api_utils.score_update_jstr(memberDiscordId, delta, reason))
+      res = {
+        "result": result,
+        "status": status
+      }
+    return res
 
   async def register_new_submission(self, userId, problemId, submission, dailyObject):
     sub_info = self.__calculate_submission_infos(userId, dailyObject['id'], problemId)
