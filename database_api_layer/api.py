@@ -166,6 +166,44 @@ class DatabaseAPILayer:
     result["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
     return result
 
+  def __read_user_monthly_object(self, session, userId, firstDayOfMonth = get_first_day_of_current_month()):
+    query = select(db.UserMonthlyObject)\
+      .where(db.UserMonthlyObject.userId == userId)\
+      .where(db.UserMonthlyObject.firstDayOfMonth == firstDayOfMonth)
+    obj = session.scalars(query).one_or_none()
+    return obj
+
+  def __read_user_daily_object(self, session, userId, dailyObjectId = None):
+    if dailyObjectId == None:
+      query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
+      dailyObj = session.scalars(query).one()
+      dailyObjectId = dailyObj.id
+    query = select(db.UserDailyObject)\
+      .where(db.UserDailyObject.userId == userId)\
+      .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
+    obj = session.scalars(query).one_or_none()
+    return obj
+
+  def __read_daily_object(self, session, date = get_today()):
+    query = select(db.DailyObject).where(db.DailyObject.generatedDate == date)
+    daily = session.scalars(query).one_or_none()
+    return daily
+
+  def read_user_progress(self, memberDiscordId):
+    query = select(db.User).where(db.User.discordId == str(memberDiscordId))
+    with Session(self.engine) as session:
+      user = session.scalars(query).one_or_none()
+      monthly_obj = self.__read_user_monthly_object(session, user.id)
+      daily_obj = self.__read_daily_object(session)
+      daily_obj_id = None if daily_obj == None else daily_obj.id
+      user_daily_obj = self.__read_user_daily_object(session, user.id, daily_obj_id)
+      result = {
+        "user_daily": user_daily_obj.as_dict(),
+        "monthly": monthly_obj.as_dict(),
+        "user": user.as_dict()
+      }
+    return result
+
   # Missing infos in SQL comparing to previous features:
   # - AC Count & Rate
   # - Like & Dislike
@@ -391,15 +429,9 @@ class DatabaseAPILayer:
     return result
 
   def read_daily_object(self, date):
-    query = select(db.DailyObject).where(db.DailyObject.generatedDate == date)
-    result = None
     with Session(self.engine) as session:
-      daily = session.scalars(query).one_or_none()
-      if daily == None:
-        daily = self.read_latest_daily()
-        result = daily
-      else:
-        result = daily.__dict__
+      result = __read_daily_object(session, date=date)
+      result = result.__dict__
 
     return result
 

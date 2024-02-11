@@ -45,6 +45,8 @@ class DailyAutomation(commands.Cog):
     async def daily(self):
         daily_challenge_info = await self.create_new_daily_object()
         await self.create_daily_thread(daily_challenge_info)
+        # await self.prune_unverified_members()
+        # await self.prune_left_members()
 
     @daily.error
     async def on_error(self, exception):

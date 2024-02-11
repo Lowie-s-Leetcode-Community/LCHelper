@@ -88,10 +88,12 @@ class DailyObject(Base):
     createdAt = mapped_column(DateTime, insert_default=func.now())
     updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     problemId = mapped_column(Integer, ForeignKey("Problem.id"))
-    isToday = mapped_column(Boolean)
     generatedDate = mapped_column(Date)
     problem: Mapped[Problem] = relationship(back_populates="dailyObjects")
     userDailyObjects: Mapped[List[UserDailyObject]] = relationship(back_populates="dailyObject")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class UserDailyObject(Base):
     __tablename__ = "UserDailyObject"
@@ -110,6 +112,9 @@ class UserDailyObject(Base):
     dailyObject: Mapped[DailyObject] = relationship(back_populates="userDailyObjects")
     user: Mapped[User] = relationship(back_populates="userDailyObjects")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class UserMonthlyObject(Base):
     __tablename__ = "UserMonthlyObject"
     id = mapped_column(Integer, primary_key=True)
@@ -119,6 +124,9 @@ class UserMonthlyObject(Base):
     scoreEarned = mapped_column(Integer)
     firstDayOfMonth = mapped_column(Date)
     user: Mapped[User] = relationship(back_populates="userMonthlyObjects")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Mission(Base):
     __tablename__ = "Mission"

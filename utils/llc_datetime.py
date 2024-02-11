@@ -13,14 +13,14 @@ def get_today():
   return result
 
 def get_fdom_by_timestamp(dtime):
-  monday = dtime - timedelta(days=dtime.weekday())
+  monday = dtime.astimezone(pytz.utc) - timedelta(days=dtime.weekday())
   day_in_week_1 = datetime(monday.year, monday.month, 7)
   result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
 
   return result.date()
 
 def get_first_day_of_current_month():
-  return get_fdom_by_timestamp(datetime.now())
+  return get_fdom_by_timestamp(datetime.now(pytz.utc))
 
 def get_first_day_of_previous_month():
   current_first_day = get_first_day_of_current_month()
