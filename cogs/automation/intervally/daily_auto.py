@@ -27,7 +27,7 @@ class DailyAutomation(commands.Cog):
 
     async def create_new_daily_object(self):
         daily_challenge_info = LC_utils.get_daily_challenge_info()
-        db_daily_obj = self.client.db_api.read_latest_daily()
+        db_daily_obj = self.client.db_api.read_latest_daily_problem()
         # {'date': '2024-02-09', 'link': 'https://leetcode.com/problems/largest-divisible-subset/', 'title': 'Largest Divisible Subset', 'title_slug': 'largest-divisible-subset', 'id': '368'}
         if daily_challenge_info['date'] != db_daily_obj['generatedDate'].strftime("%Y-%m-%d"):
             await self.client.db_api.create_daily_object(daily_challenge_info['id'], get_today())

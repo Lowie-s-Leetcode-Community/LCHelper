@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import pytz
 
 def get_date_from_timestamp(ts):
-  current_utc_time = datetime.fromtimestamp(ts)
+  current_utc_time = datetime.fromtimestamp(ts).astimezone(pytz.utc)
   result = current_utc_time.date()
 
   return result

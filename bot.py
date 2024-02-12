@@ -20,8 +20,6 @@ client = commands.Bot(command_prefix = os.getenv('BOT_PREFIX'), case_insensitive
 activity = discord.Activity(name = 'Lowie', type = discord.ActivityType.playing)
 token = os.getenv('BOT_TOKEN')
 tree = client.tree
-DBClient = MongoClient(os.getenv('MONGODB_LOGIN_CRED'))
-client.DBClient = DBClient
 log_handler = logging.FileHandler(filename = "discord.log", encoding = "utf-8", mode = "w")
 
 db_api = DatabaseAPILayer(client)

@@ -183,10 +183,20 @@ class DatabaseAPILayer:
       .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
     obj = session.scalars(query).one_or_none()
     return obj
+  
+  def __read_latest_daily_object(self, session):
+    query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
+    daily = session.scalars(query).one()
+    return daily
 
   def __read_daily_object(self, session, date = get_today()):
-    query = select(db.DailyObject).where(db.DailyObject.generatedDate == date)
-    daily = session.scalars(query).one_or_none()
+    try:
+      query = select(db.DailyObject).where(db.DailyObject.generatedDate == date)
+      daily = session.scalars(query).one()
+    except:
+      daily = self.__read_latest_daily_object(session)
+      print(f"Current daily not found. Using DailyObj from {str(daily.generatedDate)}")
+    
     return daily
 
   def read_user_progress(self, memberDiscordId: str):
@@ -195,25 +205,21 @@ class DatabaseAPILayer:
       user = session.scalars(query).one_or_none()
       monthly_obj = self.__read_user_monthly_object(session, user.id)
       daily_obj = self.__read_daily_object(session)
-      daily_obj_id = None if daily_obj == None else daily_obj.id
+      daily_obj_id = daily_obj.id
       user_daily_obj = self.__read_user_daily_object(session, user.id, daily_obj_id)
       result = {
         "user_daily": user_daily_obj.as_dict(),
         "monthly": monthly_obj.as_dict(),
+        "daily": daily_obj.as_dict(),
         "user": user.as_dict()
       }
     return result
 
-  # Missing infos in SQL comparing to previous features:
-  # - AC Count & Rate
-  # - Like & Dislike
   # Infos to be added:
   # - # Comm members solves
-  def read_latest_daily(self):
-    query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
-    result = None
+  def read_latest_daily_problem(self):
     with Session(self.engine) as session:
-      daily = session.scalars(query).one()
+      daily = self.__read_latest_daily_object(session)
       problem = daily.problem
       result = daily.__dict__
       result["problem"] = problem.__dict__
@@ -339,9 +345,6 @@ class DatabaseAPILayer:
     reason = "Gacha roll!"
     with Session(self.engine) as session:
       daily = self.__read_daily_object(session)
-      if daily == None:
-        query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
-        daily = session.scalars(query).one()
       user = session.scalars(find_user_query).one()
       result = self.__update_user_score(session, user.id, daily.as_dict(), delta)
       update_query = update(db.UserDailyObject)\
@@ -425,8 +428,7 @@ class DatabaseAPILayer:
       new_obj = db.DailyObject(
         id=get_min_available_id(session, db.DailyObject),
         problemId=problemId,
-        generatedDate=date,
-        isToday=False
+        generatedDate=date
       )
       session.add(new_obj)
       result = new_obj.id
@@ -454,7 +456,7 @@ class DatabaseAPILayer:
 
   def read_daily_object(self, date):
     with Session(self.engine) as session:
-      result = __read_daily_object(session, date=date)
+      result = self.__read_daily_object(session, date=date)
       result = result.__dict__
 
     return result
@@ -486,9 +488,23 @@ class DatabaseAPILayer:
       queryResult = session.scalars(query).one()
       cfg = queryResult.as_dict()
     return cfg
+  
+  async def update_submission_channel(self, new_channel_id: str):
+    query = update(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)\
+      .values(submissionChannelId = new_channel_id)
+    with Session(self.engine) as session:
+      queryResult = session.execute(query)
+      await self.__commit(session, "SystemConfiguration", """
+        {{ "submissionChannelId": {} }}
+      """.format(new_channel_id))
+    return True
 
-## Features to be refactoring
-
-# onboard info - need database
-
-# qa
+  async def update_score_channel(self, new_channel_id: str):
+    query = update(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)\
+      .values(scoreLogChannelId = new_channel_id)
+    with Session(self.engine) as session:
+      queryResult = session.execute(query)
+      await self.__commit(session, "SystemConfiguration", """
+        {{ "scoreLogChannelId": {} }}
+      """.format(f"<#{new_channel_id}>"))
+    return True

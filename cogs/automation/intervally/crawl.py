@@ -42,7 +42,7 @@ class Crawl(commands.Cog):
                 date = get_date_from_timestamp(int(submission['timestamp']))
                 daily_obj = self.client.db_api.read_daily_object(date)
                 if daily_obj == None:
-                    daily_obj = self.client.db_api.read_latest_daily()
+                    daily_obj = self.client.db_api.read_latest_daily_problem()
 
                 problem = self.client.db_api.read_problem_from_slug(submission['titleSlug'])
                 await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj)
