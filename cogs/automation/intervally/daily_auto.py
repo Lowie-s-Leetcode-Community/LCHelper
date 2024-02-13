@@ -8,19 +8,19 @@ import asyncio
 import traceback
 import datetime
 from utils.llc_datetime import get_today
+from utils.logger import Logger
 
-# Check if it's the first monday of the month
-def is_monthly_reset_time():
-    d = datetime.date.today()
-    if d.weekday() == 0 and int((d.day - 1) / 7) + 1 == 1:
-        return True
-    return False
+COG_START_TIMES = [
+    datetime.time(hour=0, minute=3, tzinfo=datetime.timezone.utc),
+    datetime.time(hour=0, minute=33, tzinfo=datetime.timezone.utc)
+]
 
 class DailyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True": 
             self.daily.start()
+        self.logger = Logger(client)
 
     def cog_unload(self):
         self.daily.cancel()
@@ -41,18 +41,23 @@ class DailyAutomation(commands.Cog):
         await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
         return
 
-    @tasks.loop(minutes = 30)
+    @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
+        await self.logger.on_automation_event("Daily", "start-daily")
+        await self.logger.on_automation_event("Daily", "create_new_daily_object()")
         daily_challenge_info = await self.create_new_daily_object()
+        await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
         # await self.prune_unverified_members()
         # await self.prune_left_members()
+        await self.logger.on_automation_event("Daily", "end-daily")
 
     @daily.error
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['serverId'])
-        await channel.send(f"```py\n{traceback.format_exc()[:800]}```")
+        await channel.send(f"Daily initiate error:\n```py\n{traceback.format_exc()[:800]}```\nPlease re-start.")
+        await self.logger.on_automation_event("Daily", "error found")
 
         self.daily.restart()
 

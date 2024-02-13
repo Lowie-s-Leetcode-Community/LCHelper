@@ -4,6 +4,7 @@ from discord.ext import commands
 from utils.asset import Assets
 import traceback
 import os
+from datetime import datetime
 
 class Logger:
     def __init__(self, client):
@@ -33,6 +34,16 @@ class Logger:
                     color = Assets.hard
                 )
                 await log_channel.send(msg, embed = embed)
+        except Exception as e:
+            print(traceback.format_exc()[:800])
+            raise
+        return
+    
+    async def on_automation_event(self, context: str, message: str):
+        try:
+            guild = await self.client.fetch_guild(self.client.config['serverId'])
+            log_channel = await guild.fetch_channel(self.client.config['eventLoggingId'])
+            await log_channel.send(f"**{context}** automation invoke: **{message}**. Timestamp: **{datetime.now()}**")
         except Exception as e:
             print(traceback.format_exc()[:800])
             raise

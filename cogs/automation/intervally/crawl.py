@@ -9,6 +9,8 @@ import asyncio
 import traceback
 from utils.llc_datetime import get_date_from_timestamp
 from datetime import datetime
+import pytz
+from utils.logger import Logger
 import time
 
 class Crawl(commands.Cog):
@@ -16,6 +18,7 @@ class Crawl(commands.Cog):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True":
             self.crawling.start()
+        self.logger = Logger(client)
 
     def cog_unload(self):
         self.crawling.cancel()
@@ -23,14 +26,8 @@ class Crawl(commands.Cog):
     async def submissions(self):
         # flaw: this only returns user that are shown on leaderboard???
         leaderboard = self.client.db_api.read_current_month_leaderboard()
-        # benchmarking
-        # guild = await self.client.fetch_guild(self.client.config['serverId'])
-        # log_channel = await guild.fetch_channel(self.client.config['databaseLogId'])
-        # start_time = datetime.now()
-        # await log_channel.send(f"Start crawling. Timestamp: {start_time}")
         for user in leaderboard:
             username = user['leetcodeUsername']
-            # await log_channel.send(f"Start crawling for username {username}")
             recent_solved = []
             recent_info = LC_utils.get_recent_ac(username, 20)
             if (recent_info == None):
@@ -45,20 +42,29 @@ class Crawl(commands.Cog):
                     daily_obj = self.client.db_api.read_latest_daily_problem()
 
                 problem = self.client.db_api.read_problem_from_slug(submission['titleSlug'])
-                await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj)
+                # fire-fighting, to be removed
+                if problem != None:
+                    await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj)
         # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
 
-    @tasks.loop(minutes = 20)
+    @tasks.loop(minutes = 10)
     async def crawling(self):
+        await self.logger.on_automation_event("Crawl", "start-crawl")
+        current_utc_time = datetime.now().astimezone(pytz.utc)
+        if 0 <= current_utc_time.hour <= 1:
+            await self.logger.on_automation_event("Crawl", "stop-crawl to avoid conflict with other tasks.")
+            return
+        await self.logger.on_automation_event("Crawl", "submissions()")
         await self.submissions()
+        await self.logger.on_automation_event("Crawl", "end-crawl")
 
     @crawling.error
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
+        await self.logger.on_automation_event("Crawl", "error found")
 
-        time.sleep(90)
         self.crawling.restart()
 
     @commands.command()

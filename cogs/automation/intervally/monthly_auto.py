@@ -7,20 +7,32 @@ import os
 import traceback
 import datetime
 from utils.llc_datetime import get_first_day_of_current_month
+from utils.logger import Logger
+
+COG_START_TIMES = [
+    datetime.time(hour=0, tzinfo=datetime.timezone.utc),
+    datetime.time(hour=0, minute=30, tzinfo=datetime.timezone.utc)
+]
 
 class MonthlyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True": 
             self.monthly.start()
+        self.logger = Logger(client)
 
     def cog_unload(self):
         self.monthly.cancel()
     
-    @tasks.loop(hours = 6)
+    @tasks.loop(time=COG_START_TIMES)
     async def monthly(self):
+        await self.logger.on_automation_event("Monthly", "start-monthly")
+        # TODO: filter to only continue monthly task at first Monday, but these current fn can run fine daily :)
+        await self.logger.on_automation_event("Monthly", "update_leaderboard()")
         await self.update_leaderboard()
+        await self.logger.on_automation_event("Monthly", "update_problems_list()")
         await self.update_problems_list()
+        await self.logger.on_automation_event("Monthly", "end-monthly")
 
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
@@ -62,7 +74,6 @@ class MonthlyAutomation(commands.Cog):
               lc_ind += 1
               # handling if problem changes slug?
         for problem in new_problems:
-          print(problem)
           await self.client.db_api.create_problem(problem)
 
         # add warning msg for removed_problem?
@@ -73,6 +84,7 @@ class MonthlyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Monthly crawl error```py\n{exception}```")
+        await self.logger.on_automation_event("Monthly", "error found")
 
         self.monthly.restart()
 

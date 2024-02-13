@@ -195,8 +195,7 @@ class DatabaseAPILayer:
       daily = session.scalars(query).one()
     except:
       daily = self.__read_latest_daily_object(session)
-      print(f"Current daily not found. Using DailyObj from {str(daily.generatedDate)}")
-    
+      print(f"Daily object at ({date}) not found. Using DailyObj from {str(daily.generatedDate)}")
     return daily
 
   def read_user_progress(self, memberDiscordId: str):
