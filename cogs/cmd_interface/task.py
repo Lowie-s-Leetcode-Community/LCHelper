@@ -14,7 +14,7 @@ class Task(commands.Cog):
     @app_commands.command(name = 'task', description = "Earn score by doing daily tasks")
     async def _task(self, interaction):
         await interaction.response.defer(thinking = True)
-        user_progress = self.client.db_api.read_user_progress(interaction.user.id)
+        user_progress = self.client.db_api.read_user_progress(str(interaction.user.id))
         embed_list = []
 
         embed = discord.Embed(
