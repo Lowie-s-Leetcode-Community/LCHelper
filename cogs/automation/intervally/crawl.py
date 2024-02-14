@@ -16,7 +16,7 @@ import time
 class Crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True":
+        if os.getenv('START_UP_TASKS') == "Daily":
             self.crawling.start()
         self.logger = Logger(client)
 
@@ -39,12 +39,12 @@ class Crawl(commands.Cog):
                 date = get_date_from_timestamp(int(submission['timestamp']))
                 daily_obj = self.client.db_api.read_daily_object(date)
                 if daily_obj == None:
-                    daily_obj = self.client.db_api.read_latest_daily_problem()
+                    daily_obj = self.client.db_api.read_latest_daily_object()
 
                 problem = self.client.db_api.read_problem_from_slug(submission['titleSlug'])
                 # fire-fighting, to be removed
                 if problem != None:
-                    await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj)
+                    await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj['id'])
         # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
 
     @tasks.loop(minutes = 10)

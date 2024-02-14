@@ -20,7 +20,7 @@ class DailyObjectController:
 
   # return daily object, or None
   # can't raise MultipleResultFound since the db has unique tupple
-  def read_one(self, session: Session, id: Optional[int], date: Optional[date]):
+  def read_one(self, session: Session, id: Optional[int] = None, date: Optional[date] = None):
     query = select(db.DailyObject)
     if id != None:
       query = query.where(db.DailyObject.id == id)
@@ -31,7 +31,7 @@ class DailyObjectController:
     return daily
   
   # return only daily
-  def read_one_or_latest(self, session: Session, id: Optional[int], date: Optional[date]):
+  def read_one_or_latest(self, session: Session, id: Optional[int] = None, date: Optional[date] = None):
     result = self.read_one(session=session, id=id, date=date)
     if result == None:
       result = self.read_latest(session=session)
@@ -67,8 +67,13 @@ class UserDailyObjectController:
         userId=userId,
         dailyObjectId=dailyObjectId
       )
-      session.add(result)
-      # session.refresh(result)
+      added = False
+      for obj in session.new:
+        if isinstance(obj, db.UserDailyObject):
+          if obj.userId == result.userId and obj.dailyObjectId == result.dailyObjectId:
+            added = True
+      if not added:
+        session.add(result)
     return result
 
   # update and divide into cases, whether the object is new or persistent
@@ -79,10 +84,11 @@ class UserDailyObjectController:
     insp = inspect(result)
     if insp.persistent:
       update_query = update(db.UserDailyObject)\
+        .returning(db.UserDailyObject)\
         .where(db.UserDailyObject.userId == userId)\
         .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
         .values(scoreEarned = result.scoreEarned + scoreEarnedDelta)
-      if solvedDaily != None:
+      if solvedDailyDelta != None:
         update_query = update_query.values(solvedDaily = result.solvedDaily + solvedDailyDelta)
       if solvedEasyDelta != None:
         update_query = update_query.values(solvedEasy = result.solvedEasy + solvedEasyDelta)
@@ -183,7 +189,7 @@ class UserController:
     query = select(db.User)
     return session.scalars(query).all()
 
-  def read_one(self, session: Session, userId: Optional[int], leetcodeUsername: Optional[str], discordId: Optional[str]):
+  def read_one(self, session: Session, userId: Optional[int], leetcodeUsername: Optional[str] = None, discordId: Optional[str] = None):
     query = select(db.User)
     if userId != None:
       query = query.where(db.User.id == userId)

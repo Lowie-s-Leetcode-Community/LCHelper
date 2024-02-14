@@ -44,110 +44,60 @@ class DatabaseAPILayer:
       result = True
     return result
 
-  # def __calculate_submission_infos(self, userId, dailyObjectId, problemId):
-  #   query1 = select(db.UserDailyObject)\
-  #     .where(db.UserDailyObject.userId == userId)\
-  #     .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
-  #   query2 = select(db.Problem.difficulty)\
-  #     .where(db.Problem.id == problemId)
-  #   query3 = select(db.DailyObject)\
-  #     .where(db.DailyObject.id == dailyObjectId)
-  #   score = 0
-  #   warn = None
-  #   is_daily = False
-  #   with Session(self.engine) as session:
-  #     user_daily_obj = session.execute(query1).one_or_none()
-  #     problem_diff = session.execute(query2).one().difficulty
-  #     daily_obj = session.execute(query3).one()
+  def __calculate_submission_infos(self, session: Session, user_daily_obj: db.UserDailyObject, daily: db.DailyObject, problem: db.Problem):
+    score = 0
+    warn = None
+    is_daily = False
 
-  #     if daily_obj.DailyObject.problemId == problemId:
-  #       score = 2
-  #       is_daily = True
-  #       if user_daily_obj != None:
-  #         if user_daily_obj.UserDailyObject.solvedDaily >= 1:
-  #           score = 0
-  #           warn = "Daily points have already been counted"
-  #     else:
-  #       practice_cap = 6
-  #       practice_earned = 0
-  #       if user_daily_obj != None:
-  #         info = user_daily_obj.UserDailyObject
-  #         practice_earned = min(info.solvedEasy * 1 + info.solvedMedium * 2 + info.solvedHard * 3, practice_cap)
-  #       problem_score = 1
-  #       if problem_diff == "Medium":
-  #         problem_score = 2
-  #       elif problem_diff == "Hard":
-  #         problem_score = 3
-  #       score = min(practice_cap - practice_earned, problem_score)
-  #       if (score == 0):
-  #         warn = "Point cap reached"
-  #   return { "score": score, "is_daily": is_daily, "difficulty": problem_diff, "warn": warn }
+    if daily.problemId == problem.id:
+      score = 2
+      is_daily = True
+      if (user_daily_obj.solvedDaily or 0) >= 1:
+        score = 0
+        warn = "Daily points have already been counted"
+    else:
+      practice_cap = self.client.config['practiceScoreCap']
+      easy_score = self.client.config['easySolveScore']
+      medium_score = self.client.config['mediumSolveScore']
+      hard_score = self.client.config['hardSolveScore']
+      practice_earned = (user_daily_obj.solvedEasy or 0) * easy_score + (user_daily_obj.solvedMedium or 0) * medium_score + (user_daily_obj.solvedHard or 0) * hard_score
+      practice_earned = min(practice_earned, practice_cap)
+      problem_score = 1
+      if problem.difficulty == "Medium":
+        problem_score = 2
+      elif problem.difficulty == "Hard":
+        problem_score = 3
+      score = min(practice_cap - practice_earned, problem_score)
+      if (score == 0):
+        warn = "Point cap reached"
+    return { "score": score, "is_daily": is_daily, "difficulty": problem.difficulty, "warn": warn }
 
-  # def __update_user_score(self, session, userId: int, dailyObject: dict, score: int, problem_type = None):
-  #   user_daily_query = select(db.UserDailyObject)\
-  #     .where(db.UserDailyObject.userId == userId)\
-  #     .where(db.UserDailyObject.dailyObjectId == dailyObject['id'])
-  #   user_daily_obj = session.execute(user_daily_query).one_or_none()
+  async def register_new_submission(self, userId: int, problemId: int, submission: dict, dailyObjectId: dict):
+    with Session(self.engine, autoflush=False) as session:
+      user_solved_problem_controller = ctrlers.UserSolvedProblemController()
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
+      user_controller = ctrlers.UserController()
 
-  #   solvedEasy = 1 if problem_type == "Easy" else 0
-  #   solvedMedium = 1 if problem_type == "Medium" else 0
-  #   solvedHard = 1 if problem_type == "Hard" else 0
-  #   solvedDaily = 1 if problem_type == "Daily" else 0
+      daily_object = ctrlers.DailyObjectController().read_one_or_latest(session, id=dailyObjectId)
+      problem = ctrlers.ProblemController().read_one(session, problemId=problemId)
+      user = user_controller.read_one(session, userId=userId)
 
-  #   if user_daily_obj == None:
-  #     user_daily_obj = db.UserDailyObject(
-  #       id=get_min_available_id(session, db.UserDailyObject),
-  #       userId=userId,
-  #       dailyObjectId=dailyObject['id'],
-  #       scoreEarned=score,
-  #       solvedDaily=solvedDaily,
-  #       solvedEasy=solvedEasy,
-  #       solvedMedium=solvedMedium,
-  #       solvedHard=solvedHard
-  #     )
-  #     session.add(user_daily_obj)
-  #   else:
-  #     update_query = update(db.UserDailyObject)\
-  #       .where(db.UserDailyObject.userId == userId)\
-  #       .where(db.UserDailyObject.dailyObjectId == dailyObject['id'])\
-  #       .values(scoreEarned = user_daily_obj.UserDailyObject.scoreEarned + score)\
-  #       .values(solvedEasy = user_daily_obj.UserDailyObject.solvedEasy + solvedEasy)\
-  #       .values(solvedMedium = user_daily_obj.UserDailyObject.solvedMedium + solvedMedium)\
-  #       .values(solvedHard = user_daily_obj.UserDailyObject.solvedHard + solvedHard)\
-  #       .values(solvedDaily = min(1, user_daily_obj.UserDailyObject.solvedDaily + solvedDaily))
-  #     session.execute(update_query)
+      old_submission = user_solved_problem_controller.read_one(session, userId, problemId)
+      user_daily_object = user_daily_object_controller.read_or_create_one(session, userId, dailyObjectId)
+      sub_info = self.__calculate_submission_infos(session, user_daily_object, daily_object, problem)
 
-  #   first_day_of_month = get_fdom_by_datestamp(dailyObject['generatedDate'])
-  #   user_monthly_query = select(db.UserMonthlyObject)\
-  #     .where(db.UserMonthlyObject.userId == userId)\
-  #     .where(db.UserMonthlyObject.firstDayOfMonth == first_day_of_month)
-  #   user_monthly_obj = session.execute(user_monthly_query).one_or_none()
-  #   if (user_monthly_obj == None):
-  #     new_obj = db.UserMonthlyObject(
-  #       id=get_min_available_id(session, db.UserMonthlyObject),
-  #       userId=userId,
-  #       firstDayOfMonth=first_day_of_month,
-  #       scoreEarned=score
-  #     )
-  #     session.add(new_obj)
-  #     result = new_obj.id
-  #   else:
-  #     update_query = update(db.UserMonthlyObject)\
-  #       .where(db.UserMonthlyObject.userId == userId)\
-  #       .where(db.UserMonthlyObject.firstDayOfMonth == first_day_of_month)\
-  #       .values(scoreEarned = user_monthly_obj.UserMonthlyObject.scoreEarned + score)
-  #     session.execute(update_query)
-  #   return user_daily_obj
-  
-  # def __create_submission(self, session, userId, problemId, submissionId):
-  #   new_obj = db.UserSolvedProblem(
-  #     id=get_min_available_id(session, db.UserSolvedProblem),
-  #     userId=userId,
-  #     problemId=problemId,
-  #     submissionId=submissionId
-  #   )
-  #   session.add(new_obj)
-  #   return new_obj
+      problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
+      if (not sub_info["is_daily"]) and old_submission != None:
+        return
+      if old_submission == None:
+        user_solved_problem_controller.create_one(session, userId, problemId, submission['id'])
+      user_daily_object_controller.update_one(session, userId, dailyObjectId,
+        scoreEarnedDelta=sub_info["score"], solvedDailyDelta=int(problem_type == "Daily"),
+        solvedEasyDelta=int(problem_type == "Easy"), solvedMediumDelta=int(problem_type == "Medium"),
+        solvedHardDelta=int(problem_type == "Hard"), scoreGacha=-1)
+      await self.__commit(session, "UserSolvedProblem",\
+        api_utils.submission_jstr(submission, user.as_dict(), problem.as_dict(), sub_info))
+    return
 
   # def __update_user_sub_id(self, session, userId, submissionId: int):
   #   update_query = update(db.User)\
@@ -222,16 +172,29 @@ class DatabaseAPILayer:
   #     }
   #   return result
 
-  # # Infos to be added:
-  # # - # Comm members solves
-  # def read_latest_daily_problem(self):
-  #   with Session(self.engine) as session:
-  #     daily = self.__read_latest_daily_object(session)
-  #     problem = daily.problem
-  #     result = daily.__dict__
-  #     result["problem"] = problem.__dict__
-  #     result["problem"]["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
-  #   return result
+  # Infos to be added:
+  # - # Comm members solves
+  def read_latest_daily_object(self):
+    with Session(self.engine) as session:
+      daily_object_controller = ctrlers.DailyObjectController()
+      daily = daily_object_controller.read_latest(session=session)
+      problem = daily.problem
+      result = daily.as_dict()
+      result["problem"] = problem.as_dict()
+      result["problem"]["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
+    return result
+
+  async def create_or_keep_daily_object(self, problemId, date):
+    with Session(self.engine, autoflush=False) as session:
+      daily_object_controller = ctrlers.DailyObjectController()
+      current_daily = daily_object_controller.read_latest(session=session)
+      result = current_daily.as_dict()
+      if current_daily.generatedDate != date:
+        new_obj = daily_object_controller.create(session=session, problemId=problemId, date=date)
+        session.add(new_obj)
+        result = new_obj.as_dict()
+      await self.__commit(session, f"DailyObject", result)
+    return result
 
   # # We disable getting data from random user for now.
   # def read_profile(self, memberDiscordId: str):
@@ -292,7 +255,14 @@ class DatabaseAPILayer:
       for res in query_result:
         result.append({**res.User.as_dict(), **res.UserMonthlyObject.as_dict()})
     return result
-  
+
+  def read_daily_object(self, date):
+    result = {}
+    with Session(self.engine) as session:
+      daily_object_controller = ctrlers.DailyObjectController()
+      daily = daily_object_controller.read_one_or_latest(session=session, date=date)
+      result = daily.as_dict()
+    return result
   # # Desc: return one random problem, with difficulty filter + tags filter
   # def read_gimme(self, lc_query):
   #   # getting the choices, including difficulty, premium, included tags, excluded tags
@@ -364,26 +334,6 @@ class DatabaseAPILayer:
   #     }
   #   return res
 
-  # async def register_new_submission(self, userId, problemId, submission, dailyObject):
-  #   sub_info = self.__calculate_submission_infos(userId, dailyObject['id'], problemId)
-  #   sub_query = select(db.UserSolvedProblem)\
-  #     .where(db.UserSolvedProblem.userId == userId)\
-  #     .where(db.UserSolvedProblem.problemId == problemId)
-  #   with Session(self.engine, autoflush=False) as session:
-  #     old_submission = session.execute(sub_query).one_or_none()
-  #     problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
-  #     if (not sub_info["is_daily"]) and old_submission != None:
-  #       return
-  #     if old_submission == None:
-  #       self.__create_submission(session, userId, problemId, submission["id"])
-  #     self.__update_user_score(session, userId, dailyObject, sub_info["score"], problem_type)
-  #     self.__update_user_sub_id(session, userId, submission["id"])
-  #     user = self.__read_user_from_id(session, userId)
-  #     problem = self.__read_problem_from_id(session, problemId)
-  #     await self.__commit(session, "UserSolvedProblem",\
-  #       api_utils.submission_jstr(submission, user, problem, sub_info))
-  #   return
-
   # # Can we split this fn into 2?
   # async def create_user(self, user_obj):
   #   problems = user_obj['userSolvedProblems']
@@ -426,18 +376,6 @@ class DatabaseAPILayer:
   #     result = new_obj.id
   #     await self.__commit(session, f"UserMonthlyObject<id:{result}>", "[]")
   #   return { "id": result }
-  
-  # async def create_daily_object(self, problemId, date):
-  #   with Session(self.engine, autoflush=False) as session:
-  #     new_obj = db.DailyObject(
-  #       id=get_min_available_id(session, db.DailyObject),
-  #       problemId=problemId,
-  #       generatedDate=date
-  #     )
-  #     session.add(new_obj)
-  #     result = new_obj.id
-  #     await self.__commit(session, f"DailyObject<id:{result}, date:{date}>", "[]")
-  #   return { "id": result }
 
   def read_problems_all(self):
     result = []
@@ -446,22 +384,16 @@ class DatabaseAPILayer:
       result = list(map(lambda x: x.as_dict(), problem_controller.read_many(session=session)))
     return result
   
-  # def read_problem_from_slug(self, titleSlug):
-  #   query = select(db.Problem).where(db.Problem.titleSlug == titleSlug)
-  #   with Session(self.engine) as session:
-  #     queryResult = session.execute(query).one_or_none()
-  #     if queryResult == None:
-  #       return None
+  def read_problem_from_slug(self, titleSlug):
+    with Session(self.engine) as session:
+      problem_controller = ctrlers.ProblemController()
+      problem = problem_controller.read_one(session=session, titleSlug=titleSlug)
+      if problem == None:
+        return None
 
-  #     result = queryResult.Problem.__dict__
-  #   return result
+      result = problem.as_dict()
+    return result
 
-  # def read_daily_object(self, date):
-  #   with Session(self.engine) as session:
-  #     result = self.__read_daily_object(session, date=date)
-  #     result = result.__dict__
-
-  #   return result
   async def create_problems(self, problems_list: List[dict]):
     result = []
     with Session(self.engine, autoflush=False) as session:
