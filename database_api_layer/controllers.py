@@ -219,9 +219,11 @@ class UserController:
       result = session.execute(update_query).one()
     return result
 
+  # def remove_one(self, session: Session):
+
 class TopicController:
   def read_many_in(self, session: Session, topicNames: List[str]):
-    query = select(db.Topic).filter(db.Topic.topicName.in_(topic_list))
+    query = select(db.Topic).filter(db.Topic.topicName.in_(topicNames))
     return session.execute(query).all()
   
   def create_one(self, session: Session, topicName: str):
@@ -233,7 +235,7 @@ class TopicController:
     return result
 
 class ProblemController:
-  def read_one(self, session: Session, problemId: Optional[int], titleSlug: Optional[str]):
+  def read_one(self, session: Session, problemId: Optional[int] = None, titleSlug: Optional[str] = None):
     query = select(db.Problem)
     if problemId != None:
       query = query.where(db.Problem.id == problemId)
@@ -242,8 +244,14 @@ class ProblemController:
     return session.scalar(query)
 
   # returns many, use for gimme and various stuffs
-  def read_many(self, session: Session, difficulty: Optional[str], isPremium: Optional[bool], includedTopics: list = [], excludedTopics: list = []):
-    return # stub, rewrite later
+  def read_many(self, session: Session, difficulty: Optional[str] = None, isPremium: Optional[bool] = None, includedTopics: list = [], excludedTopics: list = []):
+    query = select(db.Problem)
+    if difficulty != None:
+      query = query.where(difficulty == difficulty)
+    if isPremium != None:
+      query = query.where(isPremium == isPremium)
+    query = query.order_by(db.Problem.id)
+    return session.scalars(query).all()
 
   # topics should be a list of topic Names
   def create_one(self, session: Session, title: str, titleSlug: str, difficulty: str, isPremium: bool, topics: List[str]):

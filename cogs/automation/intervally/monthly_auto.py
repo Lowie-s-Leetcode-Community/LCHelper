@@ -73,9 +73,7 @@ class MonthlyAutomation(commands.Cog):
               new_problems.append(lc_problem_list[lc_ind])
               lc_ind += 1
               # handling if problem changes slug?
-        for problem in new_problems:
-          await self.client.db_api.create_problem(problem)
-
+        await self.client.db_api.create_problems(new_problems)
         # add warning msg for removed_problem?
         return
 
