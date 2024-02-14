@@ -45,7 +45,7 @@ class Task(commands.Cog):
         if user_progress['user_daily']['scoreGacha'] != -1:
             daily_msg += f"{Assets.green_tick} Test your luck! ({user_progress['user_daily']['scoreGacha']} pts)\n"
         else:
-            daily_msg += f"{Assets.red_tick} **Test your luck! -> </gacha:1168530503675166791> (1-?? pts)**\n"
+            daily_msg += f"{Assets.red_tick} **Test your luck!** -> </gacha:1168530503675166791> **(1-?? pts)**\n"
 
         # stub
         practice_score = min(daily_conf['practiceCap'], 5)

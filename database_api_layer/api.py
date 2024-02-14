@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, select, insert, func, update
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from typing import Optional
@@ -11,6 +11,13 @@ from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
 import asyncio
 import json
+import database_api_layer.controllers as ctrlers
+
+# API Access layer are to format data get from controllers to front-end
+# It calculates inputs to request through controllers and process their outputs to the command lines
+# Private fn are indicated by prefix __
+# One command/automation fn = one db session open
+# Only __commit when all the writings has been made
 
 class DatabaseAPILayer:
   engine = None
@@ -481,29 +488,26 @@ class DatabaseAPILayer:
     return { "id": result }
 
   def read_latest_configs(self):
-    query = select(db.SystemConfiguration)\
-      .where(db.SystemConfiguration.id == 1)
     with Session(self.engine) as session:
-      queryResult = session.scalars(query).one()
+      sys_conf_controller = ctrlers.SystemConfigurationController()
+      queryResult = sys_conf_controller.read_latest(session=session)
       cfg = queryResult.as_dict()
     return cfg
-  
+
   async def update_submission_channel(self, new_channel_id: str):
-    query = update(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)\
-      .values(submissionChannelId = new_channel_id)
+    result = {}
     with Session(self.engine) as session:
-      queryResult = session.execute(query)
-      await self.__commit(session, "SystemConfiguration", """
-        {{ "submissionChannelId": {} }}
-      """.format(new_channel_id))
-    return True
+      sys_conf_controller = ctrlers.SystemConfigurationController()
+      result = sys_conf_controller.update(session=session, submissionChannelId=new_channel_id)
+      result = result.SystemConfiguration.as_dict()
+      await self.__commit(session, "SystemConfiguration", result)
+    return result
 
   async def update_score_channel(self, new_channel_id: str):
-    query = update(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)\
-      .values(scoreLogChannelId = new_channel_id)
+    result = {}
     with Session(self.engine) as session:
-      queryResult = session.execute(query)
-      await self.__commit(session, "SystemConfiguration", """
-        {{ "scoreLogChannelId": {} }}
-      """.format(f"<#{new_channel_id}>"))
-    return True
+      sys_conf_controller = ctrlers.SystemConfigurationController()
+      result = sys_conf_controller.update(session=session, scoreLogChannelId=new_channel_id)
+      result = result.SystemConfiguration.as_dict()
+      await self.__commit(session, "SystemConfiguration", result)
+    return result
