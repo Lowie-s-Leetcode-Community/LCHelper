@@ -17,7 +17,7 @@ class NewMember(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        unverified_role = member.guild.get_role(self.client.config["unverifiedRoleId"])
+        unverified_role = member.guild.get_role(int(self.client.config['unverifiedRoleId']))
         await member.add_roles(unverified_role)
         embed = discord.Embed(
             title = "Welcome to the Lowie's LeetCode Community",

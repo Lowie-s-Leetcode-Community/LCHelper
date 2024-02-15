@@ -7,6 +7,7 @@ from typing import Optional
 import random
 import string
 import datetime
+import traceback
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
@@ -35,21 +36,15 @@ class ConfirmView(discord.ui.View):
                 'discordId': str(interaction.user.id),
                 'leetcodeUsername': self.username,
                 'mostRecentSubId': -1,
-                'userSolvedProblems': []
             }
 
-            # append missing info:
-            recent_info = LC_utils.get_recent_ac(self.username, 20)
-            if len(recent_info) > 0:
-                user_obj['mostRecentSubId'] = recent_info[0]['id']
-                for info in recent_info:
-                    user_obj['userSolvedProblems'].append(info['titleSlug'])
             member = await interaction.guild.fetch_member(interaction.user.id)
 
-            verified_role_id = self.client.config["verifiedRoleId"]
-            unverified_role_id = self.client.config["unverifiedRoleId"]
-            verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
-            unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
+            verified_role_id = self.client.config['verifiedRoleId']
+            unverified_role_id = self.client.config['unverifiedRoleId']
+            verified_role = discord.utils.get(interaction.guild.roles, id = int(verified_role_id))
+            unverified_role = discord.utils.get(interaction.guild.roles, id = int(unverified_role_id))
+            print(verified_role_id, unverified_role_id, verified_role, unverified_role)
             try:
                 await self.client.db_api.create_user(user_obj)
             except:
@@ -58,8 +53,10 @@ class ConfirmView(discord.ui.View):
                 await member.add_roles(verified_role)
                 await member.remove_roles(unverified_role)
                 await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
-        else: await interaction.followup.send(content = f"{Assets.red_tick} **Unmatched code. Please try again.**")
+        else:
+            await interaction.followup.send(content = f"{Assets.red_tick} **Unmatched code. Please try again.**")
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
+        print(traceback.format_exc())
         await interaction.followup.send(error)
         
 class verify(commands.Cog):

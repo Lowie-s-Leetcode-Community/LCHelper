@@ -224,10 +224,9 @@ class UserController:
   def create_one(self, session: Session, leetcodeUsername: str, discordId: str, mostRecentSubId: int = -1):
     new_user = db.User(
       id=get_min_available_id(session, db.User),
-      discordId=user_obj['discordId'],
-      leetcodeUsername=user_obj['leetcodeUsername'],
-      mostRecentSubId=user_obj['mostRecentSubId'],
-      userSolvedProblems=[]
+      discordId=discordId,
+      leetcodeUsername=leetcodeUsername,
+      mostRecentSubId=mostRecentSubId
     )
     session.add(new_user)
     return new_user

@@ -167,21 +167,19 @@ class DatabaseAPILayer:
       await self.__commit(session, "RegisterNewCrawl", "[]")
     return result
 
-  # def read_user_progress(self, memberDiscordId: str):
-  #   query = select(db.User).where(db.User.discordId == memberDiscordId)
-  #   with Session(self.engine) as session:
-  #     user = session.scalars(query).one_or_none()
-  #     monthly_obj = self.__read_user_monthly_object(session, user.id)
-  #     daily_obj = self.__read_daily_object(session)
-  #     daily_obj_id = daily_obj.id
-  #     user_daily_obj = self.__read_user_daily_object(session, user.id, daily_obj_id)
-  #     result = {
-  #       "user_daily": user_daily_obj.as_dict(),
-  #       "monthly": monthly_obj.as_dict(),
-  #       "daily": daily_obj.as_dict(),
-  #       "user": user.as_dict()
-  #     }
-  #   return result
+  def read_user_progress(self, memberDiscordId: str):
+    with Session(self.engine) as session:
+      user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
+      monthly_obj = ctrlers.UserMonthlyObjectController().read_one(session, user.id)
+      daily_obj = ctrlers.DailyObjectController().read_one_or_latest(session, date=get_today())
+      user_daily_obj = ctrlers.UserDailyObjectController().read_or_create_one(session, user.id, daily_obj.id)
+      result = {
+        "user_daily": user_daily_obj.as_dict(),
+        "monthly": monthly_obj.as_dict(),
+        "daily": daily_obj.as_dict(),
+        "user": user.as_dict()
+      }
+    return result
 
   # Infos to be added:
   # - # Comm members solves
@@ -208,42 +206,7 @@ class DatabaseAPILayer:
     return result
 
   # # We disable getting data from random user for now.
-  # def read_profile(self, memberDiscordId: str):
-  #   query = select(db.User).where(db.User.discordId == memberDiscordId)
-  #   result = None
-  #   with Session(self.engine) as session:
-  #     profile = session.scalars(query).one_or_none()
-  #     if profile == None:
-  #       return None
-  #     # try to optimize using sql filter next time! filter by python is very unoptimized!
-  #     daily_objs = list(filter(lambda obj: obj.dailyObject.generatedDate == get_today(), profile.userDailyObjects))
 
-  #     result = profile.__dict__
-  #     if len(daily_objs) == 0:
-  #       result['daily'] = {
-  #         'scoreEarned': 0,
-  #         'solvedDaily': 0,
-  #         'solvedEasy': 0,
-  #         'solvedMedium': 0,
-  #         'solvedHard': 0,
-  #         'rank': "N/A"
-  #       }
-  #     else:
-  #       result['daily'] = daily_objs[0].__dict__
-  #       result['daily']['rank'] = "N/A"
-
-  #     monthly_objs = list(filter(lambda obj: obj.firstDayOfMonth == get_first_day_of_current_month(), profile.userMonthlyObjects))
-  #     if len(monthly_objs) == 0:
-  #       result['monthly'] = {
-  #         'scoreEarned': 0,
-  #         'rank': "N/A"
-  #       }
-  #     else:
-  #       result['monthly'] = monthly_objs[0].__dict__
-  #       result['monthly']['rank'] = "N/A"
-
-  #   result['link'] = f"https://leetcode.com/{profile.leetcodeUsername}"
-  #   return result
 
   # Currently, just return user with a monthly object
   def read_current_month_leaderboard(self):
@@ -345,35 +308,59 @@ class DatabaseAPILayer:
   #     }
   #   return res
 
-  # # Can we split this fn into 2?
-  # async def create_user(self, user_obj):
-  #   problems = user_obj['userSolvedProblems']
-  #   problems_query = select(db.Problem).filter(db.Problem.titleSlug.in_(problems))
-  #   with Session(self.engine, autoflush=False) as session:
-  #     queryResult = session.execute(problems_query).all()
-  #     min_available_user_id = get_min_available_id(session, db.User)
-  #     new_user = db.User(
-  #       id=min_available_user_id,
-  #       discordId=user_obj['discordId'],
-  #       leetcodeUsername=user_obj['leetcodeUsername'],
-  #       mostRecentSubId=user_obj['mostRecentSubId'],
-  #       userSolvedProblems=[]
-  #     )
-  #     available_solved_problem_ids = get_multiple_available_id(session, db.UserSolvedProblem, len(queryResult))
-  #     idx = 0
-  #     for problem in queryResult:
-  #       user_solved_problem = db.UserSolvedProblem(
-  #         id=available_solved_problem_ids[idx],
-  #         problemId=problem.Problem.id,
-  #         submissionId=-1
-  #       )
-  #       new_user.userSolvedProblems.append(user_solved_problem)
-  #       idx += 1
-  #     session.add(new_user)
-  #     result = new_user.id
-  #     await self.__commit(session, "User", "[]")
+  def read_profile(self, memberDiscordId: str):
+    result = None
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+      
+      user = user_controller.read_one(session, discordId=memberDiscordId)
+      if user == None:
+        return None
 
-  #   return { "id": result }
+      result = user.as_dict()
+      daily_object = ctrlers.DailyObjectController().read_one_or_latest(session, date=get_today())
+      user_daily_object = ctrlers.UserDailyObjectController().read_one(
+        session, user.id, daily_object.id
+      )
+      if user_daily_object == None:
+        result['daily'] = {
+          'scoreEarned': 0,
+          'solvedDaily': 0,
+          'solvedEasy': 0,
+          'solvedMedium': 0,
+          'solvedHard': 0,
+          'rank': "N/A"
+        }
+      else:
+        result['daily'] = user_daily_object.as_dict()
+        result['daily']['rank'] = "N/A"
+
+      user_monthly_object = ctrlers.UserMonthlyObjectController().read_one(
+        session, user.id
+      )
+      if user_monthly_object == None:
+        result['monthly'] = {
+          'scoreEarned': 0,
+          'rank': "N/A"
+        }
+      else:
+        result['monthly'] = user_monthly_object.as_dict()
+        result['monthly']['rank'] = "N/A"
+      result['link'] = f"https://leetcode.com/{user.leetcodeUsername}"
+    return result
+
+  async def create_user(self, user_obj: dict):
+    result = {}
+    with Session(self.engine, autoflush=False) as session:
+      user_controller = ctrlers.UserController()
+      result = user_controller.create_one(
+        session,
+        user_obj['leetcodeUsername'],
+        user_obj['discordId'],
+        user_obj['mostRecentSubId']
+      )
+      await self.__commit(session, "User", json.dumps(result.as_dict(), default=str))
+    return result
 
   # async def create_user_monthly_object(self, userId, firstDayOfMonth):
   #   with Session(self.engine, autoflush=False) as session:
