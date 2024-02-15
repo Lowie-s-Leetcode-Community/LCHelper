@@ -72,6 +72,7 @@ class UserDailyObjectController:
         if isinstance(obj, db.UserDailyObject):
           if obj.userId == result.userId and obj.dailyObjectId == result.dailyObjectId:
             added = True
+            result = obj
       if not added:
         session.add(result)
     return result
@@ -98,15 +99,27 @@ class UserDailyObjectController:
         update_query = update_query.values(solvedHard = result.solvedHard + solvedHardDelta)
       if scoreGacha != None:
         update_query = update_query.values(scoreGacha = scoreGacha)
-      result = session.execute(update_query).one()
+      result = session.execute(update_query).one().UserDailyObject
     elif insp.pending:
-      result.scoreEarned = scoreEarnedDelta
+      if result.scoreEarned == None:
+        result.scoreEarned = 0
+      result.scoreEarned += scoreEarnedDelta
+
       if solvedEasyDelta != None:
-        result.solvedEasy = solvedEasyDelta
+        if result.solvedEasy == None:
+          result.solvedEasy = 0
+        result.solvedEasy += solvedEasyDelta
+
       if solvedMediumDelta != None:
-        result.solvedMedium = solvedMediumDelta
+        if result.solvedMedium == None:
+          result.solvedMedium = 0
+        result.solvedMedium += solvedMediumDelta
+
       if solvedHardDelta != None:
+        if result.solvedHard == None:
+          result.solvedHard = 0
         result.solvedHard = solvedHardDelta
+
       if scoreGacha != None:
         result.scoreGacha = scoreGacha
     return result
@@ -130,21 +143,30 @@ class UserMonthlyObjectController:
         userId=userId,
         firstDayOfMonth=fdom
       )
-      session.add(result)
-      # session.refresh(result)
+      added = False
+      for obj in session.new:
+        if isinstance(obj, db.UserMonthlyObject):
+          if obj.userId == result.userId and obj.firstDayOfMonth == result.firstDayOfMonth:
+            added = True
+            result = obj
+      if not added:
+        session.add(result)
     return result
 
   def update_one(self, session: Session, userId: int, fdom: date, scoreEarnedDelta: int):
-    result = self.read_or_create_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
+    result = self.read_or_create_one(session=session, userId=userId, fdom=fdom)
     insp = inspect(result)
     if insp.persistent:
       update_query = update(db.UserMonthlyObject)\
+        .returning(db.UserMonthlyObject)\
         .where(db.UserMonthlyObject.userId == userId)\
         .where(db.UserMonthlyObject.firstDayOfMonth == fdom)\
         .values(scoreEarned = result.scoreEarned + scoreEarnedDelta)
-      result = session.execute(update_query).one()
+      result = session.execute(update_query).one().UserMonthlyObject
     elif insp.pending:
-      result.scoreEarned = scoreEarnedDelta
+      if result.scoreEarned == None:
+        result.scoreEarned = 0
+      result.scoreEarned += scoreEarnedDelta
     return result
 
 class UserSolvedProblemController:
@@ -189,7 +211,7 @@ class UserController:
     query = select(db.User)
     return session.scalars(query).all()
 
-  def read_one(self, session: Session, userId: Optional[int], leetcodeUsername: Optional[str] = None, discordId: Optional[str] = None):
+  def read_one(self, session: Session, userId: Optional[int] = None, leetcodeUsername: Optional[str] = None, discordId: Optional[str] = None):
     query = select(db.User)
     if userId != None:
       query = query.where(db.User.id == userId)

@@ -2,6 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from typing import Optional
+from datetime import datetime
+import asyncio
+import json
 import os
 from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_datestamp
 import database_api_layer.models as db
@@ -10,8 +13,7 @@ from typing import Optional, List
 from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
 from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
-import asyncio
-import json
+
 import database_api_layer.controllers as ctrlers
 
 # API Access layer are to format data get from controllers to front-end
@@ -37,124 +39,133 @@ class DatabaseAPILayer:
       session.commit()
     except Exception as e:
       obj = { "action": json_desc, "error": e }
-      await self.logger.on_db_update(False, context, json.dump(obj, default=str))
+      await self.logger.on_db_update(False, context, json.dumps(obj, default=str))
       result = False
     else:
       await self.logger.on_db_update(True, context, json_desc)
       result = True
     return result
 
-  def __calculate_submission_infos(self, session: Session, user_daily_obj: db.UserDailyObject, daily: db.DailyObject, problem: db.Problem):
-    score = 0
-    warn = None
-    is_daily = False
-
-    if daily.problemId == problem.id:
-      score = 2
-      is_daily = True
-      if (user_daily_obj.solvedDaily or 0) >= 1:
-        score = 0
-        warn = "Daily points have already been counted"
-    else:
-      practice_cap = self.client.config['practiceScoreCap']
-      easy_score = self.client.config['easySolveScore']
-      medium_score = self.client.config['mediumSolveScore']
-      hard_score = self.client.config['hardSolveScore']
-      practice_earned = (user_daily_obj.solvedEasy or 0) * easy_score + (user_daily_obj.solvedMedium or 0) * medium_score + (user_daily_obj.solvedHard or 0) * hard_score
-      practice_earned = min(practice_earned, practice_cap)
-      problem_score = 1
-      if problem.difficulty == "Medium":
-        problem_score = 2
-      elif problem.difficulty == "Hard":
-        problem_score = 3
-      score = min(practice_cap - practice_earned, problem_score)
-      if (score == 0):
-        warn = "Point cap reached"
-    return { "score": score, "is_daily": is_daily, "difficulty": problem.difficulty, "warn": warn }
-
-  async def register_new_submission(self, userId: int, problemId: int, submission: dict, dailyObjectId: dict):
-    with Session(self.engine, autoflush=False) as session:
-      user_solved_problem_controller = ctrlers.UserSolvedProblemController()
-      user_daily_object_controller = ctrlers.UserDailyObjectController()
+  def read_all_users(self):
+    result = []
+    with Session(self.engine) as session:
       user_controller = ctrlers.UserController()
-
-      daily_object = ctrlers.DailyObjectController().read_one_or_latest(session, id=dailyObjectId)
-      problem = ctrlers.ProblemController().read_one(session, problemId=problemId)
-      user = user_controller.read_one(session, userId=userId)
-
-      old_submission = user_solved_problem_controller.read_one(session, userId, problemId)
-      user_daily_object = user_daily_object_controller.read_or_create_one(session, userId, dailyObjectId)
-      sub_info = self.__calculate_submission_infos(session, user_daily_object, daily_object, problem)
-
-      problem_type = "Daily" if sub_info["is_daily"] else sub_info["difficulty"]
-      if (not sub_info["is_daily"]) and old_submission != None:
-        return
-      if old_submission == None:
-        user_solved_problem_controller.create_one(session, userId, problemId, submission['id'])
-      user_daily_object_controller.update_one(session, userId, dailyObjectId,
-        scoreEarnedDelta=sub_info["score"], solvedDailyDelta=int(problem_type == "Daily"),
-        solvedEasyDelta=int(problem_type == "Easy"), solvedMediumDelta=int(problem_type == "Medium"),
-        solvedHardDelta=int(problem_type == "Hard"), scoreGacha=-1)
-      await self.__commit(session, "UserSolvedProblem",\
-        api_utils.submission_jstr(submission, user.as_dict(), problem.as_dict(), sub_info))
-    return
-
-  # def __update_user_sub_id(self, session, userId, submissionId: int):
-  #   update_query = update(db.User)\
-  #     .where(db.User.id == userId)\
-  #     .values(mostRecentSubId = submissionId)
-  #   session.execute(update_query)
-  #   return
+      all_users = user_controller.read_all(session)
+      result = list(map(lambda res: res.as_dict(), all_users))
+    return result
   
-  # def __read_user_from_id(self, session, userId):
-  #   query = select(db.User)\
-  #     .where(db.User.id == userId)
-  #   user = session.scalars(query).one_or_none()
-  #   if user == None:
-  #     return {}
-  #   return user.as_dict()
+  def __calculate_daily_object_delta(self, session: Session, user: db.User, daily_object: db.DailyObject,
+      user_daily_object: db.UserDailyObject, submissions_list: List[dict]):
+    result = {
+      "scoreEarned": 0,
+      "scorePractice": 0,
+      "solvedEasy": 0,
+      "solvedMedium": 0,
+      "solvedHard": 0,
+      "solvedDaily": 0,
+      "warn": ""
+    }
+    score_config = {
+      "practiceCap": self.client.config['practiceScoreCap'],
+      "Easy": self.client.config['easySolveScore'],
+      "Medium": self.client.config['mediumSolveScore'],
+      "Hard": self.client.config['hardSolveScore'],
+      "Daily": self.client.config['dailySolveScore']
+    }
+    recorded_practice = (user_daily_object.solvedEasy or 0) * score_config["Easy"] \
+      + (user_daily_object.solvedMedium or 0) * score_config["Medium"] \
+      + (user_daily_object.solvedHard or 0) * score_config["Hard"]
+    recorded_practice = min(recorded_practice, score_config["practiceCap"])
+    daily_problem_id = daily_object.problemId
+    problem_controller = ctrlers.ProblemController()
+    for submission in submissions_list:
+      problem = problem_controller.read_one(session, titleSlug=submission['titleSlug'])
+      problem_type = ""
+      if problem.id == daily_problem_id:
+        problem_type = "Daily"
+        result["solvedDaily"] = 1
+        result["scoreEarned"] += score_config["Daily"]
+        if (user_daily_object.solvedDaily or 0) >= 1:
+          result["solvedDaily"] = 0
+          result["scoreEarned"] -= score_config["Daily"]
+          result["warn"] += "Daily points have already been counted\n"
+      else:
+        problem_type = problem.difficulty
+        # Assuming had filtered all older submission
+        # "Easy", "Medium", "Hard"
+        result[f"solved{problem_type}"] += 1
+        result["scoreEarned"] += score_config[problem_type]
+        result["scorePractice"] += score_config[problem_type]
+    total_practice = recorded_practice + result["scorePractice"]
+    if total_practice > score_config["practiceCap"]:
+      gamma = total_practice - score_config["practiceCap"]
+      result["scorePractice"] -= gamma
+      result["scoreEarned"] -= gamma
+      result["warn"] += f"Practice surpassed cap {gamma} pts."
+    return result
 
-  # def __read_problem_from_id(self, session, problemId):
-  #   query = select(db.Problem)\
-  #     .where(db.Problem.id == problemId)
-  #   problem = session.scalars(query).one_or_none()
-  #   if problem == None:
-  #     return {}
-  #   result = problem.as_dict()
-  #   result["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
-  #   return result
+  async def register_new_crawl(self, submissions_blob: dict):
+    result = [] # list of new submissions object
+    with Session(self.engine, autoflush=False) as session:
+      daily_object_controller = ctrlers.DailyObjectController()
+      user_controller = ctrlers.UserController()
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
+      user_monthly_object_controller = ctrlers.UserMonthlyObjectController()
+      user_solved_problem_controller = ctrlers.UserSolvedProblemController()
+      problem_controller = ctrlers.ProblemController()
 
-  # def __read_user_monthly_object(self, session, userId, firstDayOfMonth = get_first_day_of_current_month()):
-  #   query = select(db.UserMonthlyObject)\
-  #     .where(db.UserMonthlyObject.userId == userId)\
-  #     .where(db.UserMonthlyObject.firstDayOfMonth == firstDayOfMonth)
-  #   obj = session.scalars(query).one_or_none()
-  #   return obj
+      # iterates through each month
+      for fdom_f, fdom_blob in submissions_blob.items():
+        fdom_d = datetime.strptime(fdom_f, "%Y-%m-%d")
 
-  # def __read_user_daily_object(self, session, userId, dailyObjectId = None):
-  #   if dailyObjectId == None:
-  #     query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
-  #     dailyObj = session.scalars(query).one()
-  #     dailyObjectId = dailyObj.id
-  #   query = select(db.UserDailyObject)\
-  #     .where(db.UserDailyObject.userId == userId)\
-  #     .where(db.UserDailyObject.dailyObjectId == dailyObjectId)
-  #   obj = session.scalars(query).one_or_none()
-  #   return obj
-  
-  # def __read_latest_daily_object(self, session):
-  #   query = select(db.DailyObject).order_by(db.DailyObject.id.desc()).limit(1)
-  #   daily = session.scalars(query).one()
-  #   return daily
+        # iterates through each day
+        for daily_f, daily_blob in fdom_blob.items():
+          daily_d = datetime.strptime(daily_f, "%Y-%m-%d")
+          daily_object = daily_object_controller.read_one(session, date=daily_d)
 
-  # def __read_daily_object(self, session, date = get_today()):
-  #   try:
-  #     query = select(db.DailyObject).where(db.DailyObject.generatedDate == date)
-  #     daily = session.scalars(query).one()
-  #   except:
-  #     daily = self.__read_latest_daily_object(session)
-  #     print(f"Daily object at ({date}) not found. Using DailyObj from {str(daily.generatedDate)}")
-  #   return daily
+          # if can't found daily object, best practice is to just skip
+          if daily_object == None:
+            print(f"Daily object for {daily_f} not found. Skipping...")
+            continue
+
+          # iterates through each users
+          for username, submissions in daily_blob.items():
+            user = user_controller.read_one(session, leetcodeUsername=username)
+            user_daily_object = user_daily_object_controller.read_or_create_one(session, user.id, daily_object.id)
+            user_monthly_object = user_monthly_object_controller.read_or_create_one(session, user.id, fdom_d)
+            filtered_submissions = []
+            for sub in submissions:
+              problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
+              if problem == None:
+                continue
+              user_solved_problem = user_solved_problem_controller.read_one(session, user.id, problem.id)
+              if daily_object.problemId != problem.id and user_solved_problem != None:
+                continue
+              filtered_submissions.append(sub)
+            daily_delta = self.__calculate_daily_object_delta(session, user, daily_object, user_daily_object, filtered_submissions)
+            for sub in filtered_submissions:
+              problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
+              if problem.id != daily_object.problemId:
+                obj = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
+                result.append({ "ObjType": "Submission", "Obj": obj.as_dict()})
+            
+            # update and append changes to daily objects
+            obj = user_daily_object_controller.update_one(
+              session=session, userId=user.id, dailyObjectId=daily_object.id,
+              scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
+              solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
+              solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
+            )
+            result.append({ "ObjType": "UserDailyObject", "Obj": obj.as_dict()})
+
+            # update and append changes to monthly objects
+            obj = user_monthly_object_controller.update_one(
+              session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']
+            )
+            result.append({ "ObjType": "UserMonthlyObject", "Obj": obj.as_dict()})
+      # TODO: further information logging, use for public log serving
+      await self.__commit(session, "RegisterNewCrawl", "[]")
+    return result
 
   # def read_user_progress(self, memberDiscordId: str):
   #   query = select(db.User).where(db.User.discordId == memberDiscordId)
@@ -193,7 +204,7 @@ class DatabaseAPILayer:
         new_obj = daily_object_controller.create(session=session, problemId=problemId, date=date)
         session.add(new_obj)
         result = new_obj.as_dict()
-      await self.__commit(session, f"DailyObject", result)
+      await self.__commit(session, f"DailyObject", json.dumps(result, default=str))
     return result
 
   # # We disable getting data from random user for now.

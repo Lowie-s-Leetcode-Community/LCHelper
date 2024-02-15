@@ -7,7 +7,7 @@ from cogs.cmd_interface.task import Task
 import os
 import asyncio
 import traceback
-from utils.llc_datetime import get_date_from_timestamp
+from utils.llc_datetime import get_date_from_timestamp, get_fdom_by_datestamp
 from datetime import datetime
 import pytz
 from utils.logger import Logger
@@ -24,30 +24,39 @@ class Crawl(commands.Cog):
         self.crawling.cancel()
     
     async def submissions(self):
-        # flaw: this only returns user that are shown on leaderboard???
-        leaderboard = self.client.db_api.read_current_month_leaderboard()
-        for user in leaderboard:
+        all_users = self.client.db_api.read_all_users()
+        submissions_blob = {}
+        for user in all_users:
             username = user['leetcodeUsername']
-            recent_solved = []
             recent_info = LC_utils.get_recent_ac(username, 20)
+
             if (recent_info == None):
                 continue
+            # unique, cuz somehow submissions are not unique :)
+            uniqued_recent_info = recent_info
+            # for sub in recent_info:
+            #     uniqued_recent_info[sub['titleSlug']] = sub
+            # uniqued_recent_info = uniqued_recent_info.values()
 
-            for submission in recent_info:
-                if int(submission['id']) <= user['mostRecentSubId']:
-                    break
+            user_blob = {
+                "userId": user['id'],
+                "newSubmissions": []
+            }
+            for submission in uniqued_recent_info:
                 date = get_date_from_timestamp(int(submission['timestamp']))
-                daily_obj = self.client.db_api.read_daily_object(date)
-                if daily_obj == None:
-                    daily_obj = self.client.db_api.read_latest_daily_object()
+                fdom = get_fdom_by_datestamp(date)
+                daily_f = date.strftime("%Y-%m-%d")
+                month_f = fdom.strftime("%Y-%m-%d")
+                if month_f not in submissions_blob:
+                    submissions_blob[month_f] = {}
+                if daily_f not in submissions_blob[month_f]:
+                    submissions_blob[month_f][daily_f] = {}
+                if username not in submissions_blob[month_f][daily_f]:
+                    submissions_blob[month_f][daily_f][username] = []
+                submissions_blob[month_f][daily_f][username].append(submission)
+        await self.client.db_api.register_new_crawl(submissions_blob)
 
-                problem = self.client.db_api.read_problem_from_slug(submission['titleSlug'])
-                # fire-fighting, to be removed
-                if problem != None:
-                    await self.client.db_api.register_new_submission(user['userId'], problem['id'], submission, daily_obj['id'])
-        # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
-
-    @tasks.loop(minutes = 10)
+    @tasks.loop(minutes = 20)
     async def crawling(self):
         await self.logger.on_automation_event("Crawl", "start-crawl")
         current_utc_time = datetime.now().astimezone(pytz.utc)

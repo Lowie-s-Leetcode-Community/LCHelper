@@ -71,6 +71,9 @@ class UserSolvedProblem(Base):
     problem: Mapped[Problem] = relationship(back_populates="userSolvedProblems")
     user: Mapped[User] = relationship(back_populates="userSolvedProblems")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class Topic(Base):
     __tablename__ = "Topic"
     id = mapped_column(Integer, primary_key=True)
@@ -78,6 +81,9 @@ class Topic(Base):
     updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     topicName = mapped_column(String, unique=True)
     problems: Mapped[List[Problem]] = relationship(secondary=_ProblemToTopic, back_populates="topics")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self) -> str:
         return f"Topic(id={self.id!r}, topicName={self.topicName!r})"
@@ -185,5 +191,3 @@ class SystemConfiguration(Base):
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-# missing: SystemConfiguration
