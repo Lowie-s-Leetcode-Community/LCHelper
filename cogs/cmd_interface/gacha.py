@@ -85,20 +85,32 @@ class Gacha(commands.Cog):
       )
     else:
       roll = random.choice(GACHA_RESPONSE_LIST)
-      result = await self.client.db_api.update_gacha_score(str(interaction.user.id), roll['score'])
-      if result['status'] == False:
-        await interaction.followup.send("There was a problem in processing your roll. Please try again later!")
-        return
-      
-      embed = discord.Embed(
-        description=roll['response'],
-        color=Assets.easy,
-        timestamp=interaction.created_at
-      )
-      embed.set_author(
-        name=f"Kết quả quay Gacha: Cộng {roll['score']} điểm!",
-        icon_url=self.client.user.display_avatar.url
-      )
+      embed = None
+      try:
+        result = await self.client.db_api.update_gacha_score(str(interaction.user.id), roll['score'])
+      except:
+        embed = discord.Embed(
+          description="Có vẻ chúng mình đã gặp chút sự cố khi xử lý truy vấn của bạn. Hãy thử lại sau nhé!",
+          color=Assets.hard,
+          timestamp=interaction.created_at
+        )
+        embed.set_author(
+          name=f"Lỗi!",
+          icon_url=self.client.user.display_avatar.url
+        )
+      else: 
+      # if result['status'] == False:
+      #   await interaction.followup.send("There was a problem in processing your roll. Please try again later!")
+      #   return
+        embed = discord.Embed(
+          description=roll['response'],
+          color=Assets.easy,
+          timestamp=interaction.created_at
+        )
+        embed.set_author(
+          name=f"Kết quả quay Gacha: Cộng {roll['score']} điểm!",
+          icon_url=self.client.user.display_avatar.url
+        )
 
     embed.set_footer(
       text=interaction.user.display_name,
