@@ -10,8 +10,8 @@ from utils.llc_datetime import get_first_day_of_current_month
 from utils.logger import Logger
 
 COG_START_TIMES = [
-    datetime.time(hour=0, tzinfo=datetime.timezone.utc),
-    datetime.time(hour=0, minute=30, tzinfo=datetime.timezone.utc)
+    datetime.time(hour=0, minute=20, tzinfo=datetime.timezone.utc),
+    datetime.time(hour=0, minute=50, tzinfo=datetime.timezone.utc)
 ]
 
 class MonthlyAutomation(commands.Cog):

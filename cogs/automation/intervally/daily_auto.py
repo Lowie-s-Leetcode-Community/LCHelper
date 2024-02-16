@@ -11,8 +11,8 @@ from utils.llc_datetime import get_today
 from utils.logger import Logger
 
 COG_START_TIMES = [
-    datetime.time(hour=0, minute=3, tzinfo=datetime.timezone.utc),
-    datetime.time(hour=0, minute=33, tzinfo=datetime.timezone.utc)
+    datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc),
+    datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
 ]
 
 class DailyAutomation(commands.Cog):
@@ -39,7 +39,7 @@ class DailyAutomation(commands.Cog):
         await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
         return
 
-    @tasks.loop(minutes=30)
+    @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
         await self.logger.on_automation_event("Daily", "start-daily")
         await self.logger.on_automation_event("Daily", "create_new_daily_object()")

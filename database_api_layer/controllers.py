@@ -278,7 +278,7 @@ class ProblemController:
     return session.scalar(query)
 
   # returns many, use for gimme and various stuffs
-  def read_many(self, session: Session, difficulty: Optional[str] = None, isPremium: Optional[bool] = None, includedTopics: list = [], excludedTopics: list = []):
+  def read_many(self, session: Session, difficulty: Optional[str] = None, isPremium: Optional[bool] = None):
     query = select(db.Problem)
     if difficulty != None:
       query = query.where(difficulty == difficulty)

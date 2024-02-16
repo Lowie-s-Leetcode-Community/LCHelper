@@ -240,41 +240,34 @@ class DatabaseAPILayer:
       result = daily.as_dict()
     return result
 
-  # # Desc: return one random problem, with difficulty filter + tags filter
-  # def read_gimme(self, lc_query):
-  #   # getting the choices, including difficulty, premium, included tags, excluded tags
-  #   difficulty = ""
-  #   if 'difficulty' in lc_query: difficulty = lc_query['difficulty']
-  #   premium = False
-  #   if 'premium' in lc_query: premium = lc_query['premium']
-  #   tags_1 = []
-  #   tags_2 = []
-  #   if 'topics' in lc_query:
-  #     if '$all' in lc_query['topics']:
-  #       tags_1.extend(lc_query['topics']['$all'])
-  #     if '$not' in lc_query['topics']:
-  #       tags_2.extend(lc_query['topics']['$not']['$all'])
-  #   # query the database, filter difficulty and premium
-  #   if difficulty != "" :
-  #     query = select(db.Problem).where(
-  #       db.Problem.difficulty == difficulty,
-  #       db.Problem.isPremium == premium
-  #     ).order_by(db.Problem.id)
-  #   else :
-  #     query = select(db.Problem).where(
-  #       db.Problem.isPremium == premium
-  #     ).order_by(db.Problem.id)
-  #   result = []
-    
-  #   with Session(self.engine) as session:
-  #     queryResult = session.execute(query).all()
-  #     # filter tags
-  #     for res in queryResult:
-  #       topic_list = []
-  #       for topic in res.Problem.topics:
-  #         topic_list.append(topic.topicName)
-  #       result.append(res.Problem)
-  #   return result
+  # Desc: return one random problem, with difficulty filter + tags filter
+  def read_gimme(self, lc_query):
+    result = []
+    with Session(self.engine) as session:
+      difficulty = None
+      if 'difficulty' in lc_query: difficulty = lc_query['difficulty']
+      premium = False
+      if 'premium' in lc_query: premium = lc_query['premium']
+      problems = ctrlers.ProblemController().read_many(session, difficulty, premium)
+      topics_to_include = []
+      topics_to_exclude = []
+      if 'topics' in lc_query:
+        if '$all' in lc_query['topics']:
+          topics_to_include.extend(lc_query['topics']['$all'])
+        if '$not' in lc_query['topics']:
+          topics_to_exclude.extend(lc_query['topics']['$not']['$all'])
+      for problem in problems:
+        problem_topics = [topic.topicName for topic in problem.topics]
+        sat = True
+        for topic_name in topics_to_include:
+          if topic_name not in problem_topics:
+            sat = False
+        for topic_name in topics_to_exclude:
+          if topic_name in problem_topics:
+            sat = False
+        if sat:
+          result.append(problem.as_dict())
+    return result
 
   # Desc: update to DB and send a log message (reason)
   async def update_score(self, memberDiscordId: str, delta: int, reason: str):

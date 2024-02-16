@@ -82,7 +82,7 @@ class Gimme(commands.Cog):
             await interaction.followup.send(f"{Assets.red_tick} **No problem matched your query.**")
             return
         gacha_result = random.choice(lc_result)
-        info = LC_utils.get_problem_info(gacha_result.titleSlug)
+        info = LC_utils.get_problem_info(gacha_result['titleSlug'])
 
         embed = discord.Embed(
             title = f"**{info['title']}**",
@@ -101,7 +101,7 @@ class Gimme(commands.Cog):
         )
         embed.add_field(
             name = "AC Rate",
-            value = str(info['ac_rate'])[0:5] + "%",
+            value = str(info['ac_rate'])[0:2] + "%",
             inline = True,
         )
         tag_list = ""
