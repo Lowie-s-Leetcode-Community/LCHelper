@@ -162,24 +162,27 @@ class DatabaseAPILayer:
               submission = None
               if problem.id != daily_object.problemId:
                 submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
-              obj = {
-                "submission": sub,
-                "user": user.as_dict(),
-                "problem": problem.as_dict(),
-                "info": {
-                  "warn": daily_delta['warn'],
-                  "is_daily": problem.id == daily_object.problemId
+              elif user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
+                obj = {
+                  "submission": sub,
+                  "user": user.as_dict(),
+                  "problem": problem.as_dict(),
+                  "info": {
+                    "warn": daily_delta['warn'],
+                    "is_daily": problem.id == daily_object.problemId
+                  }
                 }
-              }
               obj["problem"]["topics"] = [topic.topicName for topic in problem.topics]
               result.append({ "ObjType": "Submission", "Obj": obj})
             # update and append changes to daily objects
-            daily_obj = user_daily_object_controller.update_one(
-              session=session, userId=user.id, dailyObjectId=daily_object.id,
-              scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
-              solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
-              solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
-            )
+            daily_if_update = daily_delta['scoreEarned'] + daily_delta['solvedDaily'] + daily_delta['solvedEasy'] + daily_delta['solvedMedium'] + daily_delta['solvedHard']
+            if daily_if_update:
+              daily_obj = user_daily_object_controller.update_one(
+                session=session, userId=user.id, dailyObjectId=daily_object.id,
+                scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
+                solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
+                solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
+              )
             result.append({ "ObjType": "UserDailyObject", "Obj": daily_obj.as_dict()})
             # update and append changes to monthly objects
             monthly_obj = user_monthly_object_controller.update_one(
