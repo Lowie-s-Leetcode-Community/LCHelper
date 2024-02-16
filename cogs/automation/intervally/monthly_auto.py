@@ -28,22 +28,30 @@ class MonthlyAutomation(commands.Cog):
     async def monthly(self):
         await self.logger.on_automation_event("Monthly", "start-monthly")
         # TODO: filter to only continue monthly task at first Monday, but these current fn can run fine daily :)
+        # maybe send a message to update last month leaderboard on #general?
+        await self.logger.on_automation_event("Monthly", "purge_left_members()")
+        await self.purge_left_members()
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
         await self.update_leaderboard()
         await self.logger.on_automation_event("Monthly", "update_problems_list()")
         await self.update_problems_list()
         await self.logger.on_automation_event("Monthly", "end-monthly")
 
+    async def purge_left_members(self):
+        guilds = self.client.guilds
+        guild = [g for g in guilds if g.id == int(self.client.config['serverId'])]
+        guild = guild[0]
+        members = [str(member.id) for member in guild.members]
+        await self.client.db_api.purge_left_members(current_users_list=members)
+        return
+
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
-        # maybe send a message to update last month leaderboard on #general?
         leaderboard = self.client.db_api.read_current_month_leaderboard()
-        first_day_of_current_month = get_first_day_of_current_month()
         if len(leaderboard) > 0:
             return
-        leaderboard = self.client.db_api.read_last_month_leaderboard()
-        for user in leaderboard:
-            await self.client.db_api.create_user_monthly_object(userId=user["userId"], firstDayOfMonth=first_day_of_current_month)
+        first_day_of_current_month = get_first_day_of_current_month()
+        await self.client.db_api.refresh_server_scores(firstDayOfMonth=first_day_of_current_month)
         return
 
     # Update the problem list, as there are new problems on the site every month

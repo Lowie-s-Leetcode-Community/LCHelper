@@ -1,13 +1,10 @@
-from sqlalchemy import select, insert, func
+from sqlalchemy import select, func
 from sqlalchemy.orm.state import InstanceState
 
 def get_multiple_available_id(session, Table, limit):
-  min_available_id = (
-    session.query(func.min(Table.id + 1).label("min_id"))
-      .filter(~(Table.id + 1).in_(session.query(Table.id)))
-      .all()
-  )
-  result = list(map(lambda x: x.min_id, min_available_id))
+  query = select((Table.id + 1).label("min_id"))\
+    .where(~(Table.id + 1).in_(select(Table.id)))
+  result = list(map(lambda x: x.min_id, session.execute(query).all()))
   while len(result) < limit:
     result.append(result[-1] + 1)
   return result[:limit]

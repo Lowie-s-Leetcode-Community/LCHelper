@@ -1,11 +1,11 @@
-from sqlalchemy import select, insert, func, update, inspect
+from sqlalchemy import select, insert, func, update, delete, inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound, SQLAlchemyError
 from typing import Optional, List
 import os
 from utils.llc_datetime import get_first_day_of_current_month
 import database_api_layer.models as db
-from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
+from database_api_layer.db_utils import get_min_available_id
 from datetime import datetime, date
 
 # Controllers are responsible for direct interact with daily and returns the correct
@@ -135,26 +135,18 @@ class UserMonthlyObjectController:
   # same as above, but will create and return if no result is found
   # inspect(result) should be persistent or 
   # according to: https://docs.sqlalchemy.org/en/20/orm/session_state_management.html
-  def read_or_create_one(self, session: Session, userId: int, fdom: date = get_first_day_of_current_month()):
-    result = self.read_one(session=session, userId=userId, fdom=fdom)
-    if result == None:
-      result = db.UserMonthlyObject(
-        id=get_min_available_id(session, db.UserMonthlyObject),
-        userId=userId,
-        firstDayOfMonth=fdom
-      )
-      added = False
-      for obj in session.new:
-        if isinstance(obj, db.UserMonthlyObject):
-          if obj.userId == result.userId and obj.firstDayOfMonth == result.firstDayOfMonth:
-            added = True
-            result = obj
-      if not added:
-        session.add(result)
+  def create_one(self, session: Session, userId: int, fdom: date = get_first_day_of_current_month()):
+    result = db.UserMonthlyObject(
+      id=get_min_available_id(session, db.UserMonthlyObject),
+      userId=userId,
+      scoreEarned=0,
+      firstDayOfMonth=fdom
+    )
+    session.add(result)
     return result
 
   def update_one(self, session: Session, userId: int, fdom: date, scoreEarnedDelta: int):
-    result = self.read_or_create_one(session=session, userId=userId, fdom=fdom)
+    result = self.read_one(session=session, userId=userId, fdom=fdom)
     insp = inspect(result)
     if insp.persistent:
       update_query = update(db.UserMonthlyObject)\
@@ -245,8 +237,22 @@ class UserController:
         update_query = update_query.where(db.User.discordId == discordId)
       result = session.execute(update_query).one()
     return result
+  
+  def read_left_users(self, session: Session, current_users_list: List[str]):
+    query = select(db.User).filter(db.User.discordId.not_in(current_users_list))
+    return session.scalars(query).all()
 
-  # def remove_one(self, session: Session):
+  def remove_one(self, session: Session, userId: int):
+    # Might have to implement ON CASCADE DELETE later
+    query = delete(db.UserDailyObject).where(db.UserDailyObject.userId == userId)
+    session.execute(query)
+    query = delete(db.UserMonthlyObject).where(db.UserMonthlyObject.userId == userId)
+    session.execute(query)
+    query = delete(db.UserSolvedProblem).where(db.UserSolvedProblem.userId == userId)
+    session.execute(query)
+    query = delete(db.User).where(db.User.id == userId)
+    session.execute(query)
+    return
 
 class TopicController:
   def read_many_in(self, session: Session, topicNames: List[str]):

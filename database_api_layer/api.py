@@ -10,7 +10,6 @@ from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
-from database_api_layer.db_utils import get_min_available_id, get_multiple_available_id
 from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
 
@@ -131,8 +130,14 @@ class DatabaseAPILayer:
           # iterates through each users
           for username, submissions in daily_blob.items():
             user = user_controller.read_one(session, leetcodeUsername=username)
+
+            user_monthly_object = user_monthly_object_controller.read_one(session, user.id, fdom_d)
+            if user_monthly_object == None:
+              # ignore this, most probably because:
+              # - monthly create is bugged
+              # - user haven't join before this submission
+              continue
             user_daily_object = user_daily_object_controller.read_or_create_one(session, user.id, daily_object.id)
-            user_monthly_object = user_monthly_object_controller.read_or_create_one(session, user.id, fdom_d)
             filtered_submissions = []
             for sub in submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
@@ -204,9 +209,6 @@ class DatabaseAPILayer:
         result = new_obj.as_dict()
       await self.__commit(session, f"DailyObject", json.dumps(result, default=str))
     return result
-
-  # # We disable getting data from random user for now.
-
 
   # Currently, just return user with a monthly object
   def read_current_month_leaderboard(self):
@@ -353,27 +355,44 @@ class DatabaseAPILayer:
     result = {}
     with Session(self.engine, autoflush=False) as session:
       user_controller = ctrlers.UserController()
-      result = user_controller.create_one(
+      user = user_controller.create_one(
         session,
         user_obj['leetcodeUsername'],
         user_obj['discordId'],
         user_obj['mostRecentSubId']
       )
-      await self.__commit(session, "User", json.dumps(result.as_dict(), default=str))
+      result = user.as_dict()
+
+      user_monthly_object_controller = ctrlers.UserMonthlyObjectController()
+      user_monthly_object = user_monthly_object_controller.create_one(
+        session, user.id
+      )
+      await self.__commit(session, "User", json.dumps(result, default=str))
     return result
 
-  # async def create_user_monthly_object(self, userId, firstDayOfMonth):
-  #   with Session(self.engine, autoflush=False) as session:
-  #     new_obj = db.UserMonthlyObject(
-  #       id=get_min_available_id(session, db.UserMonthlyObject),
-  #       userId=userId,
-  #       firstDayOfMonth=firstDayOfMonth,
-  #       scoreEarned=0
-  #     )
-  #     session.add(new_obj)
-  #     result = new_obj.id
-  #     await self.__commit(session, f"UserMonthlyObject<id:{result}>", "[]")
-  #   return { "id": result }
+  async def refresh_server_scores(self, firstDayOfMonth: datetime.date):
+    with Session(self.engine, autoflush=False) as session:
+      user_controller = ctrlers.UserController()
+      user_monthly_object_controller = ctrlers.UserMonthlyObjectController()
+
+      all_users = user_controller.read_all(session)
+      for user in all_users:
+        user_monthly_object_controller.create_one(
+          session, user.id, firstDayOfMonth
+        )
+      await self.__commit(session, f"UserMonthlyObject<count:{len(all_users)}>", "[]")
+    return
+
+  async def purge_left_members(self, current_users_list: List[str]):
+    with Session(self.engine, autoflush=False) as session:
+      user_controller = ctrlers.UserController()
+      left_users = user_controller.read_left_users(session, current_users_list)
+      print([user.id for user in left_users])
+      for user in left_users:
+        user_controller.remove_one(session, user.id)
+        result.append(user)
+      await self.__commit(session, f"Users<delete_count:{len(result)}>", "[]")
+    return result
 
   def read_problems_all(self):
     result = []
