@@ -32,17 +32,25 @@ class DatabaseAPILayer:
     self.logger = Logger(client)
   
   # Generalize all session commits behavior
-  async def __commit(self, session, context, json_desc):
+  async def __commit(self, session, context, json_str_desc: str = None, array_desc: List[str] = None):
     result = None
     try:
       session.commit()
     except Exception as e:
-      obj = { "action": json_desc, "error": e }
-      await self.logger.on_db_update(False, context, json.dumps(obj, default=str))
+      if json_str_desc != None:
+        obj = { "action": json_str_desc[:200], "error": e }
+        await self.logger.on_db_update(False, context, json.dumps(obj, default=str))
+      else:
+        await self.logger.on_db_update(False, context, json.dumps(obj, default=str))
       result = False
     else:
-      await self.logger.on_db_update(True, context, json_desc)
-      result = True
+      if json_str_desc != None:
+        await self.logger.on_db_update(True, context, json_str_desc)
+        result = True
+      else:
+        for obj in array_desc:
+          await self.logger.on_db_update(True, context, obj)
+        result = True
     return result
 
   def read_all_users(self):
@@ -145,31 +153,41 @@ class DatabaseAPILayer:
                 continue
               user_solved_problem = user_solved_problem_controller.read_one(session, user.id, problem.id)
               if daily_object.problemId != problem.id and user_solved_problem != None:
+                # submission is already recorded and no point of keeping track of more
                 continue
               filtered_submissions.append(sub)
             daily_delta = self.__calculate_daily_object_delta(session, user, daily_object, user_daily_object, filtered_submissions)
             for sub in filtered_submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
+              submission = None
               if problem.id != daily_object.problemId:
-                obj = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
-                result.append({ "ObjType": "Submission", "Obj": obj.as_dict()})
-            
+                submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
+              obj = {
+                "submission": sub,
+                "user": user.as_dict(),
+                "problem": problem.as_dict(),
+                "info": {
+                  "warn": daily_delta['warn'],
+                  "is_daily": problem.id == daily_object.problemId
+                }
+              }
+              obj["problem"]["topics"] = [topic.topicName for topic in problem.topics]
+              result.append({ "ObjType": "Submission", "Obj": obj})
             # update and append changes to daily objects
-            obj = user_daily_object_controller.update_one(
+            daily_obj = user_daily_object_controller.update_one(
               session=session, userId=user.id, dailyObjectId=daily_object.id,
               scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
               solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
               solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
             )
-            result.append({ "ObjType": "UserDailyObject", "Obj": obj.as_dict()})
-
+            result.append({ "ObjType": "UserDailyObject", "Obj": daily_obj.as_dict()})
             # update and append changes to monthly objects
-            obj = user_monthly_object_controller.update_one(
+            monthly_obj = user_monthly_object_controller.update_one(
               session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']
             )
-            result.append({ "ObjType": "UserMonthlyObject", "Obj": obj.as_dict()})
-      # TODO: further information logging, use for public log serving
-      await self.__commit(session, "RegisterNewCrawl", "[]")
+            # disable due to inefficiency
+            # result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
+      await self.__commit(session, "RegisterNewCrawl", array_desc=api_utils.crawling_jstrs(result))
     return result
 
   def read_user_progress(self, memberDiscordId: str):

@@ -16,7 +16,7 @@ import time
 class Crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True":
+        if os.getenv('START_UP_TASKS') == "Local":
             self.crawling.start()
         self.logger = Logger(client)
 
@@ -56,13 +56,14 @@ class Crawl(commands.Cog):
                 submissions_blob[month_f][daily_f][username].append(submission)
         await self.client.db_api.register_new_crawl(submissions_blob)
 
-    @tasks.loop(minutes = 20)
+    @tasks.loop(minutes = 25)
     async def crawling(self):
-        await self.logger.on_automation_event("Crawl", "start-crawl")
         current_utc_time = datetime.now().astimezone(pytz.utc)
         if 0 <= current_utc_time.hour <= 1:
-            await self.logger.on_automation_event("Crawl", "stop-crawl to avoid conflict with other tasks.")
+            await self.logger.on_automation_event("Crawl", "No crawl to avoid conflict with other tasks.")
             return
+
+        await self.logger.on_automation_event("Crawl", "start-crawl")
         await self.logger.on_automation_event("Crawl", "submissions()")
         await self.submissions()
         await self.logger.on_automation_event("Crawl", "end-crawl")
@@ -73,6 +74,7 @@ class Crawl(commands.Cog):
         channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
         await self.logger.on_automation_event("Crawl", "error found")
+        await time.sleep(90)
 
         self.crawling.restart()
 
