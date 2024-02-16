@@ -79,8 +79,9 @@ class UserDailyObjectController:
 
   # update and divide into cases, whether the object is new or persistent
   def update_one(self, session: Session, userId: int, dailyObjectId: int, scoreEarnedDelta: int,\
-      solvedDailyDelta: Optional[int], solvedEasyDelta: Optional[int], solvedMediumDelta: Optional[int],\
-      solvedHardDelta: Optional[int], scoreGacha: Optional[int]):
+      solvedDailyDelta: Optional[int] = None, solvedEasyDelta: Optional[int] = None,\
+      solvedMediumDelta: Optional[int] = None, solvedHardDelta: Optional[int] = None,\
+      scoreGacha: Optional[int] = None):
     result = self.read_or_create_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
     insp = inspect(result)
     if insp.persistent:

@@ -239,6 +239,7 @@ class DatabaseAPILayer:
       daily = daily_object_controller.read_one_or_latest(session=session, date=date)
       result = daily.as_dict()
     return result
+
   # # Desc: return one random problem, with difficulty filter + tags filter
   # def read_gimme(self, lc_query):
   #   # getting the choices, including difficulty, premium, included tags, excluded tags
@@ -275,40 +276,42 @@ class DatabaseAPILayer:
   #       result.append(res.Problem)
   #   return result
 
-  # # Desc: update to DB and send a log
-  # async def update_score(self, memberDiscordId: str, delta, reason):
-  #   find_user_query = select(db.User).where(db.User.discordId == memberDiscordId)
-  #   result = None
-  #   with Session(self.engine) as session:
-  #     daily = self.__read_daily_object(session)
-  #     user = session.scalars(find_user_query).one()
-  #     result = self.__update_user_score(session, user.id, daily.as_dict(), delta)
+  # Desc: update to DB and send a log message (reason)
+  async def update_score(self, memberDiscordId: str, delta: int, reason: str):
+    result = {}
+    with Session(self.engine) as session:
+      user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
+      daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
 
-  #     await self.__commit(session, "UserDailyObject",\
-  #       api_utils.score_update_jstr(memberDiscordId, delta, reason))
-  #   return result
+      user_daily_object = ctrlers.UserDailyObjectController().update_one(
+        session, user.id, daily_obj.id, scoreEarnedDelta=delta
+      )
+      monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
+        session, user.id, get_fdom_by_datestamp(get_today()), delta
+      )
 
-  # # 90% same as fn above but also update gacha column
-  # async def update_gacha_score(self, memberDiscordId: str, delta):
-  #   find_user_query = select(db.User).where(db.User.discordId == memberDiscordId)
-  #   result = None
-  #   reason = "Gacha roll!"
-  #   with Session(self.engine) as session:
-  #     daily = self.__read_daily_object(session)
-  #     user = session.scalars(find_user_query).one()
-  #     result = self.__update_user_score(session, user.id, daily.as_dict(), delta)
-  #     update_query = update(db.UserDailyObject)\
-  #       .where(db.UserDailyObject.userId == user.id)\
-  #       .where(db.UserDailyObject.dailyObjectId == daily.id)\
-  #       .values(scoreGacha = delta)
-  #     session.execute(update_query)
-  #     status = await self.__commit(session, "UserDailyObject",\
-  #       api_utils.score_update_jstr(memberDiscordId, delta, reason))
-  #     res = {
-  #       "result": result,
-  #       "status": status
-  #     }
-  #   return res
+      result = {"daily": user_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
+      await self.__commit(session, "Scoring",\
+        api_utils.score_update_jstr(memberDiscordId, delta, reason))
+    return result
+
+  async def update_gacha_score(self, memberDiscordId: str, delta: int):
+    result = {}
+    with Session(self.engine) as session:
+      user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
+      daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+
+      user_daily_object = ctrlers.UserDailyObjectController().update_one(
+        session, user.id, daily_obj.id, scoreEarnedDelta=delta
+      )
+      monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
+        session, user.id, get_fdom_by_datestamp(get_today()), delta
+      )
+
+      result = {"daily": user_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
+      await self.__commit(session, "Scoring",\
+        api_utils.score_update_jstr(memberDiscordId, delta, "Gacha roll!"))
+    return result
 
   def read_profile(self, memberDiscordId: str):
     result = None
