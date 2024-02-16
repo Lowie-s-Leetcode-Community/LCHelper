@@ -172,8 +172,8 @@ class DatabaseAPILayer:
                     "is_daily": problem.id == daily_object.problemId
                   }
                 }
-              obj["problem"]["topics"] = [topic.topicName for topic in problem.topics]
-              result.append({ "ObjType": "Submission", "Obj": obj})
+                obj["problem"]["topics"] = [topic.topicName for topic in problem.topics]
+                result.append({ "ObjType": "Submission", "Obj": obj})
             # update and append changes to daily objects
             daily_if_update = daily_delta['scoreEarned'] + daily_delta['solvedDaily'] + daily_delta['solvedEasy'] + daily_delta['solvedMedium'] + daily_delta['solvedHard']
             if daily_if_update:
