@@ -16,7 +16,7 @@ import time
 class Crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "Local":
+        if os.getenv('START_UP_TASKS') == "True":
             self.crawling.start()
         self.logger = Logger(client)
 
