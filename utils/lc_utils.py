@@ -202,6 +202,12 @@ class LC_utils:
             'total_submissions': tmp['totalSubmission'],
             'topics': tag_list
         }
+    
+    def crawl_problem_list():
+        payload = {"query": QUERY_QUESTION_LIST, "variables": {'categorySlug': "", 'skip': 0, 'limit': 3600, 'filters': {}}}
+        response = requests.post(API_URL, json = payload)
+        tmp = json.loads(response.content)
+        return tmp['data']['problemsetQuestionList']['questions']
 
     def get_daily_challenge_info():
         payload = {"query": QUERY_DAILY_CHALLENGE}
@@ -293,9 +299,7 @@ class LC_utils:
             response = requests.post(API_URL, json = payload)
             recent_tmp = json.loads(response.content)
             recent_list = recent_tmp['data']['recentAcSubmissionList']
-        except requests.exceptions.HTTPError as error:
-            print("Error: " + error[0])
-            print("Trying again")
-            # code to try again ?
-        
+        except:
+            print(f"Warning, crawl failed for user {username}. Please try again!")
+            return []
         return recent_list

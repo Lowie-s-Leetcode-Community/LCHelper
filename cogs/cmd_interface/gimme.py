@@ -5,9 +5,10 @@ from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from typing import Optional
 import random
+
 TOPIC_TAG_LIST = ['Array', 'Backtracking', 'Biconnected Component', 'Binary Indexed Tree', 'Binary Search', 'Binary Search Tree', 'Binary Tree', 'Bit Manipulation', 'Bitmask', 'Brainteaser', 'Breadth-First Search', 'Bucket Sort', 'Combinatorics', 'Concurrency', 'Counting', 'Counting Sort', 'Data Stream', 'Database', 'Depth-First Search', 'Design', 'Divide and Conquer', 'Doubly-Linked List', 'Dynamic Programming', 'Enumeration', 'Eulerian Circuit', 'Game Theory', 'Geometry', 'Graph', 'Greedy', 'Hash Function', 'Hash Table', 'Heap (Priority Queue)', 'Interactive', 'Iterator', 'Line Sweep', 'Linked List', 'Math', 'Matrix', 'Memoization', 'Merge Sort', 'Minimum Spanning Tree', 'Monotonic Queue', 'Monotonic Stack', 'Number Theory', 'Ordered Set', 'Prefix Sum', 'Probability and Statistics', 'Queue', 'Quickselect', 'Radix Sort', 'Randomized', 'Recursion', 'Rejection Sampling', 'Reservoir Sampling', 'Rolling Hash', 'Segment Tree', 'Shell', 'Shortest Path', 'Simulation', 'Sliding Window', 'Sorting', 'Stack', 'String', 'String Matching', 'Strongly Connected Component', 'Suffix Array', 'Topological Sort', 'Tree', 'Trie', 'Two Pointers', 'Union Find']
         
-class problem(commands.Cog):
+class Gimme(commands.Cog):
     def __init__(self, client):
         self.client = client
 
@@ -43,8 +44,6 @@ class problem(commands.Cog):
         premium: app_commands.Choice[str] = None
     ):
         await interaction.response.defer(thinking = True)
-        lc_user = self.client.DBClient['LC_db']['LC_users'].find_one({'discord_id': interaction.user.id})
-        lc_col = self.client.DBClient['LC_db']['LC_problems']
         lc_query = {}
 
         # Difficulty
@@ -78,13 +77,12 @@ class problem(commands.Cog):
         elif premium and premium.name == "False": lc_query['premium'] = False
 
         # Finds and returns the problem
-
-        lc_result = list(lc_col.find(lc_query))
+        lc_result = self.client.db_api.read_gimme(lc_query)
         if len(lc_result) == 0:
             await interaction.followup.send(f"{Assets.red_tick} **No problem matched your query.**")
             return
         gacha_result = random.choice(lc_result)
-        info = LC_utils.get_problem_info(gacha_result['title_slug'])
+        info = LC_utils.get_problem_info(gacha_result['titleSlug'])
 
         embed = discord.Embed(
             title = f"**{info['title']}**",
@@ -103,7 +101,7 @@ class problem(commands.Cog):
         )
         embed.add_field(
             name = "AC Rate",
-            value = str(info['ac_rate'])[0:5] + "%",
+            value = str(info['ac_rate'])[0:2] + "%",
             inline = True,
         )
         tag_list = ""
@@ -135,5 +133,4 @@ class problem(commands.Cog):
         ][:25]
     
 async def setup(client):
-    await client.add_cog(problem(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(problem(client))
+    await client.add_cog(Gimme(client), guilds=[discord.Object(id=client.config['serverId'])])

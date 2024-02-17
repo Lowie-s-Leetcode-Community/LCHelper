@@ -96,11 +96,11 @@ Quay trở lại Discord, bấm nút `Verify Me!` trên dòng tin nhắn của c
 Nếu bạn làm các bước trên chính xác, thì bot sẽ báo thành công và bạn sẽ được nhận role <@&1087761988068855890>, chính thức xác nhận bạn là thành viên Cộng đồng 🎉🎉🎉.
 """
 
-class gl(commands.Cog):
+class Guidelines(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(name = "gl-init", description = "Sends initial embeds for info channels")
+    @commands.command(name = "guidelines-init", description = "Sends initial embeds for info channels")
     @commands.has_any_role(1087746207511757002)
     async def _gl_init(self, ctx):
         channel = await ctx.guild.fetch_channel(1139158245391474800)
@@ -314,7 +314,5 @@ class gl(commands.Cog):
         await channel.send(embeds = [embed1, embed2, embed3, embed4, embed5, embed6])
         await ctx.send(f"{Assets.green_tick} **All embeds sent**")
 
-    
 async def setup(client):
-    await client.add_cog(gl(client), guilds=[discord.Object(id=1085444549125611530)])
-    #await client.add_cog(gl(client))
+    await client.add_cog(Guidelines(client), guilds=[discord.Object(id=client.config['serverId'])])

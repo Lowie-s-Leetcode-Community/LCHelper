@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 backup.json
 .vscode/**
+.venv/
+test_api.py
