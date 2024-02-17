@@ -27,7 +27,8 @@ class DatabaseAPILayer:
     dbschema = os.getenv('POSTGRESQL_SCHEMA')
     self.engine = create_engine(
       os.getenv('POSTGRESQL_CRED'), 
-      connect_args={'options': '-csearch_path={}'.format(dbschema)})
+      connect_args={'options': '-csearch_path={}'.format(dbschema)},
+      pool_recycle=480) # 8 minutes, the estimate 
     self.client = client
     self.logger = Logger(client)
   
