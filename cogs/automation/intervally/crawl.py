@@ -22,7 +22,7 @@ class Crawl(commands.Cog):
 
     def cog_unload(self):
         self.crawling.cancel()
-    
+
     async def submissions(self):
         all_users = self.client.db_api.read_all_users()
         submissions_blob = {}

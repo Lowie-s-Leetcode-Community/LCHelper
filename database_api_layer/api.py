@@ -132,7 +132,7 @@ class DatabaseAPILayer:
 
           # if can't found daily object, best practice is to just skip
           if daily_object == None:
-            print(f"Daily object for {daily_f} not found. Skipping...")
+#            print(f"Daily object for {daily_f} not found. Skipping...")
             continue
 
           # iterates through each users
@@ -183,7 +183,7 @@ class DatabaseAPILayer:
                 solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
                 solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
               )
-            result.append({ "ObjType": "UserDailyObject", "Obj": daily_obj.as_dict()})
+              result.append({ "ObjType": "UserDailyObject", "Obj": daily_obj.as_dict()})
             # update and append changes to monthly objects
             monthly_obj = user_monthly_object_controller.update_one(
               session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']
@@ -401,6 +401,7 @@ class DatabaseAPILayer:
     return
 
   async def purge_left_members(self, current_users_list: List[str]):
+    result = []
     with Session(self.engine, autoflush=False) as session:
       user_controller = ctrlers.UserController()
       left_users = user_controller.read_left_users(session, current_users_list)

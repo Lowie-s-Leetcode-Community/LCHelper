@@ -18,7 +18,7 @@ COG_START_TIMES = [
 class DailyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True": 
+        if os.getenv('START_UP_TASKS') == "True":
             self.daily.start()
         self.logger = Logger(client)
 

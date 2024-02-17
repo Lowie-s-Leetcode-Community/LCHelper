@@ -17,13 +17,13 @@ COG_START_TIMES = [
 class MonthlyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True": 
+        if os.getenv('START_UP_TASKS') == "True":
             self.monthly.start()
         self.logger = Logger(client)
 
     def cog_unload(self):
         self.monthly.cancel()
-    
+
     @tasks.loop(time=COG_START_TIMES)
     async def monthly(self):
         await self.logger.on_automation_event("Monthly", "start-monthly")
