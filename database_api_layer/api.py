@@ -38,8 +38,8 @@ class DatabaseAPILayer:
     try:
       session.commit()
     except Exception as e:
+      obj = { "action": json_str_desc[:200], "error": e }
       if json_str_desc != None:
-        obj = { "action": json_str_desc[:200], "error": e }
         await self.logger.on_db_update(False, context, json.dumps(obj, default=str))
       else:
         await self.logger.on_db_update(False, context, json.dumps(obj, default=str))

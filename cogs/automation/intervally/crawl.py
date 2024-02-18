@@ -33,10 +33,10 @@ class Crawl(commands.Cog):
             if (recent_info == None):
                 continue
             # unique, cuz somehow submissions are not unique :)
-            uniqued_recent_info = recent_info
-            # for sub in recent_info:
-            #     uniqued_recent_info[sub['titleSlug']] = sub
-            # uniqued_recent_info = uniqued_recent_info.values()
+            uniqued_recent_info = {}
+            for sub in recent_info:
+                uniqued_recent_info[sub['titleSlug']] = sub
+            uniqued_recent_info = uniqued_recent_info.values()
 
             user_blob = {
                 "userId": user['id'],
@@ -74,7 +74,7 @@ class Crawl(commands.Cog):
         channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
         await self.logger.on_automation_event("Crawl", "error found")
-        await time.sleep(90)
+        time.sleep(90)
 
         self.crawling.restart()
 
