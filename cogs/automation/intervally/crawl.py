@@ -74,7 +74,7 @@ class Crawl(commands.Cog):
         channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
         await self.logger.on_automation_event("Crawl", "error found")
-        await time.sleep(90)
+        time.sleep(90)
 
         self.crawling.restart()
 
