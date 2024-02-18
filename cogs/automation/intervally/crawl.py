@@ -33,10 +33,10 @@ class Crawl(commands.Cog):
             if (recent_info == None):
                 continue
             # unique, cuz somehow submissions are not unique :)
-            uniqued_recent_info = recent_info
-            # for sub in recent_info:
-            #     uniqued_recent_info[sub['titleSlug']] = sub
-            # uniqued_recent_info = uniqued_recent_info.values()
+            uniqued_recent_info = {}
+            for sub in recent_info:
+                uniqued_recent_info[sub['titleSlug']] = sub
+            uniqued_recent_info = uniqued_recent_info.values()
 
             user_blob = {
                 "userId": user['id'],

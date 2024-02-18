@@ -47,7 +47,6 @@ class DailyAutomation(commands.Cog):
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
         # await self.prune_unverified_members()
-        # await self.prune_left_members()
         await self.logger.on_automation_event("Daily", "end-daily")
 
     @daily.error
