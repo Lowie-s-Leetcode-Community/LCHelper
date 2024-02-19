@@ -148,6 +148,7 @@ class DatabaseAPILayer:
               continue
             user_daily_object = user_daily_object_controller.read_or_create_one(session, user.id, daily_object.id)
             filtered_submissions = []
+            # first O(n) loop, to compare new list to database
             for sub in submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
               if problem == None:
@@ -157,13 +158,15 @@ class DatabaseAPILayer:
                 # submission is already recorded and no point of keeping track of more
                 continue
               filtered_submissions.append(sub)
+            # second O(n) loop, to calculate score changes
             daily_delta = self.__calculate_daily_object_delta(session, user, daily_object, user_daily_object, filtered_submissions)
+            # third O(n) loop, to save submissions to db and add logs
             for sub in filtered_submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
               submission = None
               if problem.id != daily_object.problemId:
                 submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
-              elif user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
+              if problem.id != daily_object.problemId or user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
                 obj = {
                   "submission": sub,
                   "user": user.as_dict(),
@@ -184,7 +187,7 @@ class DatabaseAPILayer:
                 solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
                 solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
               )
-              result.append({ "ObjType": "UserDailyObject", "Obj": daily_obj.as_dict()})
+              result.append({ "ObjType": "UserDailyObject", "Obj": { "DailyObject": daily_obj.as_dict(), "delta": daily_delta }})
             # update and append changes to monthly objects
             monthly_obj = user_monthly_object_controller.update_one(
               session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']

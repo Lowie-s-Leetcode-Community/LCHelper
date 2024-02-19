@@ -61,8 +61,9 @@ class Gacha(commands.Cog):
 
     await interaction.response.defer(thinking=True)
     user_progress = self.client.db_api.read_user_progress(str(interaction.user.id))
-    score_earned = user_progress['user_daily']['scoreEarned']
-    score_gacha = user_progress['user_daily']['scoreGacha']
+    # field returns could be null
+    score_earned = user_progress['user_daily']['scoreEarned'] or 0
+    score_gacha = user_progress['user_daily']['scoreGacha'] or -1
     if score_earned < 2:
       embed = discord.Embed(
         description="Bạn chưa hoàn thành nhiệm vụ ngày hôm nay. Hãy đọc </tasks:1107228520679231488> của bạn và ghi ít nhất 2 điểm ngày nhé!",
@@ -98,10 +99,7 @@ class Gacha(commands.Cog):
           name=f"Lỗi!",
           icon_url=self.client.user.display_avatar.url
         )
-      else: 
-      # if result['status'] == False:
-      #   await interaction.followup.send("There was a problem in processing your roll. Please try again later!")
-      #   return
+      else:
         embed = discord.Embed(
           description=roll['response'],
           color=Assets.easy,
@@ -118,6 +116,6 @@ class Gacha(commands.Cog):
     )
 
     await interaction.followup.send(embed=embed)
- 
+
 async def setup(client):
   await client.add_cog(Gacha(client), guilds=[discord.Object(id=client.config['serverId'])])
