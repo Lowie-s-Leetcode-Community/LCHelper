@@ -12,9 +12,6 @@ class NewMember(commands.Cog):
         self.client = client
         self.logger = Logger(client)
 
-    def cog_unload(self):
-        self.member_prune.cancel()
-
     @commands.Cog.listener()
     async def on_member_join(self, member):
         unverified_role = member.guild.get_role(int(self.client.config['unverifiedRoleId']))
