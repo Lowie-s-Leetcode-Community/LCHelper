@@ -320,7 +320,7 @@ class DatabaseAPILayer:
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
 
       user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta
+        session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta  
       )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
@@ -335,7 +335,7 @@ class DatabaseAPILayer:
     result = None
     with Session(self.engine) as session:
       user_controller = ctrlers.UserController()
-      
+
       user = user_controller.read_one(session, discordId=memberDiscordId)
       if user == None:
         return None
