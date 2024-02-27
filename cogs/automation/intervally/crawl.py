@@ -7,57 +7,75 @@ from cogs.cmd_interface.task import Task
 import os
 import asyncio
 import traceback
-from database_api_layer.api import DatabaseAPILayer
-from utils.llc_datetime import get_date_from_timestamp
+from utils.llc_datetime import get_date_from_timestamp, get_fdom_by_datestamp
 from datetime import datetime
+import pytz
+from utils.logger import Logger
+import time
 
 class Crawl(commands.Cog):
     def __init__(self, client):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True":
             self.crawling.start()
-        self.db_api = DatabaseAPILayer(client)
+        self.logger = Logger(client)
 
     def cog_unload(self):
         self.crawling.cancel()
-    
+
     async def submissions(self):
-        # flaw: this only returns user that are shown on leaderboard???
-        leaderboard = self.db_api.read_current_month_leaderboard()
-        # benchmarking
-        # guild = await self.client.fetch_guild(1085444549125611530)
-        # log_channel = await guild.fetch_channel(1202180199060615168)
-        # start_time = datetime.now()
-        # await log_channel.send(f"Start crawling. Timestamp: {start_time}")
-        for user in leaderboard:
+        all_users = self.client.db_api.read_all_users()
+        submissions_blob = {}
+        for user in all_users:
             username = user['leetcodeUsername']
-            # await log_channel.send(f"Start crawling for username {username}")
-            recent_solved = []
             recent_info = LC_utils.get_recent_ac(username, 20)
+
             if (recent_info == None):
                 continue
+            # unique, cuz somehow submissions are not unique :)
+            uniqued_recent_info = {}
+            for sub in recent_info:
+                uniqued_recent_info[sub['titleSlug']] = sub
+            uniqued_recent_info = uniqued_recent_info.values()
 
-            for submission in recent_info:
-                if int(submission['id']) <= user['mostRecentSubId']:
-                    break
+            user_blob = {
+                "userId": user['id'],
+                "newSubmissions": []
+            }
+            for submission in uniqued_recent_info:
                 date = get_date_from_timestamp(int(submission['timestamp']))
-                daily_obj = self.db_api.read_daily_object(date)
+                fdom = get_fdom_by_datestamp(date)
+                daily_f = date.strftime("%Y-%m-%d")
+                month_f = fdom.strftime("%Y-%m-%d")
+                if month_f not in submissions_blob:
+                    submissions_blob[month_f] = {}
+                if daily_f not in submissions_blob[month_f]:
+                    submissions_blob[month_f][daily_f] = {}
+                if username not in submissions_blob[month_f][daily_f]:
+                    submissions_blob[month_f][daily_f][username] = []
+                submissions_blob[month_f][daily_f][username].append(submission)
+        await self.client.db_api.register_new_crawl(submissions_blob)
 
-                problem = self.db_api.read_problem_from_slug(submission['titleSlug'])
-                await self.db_api.register_new_submission(user['userId'], problem['id'], int(submission['id']), daily_obj['id'])
-        # await log_channel.send(f"Finish one submission crawling loop! Timestamp: {datetime.now()}. Delta: {datetime.now() - start_time}")
-
-    @tasks.loop(minutes = 20)
+    @tasks.loop(minutes = 25)
     async def crawling(self):
+        current_utc_time = datetime.now().astimezone(pytz.utc)
+        if 0 <= current_utc_time.hour <= 1:
+            await self.logger.on_automation_event("Crawl", "No crawl to avoid conflict with other tasks.")
+            return
+
+        await self.logger.on_automation_event("Crawl", "start-crawl")
+        await self.logger.on_automation_event("Crawl", "submissions()")
         await self.submissions()
+        await self.logger.on_automation_event("Crawl", "end-crawl")
 
     @crawling.error
     async def on_error(self, exception):
-        guild = await self.client.fetch_guild(1085444549125611530)
-        channel = await guild.fetch_channel(1091763595777409025)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
         await channel.send(f"Crawling error```py\n{traceback.format_exc()[:800]}```")
-
+        await self.logger.on_automation_event("Crawl", "error found")
         time.sleep(90)
+
         self.crawling.restart()
 
     @commands.command()
@@ -73,4 +91,4 @@ class Crawl(commands.Cog):
         await ctx.send(f"{Assets.green_tick} **Submission crawling task started.**")
 
 async def setup(client):
-    await client.add_cog(Crawl(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Crawl(client), guilds=[discord.Object(id=client.config['serverId'])])

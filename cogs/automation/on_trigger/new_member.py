@@ -12,13 +12,9 @@ class NewMember(commands.Cog):
         self.client = client
         self.logger = Logger(client)
 
-    def cog_unload(self):
-        self.member_prune.cancel()
-
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        lc_query = self.client.DBClient['LC_db']['LC_config'].find_one({})
-        unverified_role = member.guild.get_role(lc_query['unverified_role_id'])
+        unverified_role = member.guild.get_role(int(self.client.config['unverifiedRoleId']))
         await member.add_roles(unverified_role)
         embed = discord.Embed(
             title = "Welcome to the Lowie's LeetCode Community",

@@ -51,4 +51,4 @@ class help_command(commands.Cog):
 
 
 async def setup(client):
-    await client.add_cog(help_command(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(help_command(client), guilds=[discord.Object(id=client.config['serverId'])])

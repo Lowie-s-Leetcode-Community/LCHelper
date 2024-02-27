@@ -299,9 +299,7 @@ class LC_utils:
             response = requests.post(API_URL, json = payload)
             recent_tmp = json.loads(response.content)
             recent_list = recent_tmp['data']['recentAcSubmissionList']
-        except requests.exceptions.HTTPError as error:
-            print("Error: " + error[0])
-            print("Trying again")
-            # code to try again ?
-        
+        except:
+            print(f"Warning, crawl failed for user {username}. Please try again!")
+            return []
         return recent_list

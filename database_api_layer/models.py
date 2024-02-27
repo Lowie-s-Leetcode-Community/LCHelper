@@ -1,19 +1,8 @@
 from __future__ import annotations
 
-from typing import List
-from typing import Optional
-from sqlalchemy import ForeignKey, text
-from sqlalchemy import Column
-from sqlalchemy import String
-from sqlalchemy import Integer
-from sqlalchemy import Table
-from sqlalchemy import Boolean
-from sqlalchemy import DateTime
-from sqlalchemy import Date
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from typing import List, Optional
+from sqlalchemy import ForeignKey, Column, String, Integer, Table, Boolean, DateTime, Date
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 class Base(DeclarativeBase):
@@ -45,6 +34,9 @@ class User(Base):
     userDailyObjects: Mapped[List[UserDailyObject]] = relationship(back_populates="user")
     userMonthlyObjects: Mapped[List[UserMonthlyObject]] = relationship(back_populates="user")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, discordId={self.discordId!r}, leetcodeUsername={self.leetcodeUsername!r})"
 
@@ -62,6 +54,9 @@ class Problem(Base):
     topics: Mapped[List[Topic]] = relationship(secondary=_ProblemToTopic, back_populates="problems")
     missions: Mapped[List[Mission]] = relationship(secondary=_MissionToProblem, back_populates="problems")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
     def __repr__(self) -> str:
         return f"Problem(id={self.id!r}, title={self.title!r}, titleSlug={self.titleSlug!r}, difficulty={self.difficulty!r})"
 
@@ -76,6 +71,9 @@ class UserSolvedProblem(Base):
     problem: Mapped[Problem] = relationship(back_populates="userSolvedProblems")
     user: Mapped[User] = relationship(back_populates="userSolvedProblems")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class Topic(Base):
     __tablename__ = "Topic"
     id = mapped_column(Integer, primary_key=True)
@@ -83,6 +81,9 @@ class Topic(Base):
     updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     topicName = mapped_column(String, unique=True)
     problems: Mapped[List[Problem]] = relationship(secondary=_ProblemToTopic, back_populates="topics")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self) -> str:
         return f"Topic(id={self.id!r}, topicName={self.topicName!r})"
@@ -93,10 +94,12 @@ class DailyObject(Base):
     createdAt = mapped_column(DateTime, insert_default=func.now())
     updatedAt = mapped_column(DateTime, insert_default=func.now(), onupdate=func.current_timestamp())
     problemId = mapped_column(Integer, ForeignKey("Problem.id"))
-    isToday = mapped_column(Boolean)
     generatedDate = mapped_column(Date)
     problem: Mapped[Problem] = relationship(back_populates="dailyObjects")
     userDailyObjects: Mapped[List[UserDailyObject]] = relationship(back_populates="dailyObject")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class UserDailyObject(Base):
     __tablename__ = "UserDailyObject"
@@ -115,6 +118,9 @@ class UserDailyObject(Base):
     dailyObject: Mapped[DailyObject] = relationship(back_populates="userDailyObjects")
     user: Mapped[User] = relationship(back_populates="userDailyObjects")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class UserMonthlyObject(Base):
     __tablename__ = "UserMonthlyObject"
     id = mapped_column(Integer, primary_key=True)
@@ -124,6 +130,9 @@ class UserMonthlyObject(Base):
     scoreEarned = mapped_column(Integer)
     firstDayOfMonth = mapped_column(Date)
     user: Mapped[User] = relationship(back_populates="userMonthlyObjects")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Mission(Base):
     __tablename__ = "Mission"
@@ -159,4 +168,26 @@ class DiscordQuizAnswer(Base):
     discordQuizId = mapped_column(Integer, ForeignKey("DiscordQuiz.id"))
     discordQuiz: Mapped[DiscordQuiz] = relationship(back_populates="discordQuizAnswer")
 
-# missing: SystemConfiguration
+class SystemConfiguration(Base):
+    __tablename__ = "SystemConfiguration"
+    id = mapped_column(Integer, primary_key=True)
+    serverId = mapped_column(String)
+    verifiedRoleId = mapped_column(String)
+    unverifiedRoleId = mapped_column(String)
+    timeBeforeKick = mapped_column(Integer)
+    dailySolveScore = mapped_column(Integer, default=2)
+    easySolveScore = mapped_column(Integer, default=1)
+    mediumSolveScore = mapped_column(Integer, default=2)
+    hardSolveScore = mapped_column(Integer, default=3)
+    practiceScoreCap = mapped_column(Integer, default=6)
+    streakBonus = mapped_column(Integer, default=4)
+    submissionChannelId = mapped_column(String)
+    scoreLogChannelId = mapped_column(String)
+    dailyThreadChannelId = mapped_column(String)
+    devErrorLogId = mapped_column(String)
+    databaseLogId = mapped_column(String)
+    backupChannelId = mapped_column(String)
+    eventLoggingId = mapped_column(String)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

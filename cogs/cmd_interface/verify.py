@@ -7,7 +7,7 @@ from typing import Optional
 import random
 import string
 import datetime
-from database_api_layer.api import DatabaseAPILayer
+import traceback
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
@@ -17,7 +17,6 @@ class ConfirmView(discord.ui.View):
         self.username = username
         self.user_id = user_id
         self.response = None
-        self.db_api = DatabaseAPILayer(client)
     
     async def on_timeout(self):
         for child in self.children:
@@ -37,44 +36,38 @@ class ConfirmView(discord.ui.View):
                 'discordId': str(interaction.user.id),
                 'leetcodeUsername': self.username,
                 'mostRecentSubId': -1,
-                'userSolvedProblems': []
             }
 
-            # append missing info:
-            recent_info = LC_utils.get_recent_ac(self.username, 20)
-            if len(recent_info) > 0:
-                user_obj['mostRecentSubId'] = recent_info[0]['id']
-                for info in recent_info:
-                    user_obj['userSolvedProblems'].append(info['titleSlug'])
             member = await interaction.guild.fetch_member(interaction.user.id)
 
-            # TODO: refactor to lc_config in db
-            verified_role_id = 1087761988068855890
-            unverified_role_id = 1157694438152347758
-            verified_role = discord.utils.get(interaction.guild.roles, id = verified_role_id)
-            unverified_role = discord.utils.get(interaction.guild.roles, id = unverified_role_id)
+            verified_role_id = self.client.config['verifiedRoleId']
+            unverified_role_id = self.client.config['unverifiedRoleId']
+            verified_role = discord.utils.get(interaction.guild.roles, id = int(verified_role_id))
+            unverified_role = discord.utils.get(interaction.guild.roles, id = int(unverified_role_id))
+            print(verified_role_id, unverified_role_id, verified_role, unverified_role)
             try:
-                await self.db_api.create_user(user_obj)
+                await self.client.db_api.create_user(user_obj)
             except:
                 await interaction.followup.send(content = f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
             else: 
                 await member.add_roles(verified_role)
                 await member.remove_roles(unverified_role)
                 await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
-        else: await interaction.followup.send(content = f"{Assets.red_tick} **Unmatched code. Please try again.**")
+        else:
+            await interaction.followup.send(content = f"{Assets.red_tick} **Unmatched code. Please try again.**")
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
+        print(traceback.format_exc())
         await interaction.followup.send(error)
         
 class verify(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.db_api = DatabaseAPILayer(client)
 
     @app_commands.command(name = 'link', description = "Links your Discord with a LeetCode account")
     @app_commands.describe(username = "Specify a username")
     async def _link(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking = True)
-        user_profile = self.db_api.read_profile(str(interaction.user.id))
+        user_profile = self.client.db_api.read_profile(str(interaction.user.id))
         if user_profile != None:
             await interaction.followup.send(f"You've already linked your profile.\
                 Please contact Core members for support if you want to re-link to another profile!")
@@ -90,4 +83,4 @@ class verify(commands.Cog):
             await interaction.followup.send(f"{Assets.red_tick} **Username doesn't exist, please double check.**")
 
 async def setup(client):
-    await client.add_cog(verify(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(verify(client), guilds=[discord.Object(id=client.config['serverId'])])

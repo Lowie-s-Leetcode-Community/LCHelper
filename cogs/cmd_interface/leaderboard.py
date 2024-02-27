@@ -8,7 +8,6 @@ from utils.asset import Assets
 import traceback
 import aiohttp
 import json
-from database_api_layer.api import DatabaseAPILayer
 
 color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
@@ -158,14 +157,13 @@ class RankingView(discord.ui.View):
 class Leaderboard(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.db_api = DatabaseAPILayer(client)
 
     rank_group = app_commands.Group(name = "leaderboard", description = "Ranking Group")
     @rank_group.command(name = "current", description = "Take a look at LLC's Hall of Fame")
     async def _leaderboard_current(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        user_list = self.db_api.read_current_month_leaderboard()
+        user_list = self.client.db_api.read_current_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, pages_count, embed_limit)
@@ -185,7 +183,7 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_previous(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        user_list = self.db_api.read_last_month_leaderboard()
+        user_list = self.client.db_api.read_last_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(user_list, pages_count, embed_limit)
@@ -203,4 +201,4 @@ class Leaderboard(commands.Cog):
     # will definitely need a help guide. Also streak count, ...
 
 async def setup(client):
-    await client.add_cog(Leaderboard(client), guilds=[discord.Object(id=1085444549125611530)])
+    await client.add_cog(Leaderboard(client), guilds=[discord.Object(id=client.config['serverId'])])
