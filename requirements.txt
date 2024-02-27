@@ -10,5 +10,4 @@ jishaku==2.5.2
 ffmpeg==1.4
 python-dotenv==1.0.1
 pymongo==4.6.1
-Pillow==9.0.1
 SQLAlchemy==2.0.25
