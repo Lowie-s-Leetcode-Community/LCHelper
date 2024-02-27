@@ -24,19 +24,17 @@ Run: `pip install -r requirements.txt`
 ### 3. Database
 
 Clone the web app to somewhere else: [llc-webapp](https://github.com/Lowie-s-Leetcode-Community/llc-webapp)
-And then follow the guide there to set up the database.
+Do part 1, 2, 3 in README.md in llc-webapp
 
 ### 4. Set up .env file
 
-Same as .env file from llc-webapp/server
-<!-- Copy .env.template file to .env file and edit: -->
-<!-- - BOT_TOKEN: the bot token you get from developer.discord  -->
-<!-- - CLIENT_SECRET: the secret key of the bot from developer.discord -->
-<!-- - MONGODB_LOGIN_CRED:"mongodb+srv://leanhduy0206:jhJiCMhR8l79xZlR@cluster0.ulkpiid.mongodb.net/test" -->
-<!-- - POSTGRESQL_CRED: change 12345678 to your postgres password, lc_db to the schema's name -->
-<!-- - POSTGRESQL_SCHEMA: schema's name -->
-<!-- - BOT_PREFIX: depends on you -->
-<!-- Leave the rest alone. -->
+Copy .env.template file to .env file and edit:
+- BOT_TOKEN: the bot token you get from developer.discord 
+- CLIENT_SECRET: the secret key of the bot from developer.discord
+- POSTGRESQL_CRED: change 12345678 to your postgres password, lc_db to the schema's name
+- POSTGRESQL_SCHEMA: schema's name
+- BOT_PREFIX: depends on you
+Leave the rest alone.
 
 ### 4. Run the bot
 
