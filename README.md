@@ -21,18 +21,13 @@ Clone the repo using GUI or command line:
 Make sure you have Python when running this:
 Run: `pip install -r requirements.txt`
 
-### 3. Database
-
-Clone the web app to somewhere else: [llc-webapp](https://github.com/Lowie-s-Leetcode-Community/llc-webapp)
-Follow part 1, 2, 3 in README.md in llc-webapp to set up postgreSQL
-
-### 4. Create an app in discord.com/developer
+### 3. Create an app in discord.com/developer
 
 Go to [discord.com/developers](https://discord.com/developers/docs/intro) to create the bot:
 - Create a new application
 - In the OAuth2 part, save the `Client ID` and `Client secret` somewhere for the section below. Note that the "Client secret" will only show up 1 time, if you want to get it again, it will generate a new one.
 
-### 5. Set up .env file
+### 4. Set up .env file
 
 Copy .env.template file to .env file and edit:
 - BOT_TOKEN: the `Client ID` you get from discord.com/developer 
@@ -41,6 +36,11 @@ Copy .env.template file to .env file and edit:
 - POSTGRESQL_SCHEMA: schema's name
 - BOT_PREFIX: depends on you
 Leave the rest alone.
+
+### 5. Database
+
+Clone the web app to somewhere else: [llc-webapp](https://github.com/Lowie-s-Leetcode-Community/llc-webapp)
+Follow part 1, 2, 3 in README.md in llc-webapp to set up postgreSQL
 
 ### 6. Run the bot
 
