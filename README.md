@@ -24,19 +24,25 @@ Run: `pip install -r requirements.txt`
 ### 3. Database
 
 Clone the web app to somewhere else: [llc-webapp](https://github.com/Lowie-s-Leetcode-Community/llc-webapp)
-Do part 1, 2, 3 in README.md in llc-webapp
+Follow part 1, 2, 3 in README.md in llc-webapp to set up postgreSQL
 
-### 4. Set up .env file
+### 4. Create an app in discord.com/developer
+
+Go to [discord.com/developers](https://discord.com/developers/docs/intro) to create the bot:
+- Create a new application
+- In the OAuth2 part, save the `Client ID` and `Client secret` somewhere for the section below. Note that the "Client secret" will only show up 1 time, if you want to get it again, it will generate a new one.
+
+### 5. Set up .env file
 
 Copy .env.template file to .env file and edit:
-- BOT_TOKEN: the bot token you get from developer.discord 
-- CLIENT_SECRET: the secret key of the bot from developer.discord
+- BOT_TOKEN: the `Client ID` you get from discord.com/developer 
+- CLIENT_SECRET: the `Client secret` of the bot from discord.com/developer
 - POSTGRESQL_CRED: change 12345678 to your postgres password, lc_db to the schema's name
 - POSTGRESQL_SCHEMA: schema's name
 - BOT_PREFIX: depends on you
 Leave the rest alone.
 
-### 4. Run the bot
+### 6. Run the bot
 
 - To simply start LCHelper, just run:
 
@@ -50,13 +56,14 @@ python bot.py
 ./run.sh
 ```
 
-## Usage
+## Documentations
 
-... In refactoring
-
+- To learn more about discord.py: [discordpy.readthefuckingdocs](https://discordpy.readthedocs.io/en/latest/index.html#manuals)
+- To learn more about sql in python: [sqlalchemy](https://www.sqlalchemy.org/)
 - The command does use both normal commands (prefix) and slash commands. Make sure you are familiar with command tree, slash commands and interaction:
   - [Bot commands tree and syncing guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
   - [Bot interaction guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
+- Just-in-case guidelines: [python guide](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
 ## License
 
