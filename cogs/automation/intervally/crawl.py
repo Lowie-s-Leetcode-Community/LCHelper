@@ -59,7 +59,7 @@ class Crawl(commands.Cog):
     @tasks.loop(minutes = 25)
     async def crawling(self):
         current_utc_time = datetime.now().astimezone(pytz.utc)
-        if 0 <= current_utc_time.hour <= 1:
+        if current_utc_time.hour == 0:
             await self.logger.on_automation_event("Crawl", "No crawl to avoid conflict with other tasks.")
             return
 
