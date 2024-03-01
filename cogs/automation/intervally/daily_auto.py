@@ -11,8 +11,7 @@ from utils.llc_datetime import get_today
 from utils.logger import Logger
 
 COG_START_TIMES = [
-    datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc),
-    datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
+    datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
 ]
 
 class DailyAutomation(commands.Cog):
