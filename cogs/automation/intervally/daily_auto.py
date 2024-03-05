@@ -69,5 +69,12 @@ class DailyAutomation(commands.Cog):
         self.daily.start()
         await ctx.send(f"{Assets.green_tick} **Daily task started.**")
 
+    @app_commands.command(name="daily_simulate", description="Simulate a daily crawl cycle.")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def _daily_simulate(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+        await self.daily()
+        await interaction.followup.send(f"{Assets.green_tick} **Daily Task finished**")
+
 async def setup(client):
     await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
