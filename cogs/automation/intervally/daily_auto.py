@@ -9,6 +9,7 @@ import traceback
 import datetime
 from utils.llc_datetime import get_today
 from utils.logger import Logger
+from cogs.cmd_interface.daily.Daily import create_daily_embed
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc),
@@ -36,7 +37,10 @@ class DailyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         name = f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
-        await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
+        
+        thread = await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
+        msg = create_daily_embed()
+        thread.send(f"Daily Challenge - {msg['display_date']}", embed = msg['embed'])
         return
 
     @tasks.loop(time=COG_START_TIMES)
