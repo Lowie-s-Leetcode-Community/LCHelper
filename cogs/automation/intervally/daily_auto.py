@@ -37,8 +37,7 @@ class DailyAutomation(commands.Cog):
         name = f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
         thread = await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
 
-         # Calling /daily automatically
-
+        # Calling /daily automatically
         daily_obj = self.client.db_api.read_latest_daily_object()
         problem = daily_obj['problem']
 

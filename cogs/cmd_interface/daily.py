@@ -53,8 +53,7 @@ class Daily(commands.Cog):
             text = f"{info['likes']} 👍 • {info['dislikes']} 👎"
         )
         display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
-        await interaction.followup.send(f"Daily Challenge - {display_date}", embed = embed)
-        
+        await interaction.followup.send(f"Daily Challenge - {display_date}", embed = embed)        
 
 async def setup(client):
     await client.add_cog(Daily(client), guilds=[discord.Object(id=client.config['serverId'])])
