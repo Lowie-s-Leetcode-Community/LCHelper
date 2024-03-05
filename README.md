@@ -6,13 +6,16 @@ The database currently in use is `PostgreSQL`, and the library wrapper for the b
 
 ## Features
 
-... In refactoring
+Command interface: [Notion page](https://funny-basket-693.notion.site/LLC-Assistant-Documentation-f28d36ddeb0046a0bab7b7c9745174d7).
 
-## Installation
+Automation: [Notion page](https://lowie-writes.notion.site/Known-LCHelper-Automations-1-e7ed44f69e044e74918d7dedddf3c2ba?pvs=74).
+
+## First-time Installation
 
 ### 1. Clone the repository
 
 Clone the repo using GUI or command line:
+
 - If you have ssh set up: `git clone git@github.com:Lowie-s-Leetcode-Community/LCHelper.git`
 - If you don't: `git clone https://github.com/Lowie-s-Leetcode-Community/LCHelper.git`
 
@@ -21,28 +24,64 @@ Clone the repo using GUI or command line:
 Make sure you have Python when running this:
 Run: `pip install -r requirements.txt`
 
+`psycopg2` installation is required, but has proven to be problematic on some machine. Please try running either:
+
+```sh
+pip install psycopg2
+```
+
+or
+
+```sh
+sudo apt-get install build-dep python3-psycopg2
+```
+
 ### 3. Create an app in discord.com/developer
 
 Go to [discord.com/developers](https://discord.com/developers/docs/intro) to create the bot:
+
+![Discord developer-home](resrc/discord-dev-home.png)
+
 - Create a new application
+
+![Discord app info](resrc/discord-app-info.png)
+
 - In the OAuth2 part, save the `Client ID` and `Client secret` somewhere for the section below. Note that the "Client secret" will only show up 1 time, if you want to get it again, it will generate a new one.
+
+![OAuth2 Instruction](resrc/oauth2-instruction.png)
 
 ### 4. Set up .env file
 
-Copy .env.template file to .env file and edit:
-- BOT_TOKEN: the `Client ID` you get from discord.com/developer 
-- CLIENT_SECRET: the `Client secret` of the bot from discord.com/developer
-- POSTGRESQL_CRED: change 12345678 to your postgres password, lc_db to the schema's name
-- POSTGRESQL_SCHEMA: schema's name
-- BOT_PREFIX: depends on you
-Leave the rest alone.
+Copy `.env.template` file to `.env` file and edit:
+
+![alt text](bot-token.png)
+
+- `BOT_TOKEN`: the **Bot Token** you get from discord.com/developer.
+- `CLIENT_SECRET`: the **Client secret** of the bot from discord.com/developer.
+- `POSTGRESQL_CRED`: change 12345678 to your postgres password, lc_db to the schema's name.
+- `POSTGRESQL_SCHEMA`: schema's name.
+- `BOT_PREFIX`: depends on you.
+
+Leave the rest as it is.
 
 ### 5. Database
+
+We'll set up the database using llc-webapp repo, using Prisma tool.
 
 Clone the web app to somewhere else: [llc-webapp](https://github.com/Lowie-s-Leetcode-Community/llc-webapp)
 Follow part 1, 2, 3 in README.md in llc-webapp to set up postgreSQL
 
-### 6. Run the bot
+### 6. Add your app as a bot into our server
+
+Paste this URL into your browser:
+
+```txt
+https://discord.com/api/oauth2/authorize?client_id=<your-client-id>&permission=8&scope=bot%20applications.commands
+```
+
+Replace `<your-client-id>` with your bot's client ID.
+
+### 7. Run the bot
 
 - To simply start LCHelper, just run:
 
@@ -50,11 +89,20 @@ Follow part 1, 2, 3 in README.md in llc-webapp to set up postgreSQL
 python bot.py
 ```
 
-- To automatically pull from the repo and start the bot, run:
+### 8. Sync commands (Use when installing, or a new command is implemented)
+
+Type into the #bot-commands channel:
 
 ```sh
-./run.sh
+<bot-prefix>sync 1
 ```
+
+Replace `<bot-prefix>` with your prefix of choice.
+
+## Notes
+
+- Please come up with your own `BOT_PREFIX` in case of many devs working at the same time.
+- Please use `/set_logging` to the dedicated channel for bot-dev logging. The default channel is public.
 
 ## Documentations
 
@@ -70,5 +118,3 @@ python bot.py
 [MIT](https://choosealicense.com/licenses/mit/)
 
 Made with 🧡 by Lowie's Leetcode Community Bot Development Team.
-
-## Note Jan 25: have to add instruction to install psycopg2. :)

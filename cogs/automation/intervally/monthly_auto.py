@@ -10,8 +10,7 @@ from utils.llc_datetime import get_first_day_of_current_month
 from utils.logger import Logger
 
 COG_START_TIMES = [
-    datetime.time(hour=0, minute=20, tzinfo=datetime.timezone.utc),
-    datetime.time(hour=0, minute=50, tzinfo=datetime.timezone.utc)
+    datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
 ]
 
 class MonthlyAutomation(commands.Cog):
@@ -89,7 +88,7 @@ class MonthlyAutomation(commands.Cog):
     async def on_error(self, exception):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
-        await channel.send(f"Monthly crawl error```py\n{exception}```")
+        await channel.send(f"Monthly crawl error```py\n{exception}```"[:800])
         await self.logger.on_automation_event("Monthly", "error found")
 
         self.monthly.restart()
