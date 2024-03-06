@@ -1,10 +1,9 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.asset import Assets
-from utils.lc_utils import LC_utils
 from typing import Optional
 import random
+from lib.embed.problem import ProblemEmbed
 
 TOPIC_TAG_LIST = ['Array', 'Backtracking', 'Biconnected Component', 'Binary Indexed Tree', 'Binary Search', 'Binary Search Tree', 'Binary Tree', 'Bit Manipulation', 'Bitmask', 'Brainteaser', 'Breadth-First Search', 'Bucket Sort', 'Combinatorics', 'Concurrency', 'Counting', 'Counting Sort', 'Data Stream', 'Database', 'Depth-First Search', 'Design', 'Divide and Conquer', 'Doubly-Linked List', 'Dynamic Programming', 'Enumeration', 'Eulerian Circuit', 'Game Theory', 'Geometry', 'Graph', 'Greedy', 'Hash Function', 'Hash Table', 'Heap (Priority Queue)', 'Interactive', 'Iterator', 'Line Sweep', 'Linked List', 'Math', 'Matrix', 'Memoization', 'Merge Sort', 'Minimum Spanning Tree', 'Monotonic Queue', 'Monotonic Stack', 'Number Theory', 'Ordered Set', 'Prefix Sum', 'Probability and Statistics', 'Queue', 'Quickselect', 'Radix Sort', 'Randomized', 'Recursion', 'Rejection Sampling', 'Reservoir Sampling', 'Rolling Hash', 'Segment Tree', 'Shell', 'Shortest Path', 'Simulation', 'Sliding Window', 'Sorting', 'Stack', 'String', 'String Matching', 'Strongly Connected Component', 'Suffix Array', 'Topological Sort', 'Tree', 'Trie', 'Two Pointers', 'Union Find']
         
@@ -82,42 +81,8 @@ class Gimme(commands.Cog):
             await interaction.followup.send(f"{Assets.red_tick} **No problem matched your query.**")
             return
         gacha_result = random.choice(lc_result)
-        info = LC_utils.get_problem_info(gacha_result['titleSlug'])
 
-        embed = discord.Embed(
-            title = f"**{info['title']}**",
-            url = f"{info['link']}",
-            color = Assets.easy if info['difficulty'] == 'Easy' else Assets.medium if info['difficulty'] == 'Medium' else Assets.hard
-        )
-        embed.add_field(
-            name = "Difficulty",
-            value = info['difficulty'],
-            inline = True
-        )
-        embed.add_field(
-            name = "AC Count", 
-            value = f"{info['total_AC']}/{info['total_submissions']}",
-            inline = True,
-        )
-        embed.add_field(
-            name = "AC Rate",
-            value = str(info['ac_rate'])[0:2] + "%",
-            inline = True,
-        )
-        tag_list = ""
-        for name, link in info['topics'].items():
-            tag_list += f"[``{name}``]({link}), "
-        
-        tag_list = tag_list[:-2]
-        tag_list = "||" + tag_list + "||"
-        embed.add_field(
-            name = "Topics",
-            value = tag_list,
-            inline = False
-        )
-        embed.set_footer(
-            text = f"{info['likes']} 👍 • {info['dislikes']} 👎"
-        )
+        embed = ProblemEmbed(gacha_result)
 
         await interaction.followup.send(f"**Problem for {interaction.user.mention}:**", embed = embed)
 
