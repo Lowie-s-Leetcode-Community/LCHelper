@@ -7,7 +7,6 @@ import os
 import asyncio
 from dotenv import load_dotenv
 from utils.asset import Assets
-from pymongo import MongoClient
 import traceback
 from pathlib import Path
 import logging

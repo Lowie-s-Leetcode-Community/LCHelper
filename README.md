@@ -4,6 +4,8 @@ Repo for LLC Assistant bot - A Discord bot built for Lowie's LeetCode Community 
 
 The database currently in use is `PostgreSQL`, and the library wrapper for the bot is `discord.py 2.0+`.
 
+Current release Python version: `3.10.12`.
+
 ## Features
 
 Command interface: [Notion page](https://funny-basket-693.notion.site/LLC-Assistant-Documentation-f28d36ddeb0046a0bab7b7c9745174d7).
@@ -54,7 +56,7 @@ Go to [discord.com/developers](https://discord.com/developers/docs/intro) to cre
 
 Copy `.env.template` file to `.env` file and edit:
 
-![alt text](bot-token.png)
+![alt text](resrc/bot-token.png)
 
 - `BOT_TOKEN`: the **Bot Token** you get from discord.com/developer.
 - `CLIENT_SECRET`: the **Client secret** of the bot from discord.com/developer.
@@ -99,6 +101,10 @@ Type into the #bot-commands channel:
 
 Replace `<bot-prefix>` with your prefix of choice.
 
+**Example**: if you've set `BOT_PREFIX` as `?!?`, you should type `?!?sync 1` into the #bot_commands server.
+
+![sync](resrc/sync.png)
+
 ## Notes
 
 - Please come up with your own `BOT_PREFIX` in case of many devs working at the same time.
@@ -106,7 +112,7 @@ Replace `<bot-prefix>` with your prefix of choice.
 
 ## Documentations
 
-- To learn more about discord.py: [discordpy.readthefuckingdocs](https://discordpy.readthedocs.io/en/latest/index.html#manuals)
+- To learn more about discord.py: [discordpy.readthedocs](https://discordpy.readthedocs.io/en/latest/index.html#manuals)
 - To learn more about sql in python: [sqlalchemy](https://www.sqlalchemy.org/)
 - The command does use both normal commands (prefix) and slash commands. Make sure you are familiar with command tree, slash commands and interaction:
   - [Bot commands tree and syncing guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
