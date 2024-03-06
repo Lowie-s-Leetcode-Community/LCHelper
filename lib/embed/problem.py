@@ -1,7 +1,6 @@
 import discord
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from typing import Optional
 
 class ProblemEmbed(discord.Embed):
   def __init__(self, problem: dict):
