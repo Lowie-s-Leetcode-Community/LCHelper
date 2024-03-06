@@ -14,7 +14,8 @@ def get_min_available_id(session, Table):
     session.db_remaining_ids = {}
   if table_name not in session.db_remaining_ids:
     query = select((Table.id + 1).label("min_id"))\
-      .where(~(Table.id + 1).in_(select(Table.id)))
+      .where(~(Table.id + 1).in_(select(Table.id)))\
+      .order_by("min_id")
     session.db_remaining_ids[table_name] = list(map(lambda x: x.min_id, session.execute(query).all()))
   rank = count_obj_in_session(session, Table) + 1
   while rank > len(session.db_remaining_ids[table_name]):

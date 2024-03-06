@@ -9,7 +9,7 @@ import traceback
 import datetime
 from utils.llc_datetime import get_today
 from utils.logger import Logger
-from cogs.cmd_interface.daily.Daily import create_daily_embed
+from lib.embed.problem import ProblemEmbed
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
@@ -36,11 +36,17 @@ class DailyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         name = f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
-        
         thread = await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
-        msg = create_daily_embed()
-        thread.send(f"Daily Challenge - {msg['display_date']}", embed = msg['embed'])
-        return
+
+        # Calling /daily automatically
+        daily_obj = self.client.db_api.read_latest_daily_object()
+        problem = daily_obj['problem']
+        embed = ProblemEmbed(problem)
+
+        display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
+        
+        await thread.send(f"Daily Challenge - {display_date}", embed = embed)
+        return 
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
@@ -72,6 +78,13 @@ class DailyAutomation(commands.Cog):
     async def start_daily(self, ctx):
         self.daily.start()
         await ctx.send(f"{Assets.green_tick} **Daily task started.**")
+
+    @app_commands.command(name="daily_simulate", description="Simulate a daily crawl cycle.")
+    @app_commands.checks.has_permissions(administrator = True)
+    async def _daily_simulate(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking = True)
+        await self.daily()
+        await interaction.followup.send(f"{Assets.green_tick} **Daily Task finished**")
 
 async def setup(client):
     await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
