@@ -291,7 +291,9 @@ class DatabaseAPILayer:
           if topic_name in problem_topics:
             sat = False
         if sat:
-          result.append(problem.as_dict())
+          prob = problem.as_dict()
+          prob["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
+          result.append(prob)
     return result
 
   # Desc: update to DB and send a log message (reason)

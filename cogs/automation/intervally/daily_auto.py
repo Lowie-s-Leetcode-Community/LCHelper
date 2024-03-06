@@ -9,6 +9,7 @@ import traceback
 import datetime
 from utils.llc_datetime import get_today
 from utils.logger import Logger
+from lib.embed.problem import ProblemEmbed
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
@@ -40,41 +41,8 @@ class DailyAutomation(commands.Cog):
         # Calling /daily automatically
         daily_obj = self.client.db_api.read_latest_daily_object()
         problem = daily_obj['problem']
+        embed = ProblemEmbed(problem)
 
-        info = LC_utils.get_problem_info(problem['titleSlug'])
-
-        embed = discord.Embed(
-            title = f"**{info['title']}**",
-            url = f"{info['link']}",
-            color = Assets.easy if info['difficulty'] == 'Easy' else Assets.medium if info['difficulty'] == 'Medium' else Assets.hard
-        )
-        embed.add_field(
-            name = "Difficulty",
-            value = info['difficulty'],
-            inline = True
-        )
-        embed.add_field(
-            name = "AC Count", 
-            value = f"{info['total_AC']}/{info['total_submissions']}",
-            inline = True,
-        )
-        embed.add_field(
-            name = "AC Rate",
-            value = str(info['ac_rate'])[0:2] + "%",
-            inline = True,
-        )
-        tag_list = ""
-        for name, link in info['topics'].items():
-            tag_list += f"[``{name}``]({link}), "
-        tag_list = "||" + tag_list + "||"
-        embed.add_field(
-            name = "Topics",
-            value = tag_list,
-            inline = False
-        )
-        embed.set_footer(
-            text = f"{info['likes']} 👍 • {info['dislikes']} 👎"
-        )
         display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
         
         await thread.send(f"Daily Challenge - {display_date}", embed = embed)
