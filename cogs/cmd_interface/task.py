@@ -12,7 +12,7 @@ class Task(commands.Cog):
         self.logger = Logger(client)
 
     @app_commands.command(name = 'task', description = "Earn score by doing daily tasks")
-    async def _task(self, interaction):
+    async def _task(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         user_progress = self.client.db_api.read_user_progress(str(interaction.user.id))
         embed_list = []
@@ -35,6 +35,10 @@ class Task(commands.Cog):
             "hard": self.client.config['hardSolveScore'],
             "practiceCap": self.client.config['practiceScoreCap'],
         }
+        if user_progress['user_daily']['scoreEarned'] is None:
+            user_progress['user_daily']['scoreEarned'] = 0
+        if user_progress['user_daily']['scoreGacha'] is None:
+            user_progress['user_daily']['scoreGacha'] = 0
         daily_msg = ""
         daily_msg += f"- Score Earned: **{user_progress['user_daily']['scoreEarned']}** pts\n"
         if user_progress['user_daily']['solvedDaily']:
@@ -48,15 +52,18 @@ class Task(commands.Cog):
             daily_msg += f"{Assets.red_tick} **Test your luck!** -> </gacha:1168530503675166791> **(1-?? pts)**\n"
 
         # stub
-        practice_score = min(daily_conf['practiceCap'], 5)
-        if True:
-            daily_msg += f"{Assets.green_tick} Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)\n"
+        practice_score = min(daily_conf['practiceCap'], user_progress['user_daily']['scoreEarned'])
+        if practice_score == daily_conf['practiceCap']:
+            daily_msg += f"{Assets.green_tick} Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)\n" 
         else:
             daily_msg += f"{'⌛' if practice_score else Assets.red_tick} **Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)**\n"
 
-        daily_msg += f"{Assets.blank} - *Solve an Easy problem ({daily_conf['easy']} pts): {user_progress['user_daily']['solvedEasy']} solved*\n"
-        daily_msg += f"{Assets.blank} - *Solve a Medium problem ({daily_conf['medium']} pts): {user_progress['user_daily']['solvedMedium']} solved*\n"
-        daily_msg += f"{Assets.blank} - *Solve a Hard problem ({daily_conf['hard']} pts): {user_progress['user_daily']['solvedHard']} solved*\n"
+        solved_easy = user_progress['user_daily']['solvedEasy'] if user_progress['user_daily']['solvedEasy'] is not None else 0
+        daily_msg += f"{Assets.blank} - *Solve an Easy problem ({daily_conf['easy']} pts): {solved_easy} solved*\n"
+        solved_medium = user_progress['user_daily']['solvedMedium'] if user_progress['user_daily']['solvedMedium'] is not None else 0
+        daily_msg += f"{Assets.blank} - *Solve a Medium problem ({daily_conf['medium']} pts): {solved_medium} solved*\n"
+        solved_hard = user_progress['user_daily']['solvedHard'] if user_progress['user_daily']['solvedHard'] is not None else 0
+        daily_msg += f"{Assets.blank} - *Solve a Hard problem ({daily_conf['hard']} pts): {solved_hard} solved*\n"
 
         embed.add_field(
             name = "Daily Progress",
