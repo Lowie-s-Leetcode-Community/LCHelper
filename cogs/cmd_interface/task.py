@@ -44,12 +44,12 @@ class Task(commands.Cog):
         if user_progress['user_daily']['solvedDaily']:
             daily_msg += f"{Assets.green_tick} Complete Daily Challenge 🗓️ ({daily_conf['daily']} pts)\n"
         else:
-            daily_msg += f"**{Assets.red_tick} Complete Daily Challenge 🗓️ ({daily_conf['daily']} pts)** -> </daily:1113100702886141994>\n"
+            daily_msg += f"**{Assets.red_tick} Complete Daily Challenge 🗓️ ({daily_conf['daily']} pts)** -> </daily:1206907242784235525>\n"
 
-        if user_progress['user_daily']['scoreGacha'] != -1:
+        if user_progress['user_daily']['scoreGacha']:
             daily_msg += f"{Assets.green_tick} Test your luck! ({user_progress['user_daily']['scoreGacha']} pts)\n"
         else:
-            daily_msg += f"{Assets.red_tick} **Test your luck!** -> </gacha:1168530503675166791> **(1-?? pts)**\n"
+            daily_msg += f"{Assets.red_tick} **Test your luck!** -> </gacha:1206907242784235527> **(1-?? pts)**\n"
 
         # stub
         practice_score = min(daily_conf['practiceCap'], user_progress['user_daily']['scoreEarned'])
