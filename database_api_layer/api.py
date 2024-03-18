@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
@@ -295,6 +297,39 @@ class DatabaseAPILayer:
           prob["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
           result.append(prob)
     return result
+
+  def read_quiz(self, quiz_detail):
+    result = []
+    quiz = []
+    with Session(self.engine) as session:
+      difficulty = None
+      category = None
+
+      if 'difficulty' in quiz_detail: difficulty = quiz_detail['difficulty']
+      if 'category' in quiz_detail: category = quiz_detail['category']
+
+      result = ctrlers.QuizController().read_many(session, difficulty, category)
+
+      if len(result) == 0:
+        return []
+      question = result[random.randint(0, len(result) - 1)]
+
+      quiz.append(question)
+      quiz.append(ctrlers.QuizController().read_quiz_answer(session, question.id))
+    return quiz
+
+  def read_all_quiz(self):
+    result = []
+    with Session(self.engine) as session:
+      result = ctrlers.QuizController().read_many(session)
+    return result
+
+  def read_answer_for_quiz(self, quiz_id):
+    result = []
+    with Session(self.engine) as session:
+      result = ctrlers.QuizController().read_quiz_answer(session, quiz_id)
+    return result
+
 
   # Desc: update to DB and send a log message (reason)
   async def update_score(self, memberDiscordId: str, delta: int, reason: str):
