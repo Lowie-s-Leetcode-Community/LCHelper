@@ -384,7 +384,6 @@ class QuizController:
   def read_many(self, session: Session,
                 difficulty: Optional[str] = None,
                 category: Optional[str] = None):
-    print(difficulty, category)
     query = select(db.DiscordQuiz)
     if difficulty is not None:
       query = query.where(db.DiscordQuiz.difficulty == difficulty)
