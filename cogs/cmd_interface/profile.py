@@ -63,7 +63,7 @@ class Profile(commands.Cog):
                 inline = False
             )
             embed.set_author(
-                name = f"LeetCode profile for {interaction.user}",
+                name = f"LeetCode profile for {result['leetcodeUsername']}",
                 icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
                 url = result['link']
             )
