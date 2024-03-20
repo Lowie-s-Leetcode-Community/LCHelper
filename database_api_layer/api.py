@@ -318,18 +318,6 @@ class DatabaseAPILayer:
       quiz.append(ctrlers.QuizController().read_quiz_answer(session, question.id))
     return quiz
 
-  def read_all_quiz(self):
-    result = []
-    with Session(self.engine) as session:
-      result = ctrlers.QuizController().read_many(session)
-    return result
-
-  def read_answer_for_quiz(self, quiz_id):
-    result = []
-    with Session(self.engine) as session:
-      result = ctrlers.QuizController().read_quiz_answer(session, quiz_id)
-    return result
-
 
   # Desc: update to DB and send a log message (reason)
   async def update_score(self, memberDiscordId: str, delta: int, reason: str):

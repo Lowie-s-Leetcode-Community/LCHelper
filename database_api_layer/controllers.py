@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import select, insert, func, update, delete, inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound, SQLAlchemyError
@@ -385,6 +387,12 @@ class QuizController:
                 difficulty: Optional[str] = None,
                 category: Optional[str] = None):
     query = select(db.DiscordQuiz)
+
+    sizeOfDb = session.scalar(select(func.count()).select_from(db.DiscordQuiz))
+    if difficulty is None and category is None:
+      query = query.where(db.DiscordQuiz.id == random.randint(1, sizeOfDb));
+      return [session.scalar(query)]
+
     if difficulty is not None:
       query = query.where(db.DiscordQuiz.difficulty == difficulty)
     if category is not None:

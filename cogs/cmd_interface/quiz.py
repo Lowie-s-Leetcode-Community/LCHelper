@@ -124,7 +124,6 @@ class ChooseQuestion(discord.ui.View):
 
 class Quiz(commands.Cog):
     def __init__(self, client):
-        self.DB_Quiz = None
         self.client = client
 
     @app_commands.command(name='quiz', description="Get some easy quiz questions")
@@ -149,19 +148,8 @@ class Quiz(commands.Cog):
             quiz_detail['difficulty'] = difficulty.name
         if category:
             quiz_detail['category'] = category
-        quiz_result = []
 
-        # The optimization when the user calls Quiz many times
-        if len(quiz_detail) == 0:
-            if self.DB_Quiz is None:
-                self.DB_Quiz = self.client.db_api.read_all_quiz()
-            quiz = self.DB_Quiz[random.randint(0, len(self.DB_Quiz) - 1)]
-            answer = self.client.db_api.read_answer_for_quiz(quiz.id)
-            quiz_result.append(quiz)
-            quiz_result.append(answer)
-        else:
-            quiz_result = self.client.db_api.read_quiz(quiz_detail)
-        # quiz_result = self.client.db_api.read_quiz(quiz_detail)
+        quiz_result = self.client.db_api.read_quiz(quiz_detail)
 
         if len(quiz_result) == 0:
             await interaction.followup.send(embed=discord.Embed(
