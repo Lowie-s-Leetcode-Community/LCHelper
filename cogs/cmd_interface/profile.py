@@ -42,6 +42,9 @@ class Profile(commands.Cog):
         # Will wait for leetcode layer to add more info
         # missing: streak
         if result != None:
+            # Get Discord user by ID
+            discord_user = await self.client.fetch_user(result['discordId'])
+            embed.set_thumbnail(url=discord_user.display_avatar)
             embed.add_field(
                 name = "🏡 Server Profile",
                 value = f"""
@@ -63,7 +66,7 @@ class Profile(commands.Cog):
                 inline = False
             )
             embed.set_author(
-                name = f"LeetCode profile for {result['leetcodeUsername']}",
+                name = f"LeetCode profile for {discord_user.display_name}",
                 icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
                 url = result['link']
             )
