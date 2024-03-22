@@ -388,9 +388,9 @@ class QuizController:
                 category: Optional[str] = None):
     query = select(db.DiscordQuiz)
 
-    sizeOfDb = session.scalar(select(func.count()).select_from(db.DiscordQuiz))
+    size_of_quiz_table = session.scalar(select(func.count()).select_from(db.DiscordQuiz))
     if difficulty is None and category is None:
-      query = query.where(db.DiscordQuiz.id == random.randint(1, sizeOfDb));
+      query = query.where(db.DiscordQuiz.id == random.randint(1, size_of_quiz_table));
       return [session.scalar(query)]
 
     if difficulty is not None:
