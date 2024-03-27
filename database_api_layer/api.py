@@ -166,7 +166,8 @@ class DatabaseAPILayer:
               submission = None
               if problem.id != daily_object.problemId:
                 submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
-              if problem.id != daily_object.problemId or user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
+              # solve daily - submission problem
+              if problem.id == daily_object.problemId and (user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None): # hasn't registered daily submission yet
                 obj = {
                   "submission": sub,
                   "user": user.as_dict(),
