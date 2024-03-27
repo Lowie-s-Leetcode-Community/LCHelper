@@ -57,15 +57,15 @@ class Task(commands.Cog):
         solved_medium = user_progress['user_daily']['solvedMedium'] if user_progress['user_daily']['solvedMedium'] is not None else 0
         solved_hard = user_progress['user_daily']['solvedHard'] if user_progress['user_daily']['solvedHard'] is not None else 0
 
-        practice_score = min(daily_conf['practiceCap'], solved_easy + solved_medium*2 + solved_hard*3)
+        practice_score = min(daily_conf['practiceCap'], solved_easy*daily_conf['easy'] + solved_medium*daily_conf['medium'] + solved_hard*daily_conf['hard'])
         if practice_score == daily_conf['practiceCap']:
-            daily_msg += f"{Assets.green_tick} Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)\n" 
+            daily_msg += f"{Assets.green_tick} Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)\n"
         else:
             daily_msg += f"{'⌛' if practice_score else Assets.red_tick} **Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)**\n"
 
         
-        daily_msg += f"{Assets.blank} - *Solve an Easy problem ({daily_conf['easy']} pts): **{solved_easy}** solved*\n"   
-        daily_msg += f"{Assets.blank} - *Solve a Medium problem ({daily_conf['medium']} pts): **{solved_medium}** solved*\n"    
+        daily_msg += f"{Assets.blank} - *Solve an Easy problem ({daily_conf['easy']} pts): **{solved_easy}** solved*\n"
+        daily_msg += f"{Assets.blank} - *Solve a Medium problem ({daily_conf['medium']} pts): **{solved_medium}** solved*\n" 
         daily_msg += f"{Assets.blank} - *Solve a Hard problem ({daily_conf['hard']} pts): **{solved_hard}** solved*\n"
 
         embed.add_field(
