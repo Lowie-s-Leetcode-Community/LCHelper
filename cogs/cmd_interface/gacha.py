@@ -66,7 +66,7 @@ class Gacha(commands.Cog):
     score_gacha = user_progress['user_daily']['scoreGacha'] or -1
     if score_earned < 2:
       embed = discord.Embed(
-        description="Bạn chưa hoàn thành nhiệm vụ ngày hôm nay. Hãy đọc </tasks:1107228520679231488> của bạn và ghi ít nhất 2 điểm ngày nhé!",
+        description="Bạn chưa hoàn thành nhiệm vụ ngày hôm nay. Hãy đọc </task:1206907242784235521> của bạn và ghi ít nhất 2 điểm ngày nhé!",
         color=Assets.hard,
         timestamp=interaction.created_at
       )
