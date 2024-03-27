@@ -299,7 +299,6 @@ class DatabaseAPILayer:
     return result
 
   def read_quiz(self, quiz_detail):
-    result = []
     quiz = []
     with Session(self.engine) as session:
       difficulty = None

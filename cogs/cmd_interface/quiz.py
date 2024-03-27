@@ -6,8 +6,6 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 
-import random
-
 keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E.', 'F.']
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
 TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems','Software Architecture', 'Complexity Theory']
@@ -15,9 +13,9 @@ TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems','Software Archi
 
 def createEmbed(_question: None, _answer: None, choice: int = -1):
     question = _question
-    answer = _answer
+    answers = _answer
 
-    correct_answer = question.correctAnswerId - answer[0].id
+    correct_answer = question.correctAnswerId - answers[0].id
 
     embed = discord.Embed(
         color= getattr(Assets, question.difficulty.lower())
@@ -45,17 +43,17 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
     )
     answer_view = ""
     if choice == -1:
-        for i in range(len(answer)):
-            answer_view += f"```\n{keyAns[i] + answer[i].answer}\n```"
+        for i in range(len(answers)):
+            answer_view += f"```\n{keyAns[i] + answers[i].answer}\n```"
     else:
-        for i in range(len(answer)):
+        for i in range(len(answers)):
             if i == correct_answer:
-                answer_view += f"```diff\n+{keyAns[i] + answer[i].answer}\n```"
+                answer_view += f"```diff\n+{keyAns[i] + answers[i].answer}\n```"
                 continue
             if i == choice:
-                answer_view += f"```diff\n-{keyAns[i] + answer[i].answer}\n```"
+                answer_view += f"```diff\n-{keyAns[i] + answers[i].answer}\n```"
                 continue
-            answer_view += f"```\n{keyAns[i] + answer[i].answer}\n```"
+            answer_view += f"```\n{keyAns[i] + answers[i].answer}\n```"
     embed.add_field(
         name="Answer",
         value=answer_view,
@@ -66,19 +64,19 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
 
 
 class AnswerButton(discord.ui.Button['ChooseQuestion']):
-    def __init__(self, button_type: int, isCorrect: bool, style: discord.ButtonStyle, is_disabled: bool = False,
+    def __init__(self, button_type: int, is_correct: bool, style: discord.ButtonStyle, is_disabled: bool = False,
                  emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None, label: str = None):
         super().__init__(style=style, label=label, disabled=is_disabled, emoji=emoji)
         self.button_type = button_type
-        self.isCorrect = isCorrect
+        self.is_correct = is_correct
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=False)
-        embed = createEmbed(self.view.question, self.view.answer, self.button_type)
+        embed = createEmbed(self.view.question, self.view.answers, self.button_type)
         if interaction.user != self.view.user: return
-        if self.isCorrect:
+        if self.is_correct:
             embed.add_field(
-                name="You're correct !!! ",
+                name="You're correct !!!",
                 value='',
                 inline=False
             )
@@ -96,20 +94,20 @@ class AnswerButton(discord.ui.Button['ChooseQuestion']):
 class ChooseQuestion(discord.ui.View):
     children: typing.List[typing.Union[AnswerButton]]
 
-    def __init__(self, question: None, answer: None, correctAnswer: int, user):
+    def __init__(self, question: None, answers: None, correctAnswer: int, user):
         super().__init__()
         self.response = None
         self.question = question
-        self.answer = answer
+        self.answers = answers
         self.user = user
-        for i in range(len(answer)):
-            self.add_item(AnswerButton(button_type=i, isCorrect=(i == correctAnswer), style=discord.ButtonStyle.gray,
+        for i in range(len(answers)):
+            self.add_item(AnswerButton(button_type=i, is_correct=(i == correctAnswer), style=discord.ButtonStyle.gray,
                                     is_disabled=False,
                                     emoji=iconKey[i]))
         self.correct_answer = correctAnswer
 
     def disable_answer(self):
-        for i in range(len(self.answer)):
+        for i in range(len(self.answers)):
             self.children[i].disabled = True
 
 
