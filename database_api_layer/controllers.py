@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import select, insert, func, update, delete, inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound, SQLAlchemyError
@@ -366,3 +368,28 @@ class LeaderboardController:
       db.UserDailyObject.id == dailyObjectId
     ).order_by(db.UserDailyObject.scoreEarned.desc())
     return session.execute(query).all()
+class QuizController:
+  def read_one(self, session: Session,
+               quesId: Optional[int] = None):
+    query = select(db.DiscordQuiz)
+    if quesId is not None:
+      query = query.where(db.DiscordQuiz.id == quesId)
+    return session.scalar(query)
+
+  def read_quiz_answer(self, session: Session,
+                       quesId: Optional[int] = None):
+    query = select(db.DiscordQuizAnswer)
+    if quesId is not None:
+      query = query.where(db.DiscordQuizAnswer.discordQuizId == quesId)
+    return session.scalars(query).all()
+
+  def read_many(self, session: Session,
+                difficulty: Optional[str] = None,
+                category: Optional[str] = None):
+    query = select(db.DiscordQuiz)
+
+    if difficulty is not None:
+      query = query.where(db.DiscordQuiz.difficulty == difficulty)
+    if category is not None:
+      query = query.where(db.DiscordQuiz.category == category)
+    return session.scalars(query).all()
