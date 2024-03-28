@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 
-keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E.', 'F.']
+keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E. ', 'F. ']
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
 TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems','Software Architecture', 'Complexity Theory']
 
@@ -21,7 +21,7 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
         color= getattr(Assets, question.difficulty.lower())
     )
     embed.set_author(
-        name="Quiz: ",
+        name="Quiz:",
         icon_url="https://assets.leetcode.com/users/leetcode/avatar_1568224780.png"
     )
     embed.add_field(
@@ -64,8 +64,15 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
 
 
 class AnswerButton(discord.ui.Button['ChooseQuestion']):
-    def __init__(self, button_type: int, is_correct: bool, style: discord.ButtonStyle, is_disabled: bool = False,
-                 emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None, label: str = None):
+    def __init__(
+        self,
+        button_type: int,
+        is_correct: bool,
+        style: discord.ButtonStyle,
+        is_disabled: bool = False,
+        emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
+        label: str = None
+    ):
         super().__init__(style=style, label=label, disabled=is_disabled, emoji=emoji)
         self.button_type = button_type
         self.is_correct = is_correct
@@ -82,12 +89,12 @@ class AnswerButton(discord.ui.Button['ChooseQuestion']):
             )
         else:
             embed.add_field(
-                name="Wrong!!! You chose " + keyAns[self.button_type] + " But the correct answer is " + keyAns[
+                name="Wrong! You chose " + keyAns[self.button_type] + " But the correct answer is " + keyAns[
                     self.view.correct_answer],
                 value='',
                 inline=False
             )
-        self.view.disable_answer()
+        self.view.disable_answers()
         await interaction.edit_original_response(embed=embed, view=self.view)
 
 
@@ -101,12 +108,14 @@ class ChooseQuestion(discord.ui.View):
         self.answers = answers
         self.user = user
         for i in range(len(answers)):
-            self.add_item(AnswerButton(button_type=i, is_correct=(i == correctAnswer), style=discord.ButtonStyle.gray,
-                                    is_disabled=False,
-                                    emoji=iconKey[i]))
+            self.add_item(AnswerButton(button_type=i,
+                                       is_correct=(i == correctAnswer),
+                                       style=discord.ButtonStyle.gray,
+                                       is_disabled=False,
+                                       emoji=iconKey[i]))
         self.correct_answer = correctAnswer
 
-    def disable_answer(self):
+    def disable_answers(self):
         for i in range(len(self.answers)):
             self.children[i].disabled = True
 
@@ -142,11 +151,15 @@ class Quiz(commands.Cog):
 
         if len(quiz_result) == 0:
             await interaction.followup.send(embed=discord.Embed(
-                description="Sorry, data for the question is being updated, please come back later"))
+                description="Sorry, we cannot find a question with the given parameters."))
             return
 
-        view = ChooseQuestion(quiz_result[0], quiz_result[1], quiz_result[0].correctAnswerId - quiz_result[1][0].id, interaction.user)
-        await interaction.followup.send(embed=createEmbed(quiz_result[0], quiz_result[1]), view=view)
+        view = ChooseQuestion(quiz_result[0], quiz_result[1],
+                              quiz_result[0].correctAnswerId - quiz_result[1][0].id,
+                              interaction.user)
+
+        await interaction.followup.send(embed=createEmbed(quiz_result[0], quiz_result[1]),
+                                        view=view)
         view.response = await interaction.original_response()
 
     @_quiz.autocomplete('category')
