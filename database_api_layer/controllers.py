@@ -225,20 +225,17 @@ class UserController:
     )
     session.add(new_user)
     return new_user
-  
-  def update_one(self, session: Session, userId: Optional[int], leetcodeUsername: Optional[str], discordId: Optional[str], submissionId: int):
-    result = self.read_one(session, userId, leetcodeUsername, discordId)
-    if read_one == None:
-      result = self.create_one(session, leetcodeUsername, discordId, mostRecentSubId = submissionId)
-    else:
-      update_query = update(db.User)
-      if userId != None:
-        update_query = update_query.where(db.User.id == userId)
-      elif leetcodeUsername != None:
-        update_query = update_query.where(db.User.leetcodeUsername == leetcodeUsername)
-      elif discordId != None:
-        update_query = update_query.where(db.User.discordId == discordId)
+
+  def update_username_one(self, session: Session, leetcodeUsername: Optional[str], discordId: Optional[str]):
+    update_query = update(db.User)
+    if discordId != None:
+      update_query = update_query.where(db.User.discordId == discordId).returning(db.User)
+    update_query = update_query.values(leetcodeUsername=leetcodeUsername)
+    result = self.read_one(session, None, None, discordId)
+    try:
       result = session.execute(update_query).one()
+    except Exception as e:
+      print(e)
     return result
   
   def read_left_users(self, session: Session, current_users_list: List[str]):

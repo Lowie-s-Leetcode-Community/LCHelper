@@ -415,6 +415,32 @@ class DatabaseAPILayer:
       await self.__commit(session, "User", json.dumps(result, default=str))
     return result
 
+  async def update_username(self, user_obj: dict):
+    result = {}
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+      user = user_controller.update_username_one(
+        session,
+        user_obj['leetcodeUsername'],
+        user_obj['discordId'],
+      )
+      try :
+        await self.__commit(session, "User")
+      except Exception as e:
+        print(e)
+    return result
+
+  async def delete_old_account(self, user_id: int):
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+      user_controller.remove_one(session, user_id)
+      try:
+        await self.__commit(session, f"Users<delete_count:1>", "[]")
+      except Exception as e:
+        print(e)
+    return
+
+
   async def refresh_server_scores(self, firstDayOfMonth: datetime.date):
     with Session(self.engine, autoflush=False) as session:
       user_controller = ctrlers.UserController()
