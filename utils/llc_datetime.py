@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import pytz
 
+weeksday = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
 def get_date_from_timestamp(ts):
   current_utc_time = datetime.fromtimestamp(ts).astimezone(pytz.utc)
   result = current_utc_time.date()
@@ -29,3 +31,10 @@ def get_first_day_of_previous_month():
   result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
 
   return result.date()
+
+def get_weekday():
+  currentDate = datetime.datetime.utcnow()
+  weekday = currentDate.weekday()
+  weekDayInChar = weeksday[weekday]
+  return weekDayInChar
+
