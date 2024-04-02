@@ -133,6 +133,6 @@ class MonthlyAutomation(commands.Cog):
         await interaction.response.defer(thinking = True)
         await self.monthly()
         await interaction.followup.send(f"{Assets.green_tick} **Monthly task finished**")
-    
+
 async def setup(client):
     await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
