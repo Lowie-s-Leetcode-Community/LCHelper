@@ -88,14 +88,22 @@ class MonthlyAutomation(commands.Cog):
     
     # Set the top 5 users from leaderboard previous with highest score role "LeetCoder of the Month"
     async def set_leetcoder_of_the_month(self):
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        role = discord.utils.get(guild.roles, name="Leetcoder of the Month")
+
+        # Deletes roles from users
+        async for member in guild.fetch_members(limit=None):
+            if role in member.roles:
+                await member.remove_roles(role)
+        
+        # Adds roles to top 5 users
         leaderboard = self.client.db_api.read_last_month_leaderboard()
         leaderboard.sort(key=lambda x: x["scoreEarned"], reverse=True)
         top_members = leaderboard[:5]
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        role = discord.utils.get(guild.roles, name="Leetcoder of the Month")
+        
         for member in top_members:
             user = await guild.fetch_member(int(member["discordId"]))
-            await user.add_roles(role)
+            await user.add_roles(role)       
         return
 
     @monthly.error
@@ -128,4 +136,3 @@ class MonthlyAutomation(commands.Cog):
     
 async def setup(client):
     await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
-    
