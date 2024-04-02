@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 import traceback
+import json
 import os
 from datetime import datetime
 
@@ -24,6 +25,23 @@ class Logger:
                     color = Assets.easy
                 )
                 await log_channel.send(msg, embed = embed)
+                json_log = json.loads(message)
+                if isinstance(json_log, dict):
+                    if "type" in json_log and json_log["type"] == "Submission":
+                        content = json_log["content"]
+                        await self.on_submission(
+                            content["user"],
+                            content["problem"],
+                            content["submission"],
+                            content["is_daily"]
+                        )
+                    if "ObjType" in json_log and json_log["ObjType"] == "UserDailyObject":
+                        content = json_log["Obj"]
+                        await self.on_score_add(
+                            content["DailyObject"]["userId"],
+                            content["delta"]["scoreEarned"],
+                            f"Submission crawl for user {content['DailyObject']['userId']} on daily object {content['DailyObject']['dailyObjectId']}."
+                        )
             else:
                 msg = f"""
                 {os.getenv('LOGGING_PREFIX')}db_log
