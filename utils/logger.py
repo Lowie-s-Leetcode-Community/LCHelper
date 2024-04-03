@@ -26,6 +26,8 @@ class Logger:
                 )
                 await log_channel.send(msg, embed = embed)
                 json_log = json.loads(message)
+
+                # TODO: refactor to public_log_fwd class
                 if isinstance(json_log, dict):
                     if "type" in json_log and json_log["type"] == "Submission":
                         content = json_log["content"]
@@ -35,12 +37,12 @@ class Logger:
                             content["submission"],
                             content["is_daily"]
                         )
-                    if "ObjType" in json_log and json_log["ObjType"] == "UserDailyObject":
-                        content = json_log["Obj"]
+                    if "type" in json_log and json_log["type"] == "Score":
+                        content = json_log["content"]
                         await self.on_score_add(
-                            content["DailyObject"]["userId"],
-                            content["delta"]["scoreEarned"],
-                            f"Submission crawl for user {content['DailyObject']['userId']} on daily object {content['DailyObject']['dailyObjectId']}."
+                            content['member_mention'],
+                            content["delta"],
+                            content['reason']
                         )
             else:
                 msg = f"""
