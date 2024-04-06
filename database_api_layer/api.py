@@ -127,6 +127,7 @@ class DatabaseAPILayer:
       # iterates through each month
       for fdom_f, fdom_blob in submissions_blob.items():
         fdom_d = datetime.strptime(fdom_f, "%Y-%m-%d")
+        user_score_earned_delta = {}
 
         # iterates through each day
         for daily_f, daily_blob in fdom_blob.items():
@@ -197,10 +198,20 @@ class DatabaseAPILayer:
               }
               result.append({ "ObjType": "UserDailyObject", "Obj": obj})
             # update and append changes to monthly objects
-            monthly_obj = user_monthly_object_controller.update_one(
-              session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']
-            )
-            result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
+            if str(user.id) in user_score_earned_delta:
+              user_score_earned_delta[str(user.id)] += daily_delta['scoreEarned']
+            else:
+              user_score_earned_delta[str(user.id)] = daily_delta['scoreEarned']
+
+        # loop to update monthly objects, accumulated from daily deltas
+        for userIdStr, scoreEarnedDelta in user_score_earned_delta.items():
+          if scoreEarnedDelta <= 0:
+            continue
+
+          monthly_obj = user_monthly_object_controller.update_one(
+            session=session, userId=int(userIdStr), fdom=fdom_d, scoreEarnedDelta=scoreEarnedDelta
+          )
+          result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
       await self.__commit(session, "RegisterNewCrawl", array_desc=api_utils.crawling_jstrs(result))
     return result
 
