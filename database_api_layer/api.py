@@ -127,6 +127,7 @@ class DatabaseAPILayer:
       # iterates through each month
       for fdom_f, fdom_blob in submissions_blob.items():
         fdom_d = datetime.strptime(fdom_f, "%Y-%m-%d")
+        user_score_earned_delta = {}
 
         # iterates through each day
         for daily_f, daily_blob in fdom_blob.items():
@@ -166,7 +167,8 @@ class DatabaseAPILayer:
             for sub in filtered_submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
               submission = None
-              if problem.id != daily_object.problemId:
+              user_solved_problem = user_solved_problem_controller.read_one(session, user.id, problem.id)
+              if user_solved_problem == None:
                 submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
               if problem.id != daily_object.problemId or user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
                 obj = {
@@ -183,19 +185,33 @@ class DatabaseAPILayer:
             # update and append changes to daily objects
             daily_if_update = daily_delta['scoreEarned'] + daily_delta['solvedDaily'] + daily_delta['solvedEasy'] + daily_delta['solvedMedium'] + daily_delta['solvedHard']
             if daily_if_update:
-              daily_obj = user_daily_object_controller.update_one(
+              user_daily_object_controller.update_one(
                 session=session, userId=user.id, dailyObjectId=daily_object.id,
                 scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
                 solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
-                solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
+                solvedHardDelta=daily_delta['solvedHard']
               )
-              result.append({ "ObjType": "UserDailyObject", "Obj": { "DailyObject": daily_obj.as_dict(), "delta": daily_delta }})
+              obj = {
+                "user": user.as_dict(),
+                "dailyObject": daily_object.as_dict(),
+                "delta": daily_delta,
+              }
+              result.append({ "ObjType": "UserDailyObject", "Obj": obj})
             # update and append changes to monthly objects
-            monthly_obj = user_monthly_object_controller.update_one(
-              session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']
-            )
-            # disable due to inefficiency
-            # result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
+            if str(user.id) in user_score_earned_delta:
+              user_score_earned_delta[str(user.id)] += daily_delta['scoreEarned']
+            else:
+              user_score_earned_delta[str(user.id)] = daily_delta['scoreEarned']
+
+        # loop to update monthly objects, accumulated from daily deltas
+        for userIdStr, scoreEarnedDelta in user_score_earned_delta.items():
+          if scoreEarnedDelta <= 0:
+            continue
+
+          monthly_obj = user_monthly_object_controller.update_one(
+            session=session, userId=int(userIdStr), fdom=fdom_d, scoreEarnedDelta=scoreEarnedDelta
+          )
+          result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
       await self.__commit(session, "RegisterNewCrawl", array_desc=api_utils.crawling_jstrs(result))
     return result
 
