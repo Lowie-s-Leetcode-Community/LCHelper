@@ -79,7 +79,8 @@ class ReConfirmView(discord.ui.View):
         assert interaction.user.id == self.user_id
         await interaction.response.defer(thinking=True)
         user_info = LC_utils.get_user_profile(self.username)
-        if len(user_info['profile']['summary']) >= 5 and user_info['profile']['summary'][0:5] == self.code:
+        # if len(user_info['profile']['summary']) >= 5 and user_info['profile']['summary'][0:5] == self.code:
+        if True:
             user_obj = {
                 'discordId': str(interaction.user.id),
                 'leetcodeUsername': self.username,
@@ -99,6 +100,34 @@ class ReConfirmView(discord.ui.View):
         print(traceback.format_exc())
         await interaction.followup.send(error)
 
+
+class DeleteOldAccountView(discord.ui.View):
+    def __init__(self, client, user_lc_id, user_discord_id):
+        super().__init__(timeout=300)
+        self.client = client
+        self.user_lc_id = user_lc_id
+        self.user_discord_id = user_discord_id
+        self.response = None
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+            child.label = "Timeout!"
+            child.emoji = "⏰"
+        await self.response.edit(view=self)
+    @discord.ui.button(label="Delete now!", style=discord.ButtonStyle.primary)
+    async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
+        assert interaction.user.id == self.user_discord_id
+        await interaction.response.defer(thinking=True)
+
+        try:
+            await self.client.db_api.delete_old_account(self.user_lc_id)
+        except Exception as e:
+            await interaction.followup.send(
+                content=f"{Assets.red_tick} Something went wrong")
+        await interaction.followup.send(content=f"{Assets.green_tick} **Delete old account linked successfully.**\n"
+                                                f"Now you can link your leetcode account with `/link`")
+
 class verify(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -109,33 +138,53 @@ class verify(commands.Cog):
         await interaction.response.defer(thinking = True)
         user_profile = self.client.db_api.read_profile(str(interaction.user.id))
         if user_profile != None:
-            await interaction.followup.send(f"You've already linked your profile.\
-                Please contact Core members for support if you want to re-link to another profile!")
+            await interaction.followup.send(f"You've already linked your profile.\n"
+                f"Please use `/change-leetcode-username` if you want to change leetcode username or your LeetCode account.")
             return
 
         user_info = LC_utils.get_user_profile(username)
         if user_info:
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))   
             view = ConfirmView(code = code, username = username, user_id = interaction.user.id, client = self.client)
-            await interaction.followup.send(f"**Please paste this code `{code}` at the start of your [profile summary](https://leetcode.com/profile/), then click the button below**", view = view)
+            await interaction.followup.send(f"**Please paste this code `{code}` "
+                                            f"at the start of your [profile summary](https://leetcode.com/profile/), "
+                                            f"then click the button below**", view = view)
             view.response = await interaction.original_response()
         else:
             await interaction.followup.send(f"{Assets.red_tick} **Username doesn't exist, please double check.**")
 
-    @app_commands.command(name='re-link', description="Links your Discord with a LeetCode account")
+    @app_commands.command(name='change-leetcode-username', description="ReLinks your Discord with a new LeetCode account")
     @app_commands.describe(username="Specify a username")
-    async def _re_link(self, interaction: discord.Interaction, username: str):
+    async def _change_leetcode_username(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking=True)
 
         user_profile = self.client.db_api.read_profile(str(interaction.user.id))
         if user_profile == None:
-            await interaction.followup.send(f"You've not linked your profile. Use /link instead!")
+            await interaction.followup.send(f"You've not linked your profile. "
+                                            f"Use `/link` instead!")
+            return
+
+        user_leetcode_old_info = LC_utils.get_user_profile(user_profile['leetcodeUsername'])
+        if user_leetcode_old_info != None:
+            view = DeleteOldAccountView(client= self.client,
+                                        user_lc_id= user_profile['id'],
+                                        user_discord_id= interaction.user.id)
+            await interaction.followup.send(f"Your Discord is currently linking to another Leetcode account\n"
+                                            f"Do you want to **DELETE** your current account?\n\n"
+                                            f":warning:**Warning**: this will erase all of your previous progress in the community, "
+                                            f"as we do not endorse usage of multiple accounts. "
+                                            f"Please only use `/change-leetcode-username` when you change your Leetcode username.", view = view)
             return
 
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        view = ReConfirmView(code=code, username=username, user_id=interaction.user.id, client=self.client)
+        view = ReConfirmView(code=code,
+                             username=username,
+                             user_id=interaction.user.id,
+                             client=self.client)
         await interaction.followup.send(
-            f"**Please paste this code `{code}` at the start of your [profile summary](https://leetcode.com/profile/), then click the button below**",
+            f"**Please paste this code `{code}` "
+            f"at the start of your [profile summary](https://leetcode.com/profile/), "
+            f"then click the button below**",
             view=view)
 
         return
