@@ -98,12 +98,11 @@ class MonthlyAutomation(commands.Cog):
         
         # Adds roles to top 5 users
         leaderboard = self.client.db_api.read_last_month_leaderboard()
-        leaderboard.sort(key=lambda x: x["scoreEarned"], reverse=True)
         top_members = leaderboard[:5]
         
         for member in top_members:
             user = await guild.fetch_member(int(member["discordId"]))
-            await user.add_roles(role)       
+            await user.add_roles(role)
         return
 
     @monthly.error
