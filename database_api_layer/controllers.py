@@ -226,10 +226,10 @@ class UserController:
     session.add(new_user)
     return new_user
 
-  def update_username_one(self, session: Session, leetcodeUsername: Optional[str], discordId: Optional[str]):
+  def update_one(self, session: Session, leetcodeUsername: Optional[str], discordId: Optional[str]):
     update_query = update(db.User)
     if discordId != None:
-      update_query = update_query.where(db.User.discordId == discordId).returning(db.User)
+      update_query = update_query.where(db.User.discordId == discordId)
     update_query = update_query.values(leetcodeUsername=leetcodeUsername)
     result = self.read_one(session, None, None, discordId)
     try:

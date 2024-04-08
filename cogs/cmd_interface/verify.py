@@ -86,7 +86,7 @@ class ReConfirmView(discord.ui.View):
             }
 
             try:
-                await self.client.db_api.update_username(user_obj)
+                await self.client.db_api.update_one(user_obj)
             except Exception as e:
                 await interaction.followup.send(
                     content=f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
@@ -98,34 +98,6 @@ class ReConfirmView(discord.ui.View):
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
         print(traceback.format_exc())
         await interaction.followup.send(error)
-
-
-class DeleteOldAccountView(discord.ui.View):
-    def __init__(self, client, user_lc_id, user_discord_id):
-        super().__init__(timeout=300)
-        self.client = client
-        self.user_lc_id = user_lc_id
-        self.user_discord_id = user_discord_id
-        self.response = None
-
-    async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
-            child.label = "Timeout!"
-            child.emoji = "⏰"
-        await self.response.edit(view=self)
-    @discord.ui.button(label="Delete now!", style=discord.ButtonStyle.primary)
-    async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
-        assert interaction.user.id == self.user_discord_id
-        await interaction.response.defer(thinking=True)
-
-        try:
-            await self.client.db_api.delete_old_account(self.user_lc_id)
-        except Exception as e:
-            await interaction.followup.send(
-                content=f"{Assets.red_tick} Something went wrong")
-        await interaction.followup.send(content=f"{Assets.green_tick} **Delete old account linked successfully.**\n"
-                                                f"Now you can link your leetcode account with /link")
 
 class verify(commands.Cog):
     def __init__(self, client):
@@ -157,16 +129,7 @@ class verify(commands.Cog):
 
         user_profile = self.client.db_api.read_profile(str(interaction.user.id))
         if user_profile == None:
-            await interaction.followup.send(f"You've not linked your profile.")
-            return
-
-        user_leetcode_old_info = LC_utils.get_user_profile(user_profile['leetcodeUsername'])
-        if user_leetcode_old_info != None:
-            view = DeleteOldAccountView(client= self.client,
-                                        user_lc_id= user_profile['id'],
-                                        user_discord_id= interaction.user.id)
-            await interaction.followup.send(f"Your Discord is currently linking to another Leetcode account\n "
-                                            f"Do you want to delete old account?", view = view)
+            await interaction.followup.send(f"You've not linked your profile. Use /link instead!")
             return
 
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))

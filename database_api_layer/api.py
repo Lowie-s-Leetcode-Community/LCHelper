@@ -415,11 +415,10 @@ class DatabaseAPILayer:
       await self.__commit(session, "User", json.dumps(result, default=str))
     return result
 
-  async def update_username(self, user_obj: dict):
-    result = {}
+  async def update_one(self, user_obj: dict):
     with Session(self.engine) as session:
       user_controller = ctrlers.UserController()
-      user = user_controller.update_username_one(
+      user_controller.update_one(
         session,
         user_obj['leetcodeUsername'],
         user_obj['discordId'],
@@ -428,7 +427,6 @@ class DatabaseAPILayer:
         await self.__commit(session, "User")
       except Exception as e:
         print(e)
-    return result
 
   async def delete_old_account(self, user_id: int):
     with Session(self.engine) as session:
