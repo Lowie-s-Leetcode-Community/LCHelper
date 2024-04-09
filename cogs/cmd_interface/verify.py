@@ -152,7 +152,7 @@ class verify(commands.Cog):
         else:
             await interaction.followup.send(f"{Assets.red_tick} **Username doesn't exist, please double check.**")
 
-    @app_commands.command(name='change-leetcode-username', description="ReLinks your Discord with a new LeetCode account")
+    @app_commands.command(name='change-leetcode-username', description="Re-link your account when you've just changed your username on Leetcode.")
     @app_commands.describe(username="Specify a username")
     async def _change_leetcode_username(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking=True)
