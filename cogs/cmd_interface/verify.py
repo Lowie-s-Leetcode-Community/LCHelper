@@ -79,8 +79,7 @@ class ReConfirmView(discord.ui.View):
         assert interaction.user.id == self.user_id
         await interaction.response.defer(thinking=True)
         user_info = LC_utils.get_user_profile(self.username)
-        # if len(user_info['profile']['summary']) >= 5 and user_info['profile']['summary'][0:5] == self.code:
-        if True:
+        if len(user_info['profile']['summary']) >= 5 and user_info['profile']['summary'][0:5] == self.code:
             user_obj = {
                 'discordId': str(interaction.user.id),
                 'leetcodeUsername': self.username,
