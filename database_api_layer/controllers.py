@@ -50,81 +50,53 @@ class DailyObjectController:
     return new_obj
 
 class UserDailyObjectController:
-  # can't raise MultipleResultFound since the db has unique tupple
+  # can't raise MultipleResultFound since the db has unique tuple
   def read_one(self, session: Session, userId: int, dailyObjectId: int):
     query = select(db.UserDailyObject)\
       .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
       .where(db.UserDailyObject.userId == userId)
     result = session.scalar(query)
     return result
-  
-  # same as above, but will create and return if no result is found
-  # inspect(result) should be persistent or 
-  # according to: https://docs.sqlalchemy.org/en/20/orm/session_state_management.html
-  def read_or_create_one(self, session: Session, userId: int, dailyObjectId: int):
-    result = self.read_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
-    if result == None:
-      result = db.UserDailyObject(
+
+  def create_one(self, session: Session, userId: int, dailyObjectId: int, scoreEarned: int,\
+      solvedDaily: Optional[int] = 0, solvedEasy: Optional[int] = 0,\
+      solvedMedium: Optional[int] = 0, solvedHard: Optional[int] = 0,\
+      scoreGacha: Optional[int] = -1):
+    result = db.UserDailyObject(
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
-        dailyObjectId=dailyObjectId
+        dailyObjectId=dailyObjectId,
+        solvedDaily=solvedDaily,
+        solvedEasy=solvedEasy,
+        solvedMedium=solvedMedium,
+        solvedHard=solvedHard,
+        scoreGacha=scoreGacha
       )
-      added = False
-      for obj in session.new:
-        if isinstance(obj, db.UserDailyObject):
-          if obj.userId == result.userId and obj.dailyObjectId == result.dailyObjectId:
-            added = True
-            result = obj
-      if not added:
-        session.add(result)
-    return result
+    session.add(result)
+    return
 
   # update and divide into cases, whether the object is new or persistent
   def update_one(self, session: Session, userId: int, dailyObjectId: int, scoreEarnedDelta: int,\
       solvedDailyDelta: Optional[int] = None, solvedEasyDelta: Optional[int] = None,\
       solvedMediumDelta: Optional[int] = None, solvedHardDelta: Optional[int] = None,\
       scoreGacha: Optional[int] = None):
-    result = self.read_or_create_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
-    insp = inspect(result)
-    if insp.persistent:
-      update_query = update(db.UserDailyObject)\
-        .returning(db.UserDailyObject)\
-        .where(db.UserDailyObject.userId == userId)\
-        .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
-        .values(scoreEarned = result.scoreEarned + scoreEarnedDelta)
-      if solvedDailyDelta != None:
-        update_query = update_query.values(solvedDaily = result.solvedDaily + solvedDailyDelta)
-      if solvedEasyDelta != None:
-        update_query = update_query.values(solvedEasy = result.solvedEasy + solvedEasyDelta)
-      if solvedMediumDelta != None:
-        update_query = update_query.values(solvedMedium = result.solvedMedium + solvedMediumDelta)
-      if solvedHardDelta != None:
-        update_query = update_query.values(solvedHard = result.solvedHard + solvedHardDelta)
-      if scoreGacha != None:
-        update_query = update_query.values(scoreGacha = scoreGacha)
-      result = session.execute(update_query).one().UserDailyObject
-    elif insp.pending:
-      if result.scoreEarned == None:
-        result.scoreEarned = 0
-      result.scoreEarned += scoreEarnedDelta
-
-      if solvedEasyDelta != None:
-        if result.solvedEasy == None:
-          result.solvedEasy = 0
-        result.solvedEasy += solvedEasyDelta
-
-      if solvedMediumDelta != None:
-        if result.solvedMedium == None:
-          result.solvedMedium = 0
-        result.solvedMedium += solvedMediumDelta
-
-      if solvedHardDelta != None:
-        if result.solvedHard == None:
-          result.solvedHard = 0
-        result.solvedHard = solvedHardDelta
-
-      if scoreGacha != None:
-        result.scoreGacha = scoreGacha
+    result = self.read_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
+    update_query = update(db.UserDailyObject)\
+      .returning(db.UserDailyObject)\
+      .where(db.UserDailyObject.userId == userId)\
+      .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
+      .values(scoreEarned = result.scoreEarned + scoreEarnedDelta)
+    if solvedDailyDelta != None:
+      update_query = update_query.values(solvedDaily = result.solvedDaily + solvedDailyDelta)
+    if solvedEasyDelta != None:
+      update_query = update_query.values(solvedEasy = result.solvedEasy + solvedEasyDelta)
+    if solvedMediumDelta != None:
+      update_query = update_query.values(solvedMedium = result.solvedMedium + solvedMediumDelta)
+    if solvedHardDelta != None:
+      update_query = update_query.values(solvedHard = result.solvedHard + solvedHardDelta)
+    if scoreGacha != None:
+      update_query = update_query.values(scoreGacha = scoreGacha)
+    result = session.execute(update_query).one().UserDailyObject
     return result
 
 class UserMonthlyObjectController:
