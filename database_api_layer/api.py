@@ -149,7 +149,9 @@ class DatabaseAPILayer:
               # - monthly create is bugged
               # - user haven't join before this submission
               continue
-            user_daily_object = user_daily_object_controller.read_or_create_one(session, user.id, daily_object.id)
+            user_daily_object = user_daily_object_controller.read_one(session, user.id, daily_object.id)
+            # if not initialize, just construct one object for __calculate_daily_object_delta
+            user_daily_object = user_daily_object or db.UserDailyObject()
             filtered_submissions = []
             # first O(n) loop, to compare new list to database
             for sub in submissions:
@@ -166,11 +168,12 @@ class DatabaseAPILayer:
             # third O(n) loop, to save submissions to db and add logs
             for sub in filtered_submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
-              submission = None
               user_solved_problem = user_solved_problem_controller.read_one(session, user.id, problem.id)
               if user_solved_problem == None:
-                submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
-              if problem.id != daily_object.problemId or user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
+                user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
+              if problem.id != daily_object.problemId \
+                  or user_daily_object.solvedDaily == 0 \
+                  or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
                 obj = {
                   "submission": sub,
                   "user": user.as_dict(),
@@ -185,12 +188,20 @@ class DatabaseAPILayer:
             # update and append changes to daily objects
             daily_if_update = daily_delta['scoreEarned'] + daily_delta['solvedDaily'] + daily_delta['solvedEasy'] + daily_delta['solvedMedium'] + daily_delta['solvedHard']
             if daily_if_update:
-              user_daily_object_controller.update_one(
-                session=session, userId=user.id, dailyObjectId=daily_object.id,
-                scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
-                solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
-                solvedHardDelta=daily_delta['solvedHard']
-              )
+              if user_daily_object.id == None:
+                user_daily_object_controller.create_one(
+                  session=session, userId=user.id, dailyObjectId=daily_object.id,
+                  scoreEarned=daily_delta['scoreEarned'], solvedDaily=daily_delta['solvedDaily'],
+                  solvedEasy=daily_delta['solvedEasy'], solvedMedium=daily_delta['solvedMedium'],
+                  solvedHard=daily_delta['solvedHard']
+                )
+              else:
+                user_daily_object_controller.update_one(
+                  session=session, userId=user.id, dailyObjectId=daily_object.id,
+                  scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
+                  solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
+                  solvedHardDelta=daily_delta['solvedHard']
+                )
               obj = {
                 "user": user.as_dict(),
                 "dailyObject": daily_object.as_dict(),
@@ -220,7 +231,8 @@ class DatabaseAPILayer:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       monthly_obj = ctrlers.UserMonthlyObjectController().read_one(session, user.id)
       daily_obj = ctrlers.DailyObjectController().read_one_or_latest(session, date=get_today())
-      user_daily_obj = ctrlers.UserDailyObjectController().read_or_create_one(session, user.id, daily_obj.id)
+      user_daily_obj = ctrlers.UserDailyObjectController().read_one(session, user.id, daily_obj.id)
+      user_daily_obj = user_daily_obj or db.UserDailyObject()
       result = {
         "user_daily": user_daily_obj.as_dict(),
         "monthly": monthly_obj.as_dict(),
