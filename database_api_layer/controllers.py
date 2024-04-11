@@ -66,6 +66,7 @@ class UserDailyObjectController:
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
         dailyObjectId=dailyObjectId,
+        scoreEarned=scoreEarned,
         solvedDaily=solvedDaily,
         solvedEasy=solvedEasy,
         solvedMedium=solvedMedium,
