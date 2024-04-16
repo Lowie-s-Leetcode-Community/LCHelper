@@ -29,6 +29,8 @@ class WeeklyAutomation(commands.Cog):
                    f"Mọi người đăng ký nhiệt tình nhé. Chúc các bạn một tuần giải thuật vui vẻ.")
         content, firstday, lastday = self.get_registration_announce_msg(message)
         name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{week} - {lastday}/{week})"
+        if firstday > lastday:
+            name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{week} - {lastday}/{week + 1})"
 
         thread = await channel.create_thread(name=name, type=discord.ChannelType.public_thread)
         reg_mes = await thread.send(content)
