@@ -81,7 +81,7 @@ class WeeklyAutomation(commands.Cog):
 
     @tasks.loop(time=COG_START_TIMES)
     async def weekly(self):
-        if datetime.date.today().weekday() == 1:
+        if datetime.date.today().weekday() == 5:
             await self.logger.on_automation_event("Weekly ", "create_weekly_form")
             await self.create_weekly_thread()
 
