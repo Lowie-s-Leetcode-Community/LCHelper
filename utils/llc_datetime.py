@@ -33,7 +33,7 @@ def get_first_day_of_previous_month():
   return result.date()
 
 def get_weekday():
-  currentDate = datetime.datetime.utcnow()
+  currentDate = datetime.utcnow()
   weekday = currentDate.weekday()
   weekDayInChar = weeksday[weekday]
   return weekDayInChar
