@@ -12,7 +12,6 @@ from datetime import datetime
 import pytz
 from utils.logger import Logger
 import time
-from utils.llc_datetime import get_weekday
 
 
 

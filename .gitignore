@@ -5,4 +5,4 @@ backup.json
 .vscode/**
 .venv/
 test_api.py
-.idea/
+.idea/**
