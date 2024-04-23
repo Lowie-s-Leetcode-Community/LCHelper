@@ -27,7 +27,7 @@ class DuelButton(discord.ui.Button['DuelView']):
             )
             return
         await interaction.response.defer(ephemeral=True)
-        await self.view.__handle_choice(accept=(self.label == "Accept"))
+        await self.view.handle_choice(accept=(self.label == "Accept"))
 
 class DuelView(discord.ui.View):
     def __init__(self, opponent: discord.Member):
@@ -37,7 +37,7 @@ class DuelView(discord.ui.View):
         self.add_item(DuelButton(label="Accept", style=discord.ButtonStyle.green, opponent=opponent))
         self.add_item(DuelButton(label="Decline", style=discord.ButtonStyle.red, opponent=opponent))
 
-    async def __handle_choice(self, accept: bool):
+    async def handle_choice(self, accept: bool):
         self.response = accept
         self.stop()
 
@@ -48,7 +48,7 @@ class Duel(commands.Cog):
         self.problem_list = self.client.db_api.read_problems_all()
         self.current_problem = None
         self.players = []
-        self.max_duel_timeout = 600  # minutes
+        self.max_duel_timeout = 600  # seconds
 
     rank_group = app_commands.Group(name="duel", description="Ranking Group")
     @rank_group.command(name='start', description="I challenge you to a duel!")
