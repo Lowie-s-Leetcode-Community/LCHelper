@@ -79,6 +79,7 @@ class DailyAutomation(commands.Cog):
             await channel.send(message, embed=embed)
             return
 
+
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
         await self.logger.on_automation_event("Daily", "start-daily")
