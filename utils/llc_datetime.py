@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pytz
 
 def get_date_from_timestamp(ts):
@@ -29,3 +29,18 @@ def get_first_day_of_previous_month():
   result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
 
   return result.date()
+
+
+def next_weekday(d, weekday):
+  days_ahead = weekday - d.weekday()
+  if days_ahead <= 0:
+    days_ahead += 7
+  return d + timedelta(days_ahead)
+
+
+def get_next_LLC_week_and_month():
+  d = date.today()
+  next_mon = next_weekday(d, 0)
+  week_no = int((next_mon.day - 1) / 7) + 1
+  month_no = next_mon.month
+  return week_no, month_no

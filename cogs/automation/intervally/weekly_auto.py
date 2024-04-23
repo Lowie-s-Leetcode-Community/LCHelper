@@ -1,15 +1,18 @@
 import textwrap
-
 import discord
+from discord import app_commands
 from discord.ext import tasks, commands
 import os
 import traceback
 import datetime
+from utils.asset import Assets
 from utils.logger import Logger
+from utils.llc_datetime import next_weekday, get_next_LLC_week_and_month
 
 COG_START_TIMES = [
     datetime.time(hour=12, minute=00, tzinfo=datetime.timezone.utc)
 ]
+
 
 class WeeklyAutomation(commands.Cog):
     def __init__(self, client):
@@ -23,14 +26,15 @@ class WeeklyAutomation(commands.Cog):
 
     async def create_weekly_thread(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
+        ## Id for Discussion Channel, You should create a column in Config table
         channel = await guild.fetch_channel("1085456207067762738")
-        week, month = self.get_next_LLC_week_and_month()
+        week, month = get_next_LLC_week_and_month()
         message = (f"Form đăng ký chữa Daily tuần {week} tháng {month} đã chính thức mở. "
                    f"Mọi người đăng ký nhiệt tình nhé. Chúc các bạn một tuần giải thuật vui vẻ.")
         content, firstday, lastday = self.get_registration_announce_msg(message)
-        name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{week} - {lastday}/{week})"
+        name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{month} - {lastday}/{month})"
         if firstday > lastday:
-            name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{week} - {lastday}/{week + 1})"
+            name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{month} - {lastday}/{month + 1})"
 
         thread = await channel.create_thread(name=name, type=discord.ChannelType.public_thread)
         reg_mes = await thread.send(content)
@@ -43,27 +47,13 @@ class WeeklyAutomation(commands.Cog):
         await reg_mes.add_reaction("8️⃣")
         return
 
-    def next_weekday(self, d, weekday):
-        days_ahead = weekday - d.weekday()
-        if days_ahead <= 0:
-            days_ahead += 7
-        return d + datetime.timedelta(days_ahead)
-
-    def get_next_LLC_week_and_month(self):
-        d = datetime.date.today()
-        next_mon = self.next_weekday(d, 0)
-        week_no = int((next_mon.day - 1) / 7) + 1
-        month_no = next_mon.month
-
-        return week_no, month_no
-
     def get_registration_announce_msg(self, message):
         d = datetime.date.today()
         weekdays = []
-        next_mon = self.next_weekday(d, 0)
+        next_mon = next_weekday(d, 0)
         weekdays.append(next_mon)
         for i in range(6):
-            weekdays.append(next_mon + datetime.timedelta(days = i + 1))
+            weekdays.append(next_mon + datetime.timedelta(days=i + 1))
 
         reg_msg = f"""
         Xin chào buổi tối, các thành viên LLC,
@@ -83,9 +73,10 @@ class WeeklyAutomation(commands.Cog):
 
     @tasks.loop(time=COG_START_TIMES)
     async def weekly(self):
-        if datetime.date.today().weekday() == 5:
-            await self.logger.on_automation_event("Weekly ", "create_weekly_form")
-            await self.create_weekly_thread()
+        if datetime.date.today().weekday() != 5:
+            return
+        await self.logger.on_automation_event("Weekly ", "create_weekly_form")
+        await self.create_weekly_thread()
 
     @weekly.error
     async def on_error(self, exception):
@@ -96,6 +87,13 @@ class WeeklyAutomation(commands.Cog):
 
         self.weekly.restart()
 
+    @app_commands.command(name="weekly_simulate", description="Simulate a weekly crawl cycle.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def _weekly_simulate(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+        await self.weekly()
+        await interaction.followup.send(f"{Assets.green_tick} **Weekly Task finished**")
+
+
 async def setup(client):
     await client.add_cog(WeeklyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
-
