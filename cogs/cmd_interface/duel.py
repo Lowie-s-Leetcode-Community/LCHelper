@@ -45,7 +45,10 @@ class Duel(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.is_duel_active = False
-        self.problem_list = self.client.db_api.read_problems_all()
+        self.problem_list = [
+            problem for problem in self.client.db_api.read_problems_all()
+            if problem['difficulty'] in ['Easy', 'Medium']
+        ]
         self.current_problem = None
         self.players = []
         self.max_duel_timeout = 600  # seconds
