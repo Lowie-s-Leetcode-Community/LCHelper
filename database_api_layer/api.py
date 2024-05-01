@@ -352,10 +352,18 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
 
-      user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta
+      user_daily_object = user_daily_object_controller.read_one(
+        session, user.id, daily_obj.id
       )
+
+      if user_daily_object == None:
+        user_daily_object = user_daily_object_controller.create_one(session, user.id, daily_obj.id, scoreEarned=delta)
+      else:
+        user_daily_object = user_daily_object_controller.update_one(
+          session, user.id, daily_obj.id, scoreEarnedDelta=delta
+        )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
       )
@@ -370,10 +378,20 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
 
-      user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta  
+      user_daily_object = user_daily_object_controller.read_one(
+        session, user.id, daily_obj.id
       )
+
+      if user_daily_object == None:
+        user_daily_object = user_daily_object_controller.create_one(
+          session, user.id, daily_obj.id, scoreEarned=delta, scoreGacha=delta
+        )
+      else:
+        user_daily_object = user_daily_object_controller.update_one(
+          session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta
+        )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
       )

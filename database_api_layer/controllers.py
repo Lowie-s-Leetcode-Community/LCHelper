@@ -74,7 +74,7 @@ class UserDailyObjectController:
         scoreGacha=scoreGacha
       )
     session.add(result)
-    return
+    return result
 
   # update and divide into cases, whether the object is new or persistent
   def update_one(self, session: Session, userId: int, dailyObjectId: int, scoreEarnedDelta: int,\
