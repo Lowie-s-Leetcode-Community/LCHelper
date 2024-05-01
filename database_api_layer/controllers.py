@@ -253,9 +253,9 @@ class ProblemController:
   def read_many(self, session: Session, difficulty: Optional[str] = None, isPremium: Optional[bool] = None):
     query = select(db.Problem)
     if difficulty != None:
-      query = query.where(difficulty == difficulty)
+      query = query.where(db.Problem.difficulty == difficulty)
     if isPremium != None:
-      query = query.where(isPremium == isPremium)
+      query = query.where(db.Problem.isPremium == isPremium)
     query = query.order_by(db.Problem.id)
     return session.scalars(query).all()
 
