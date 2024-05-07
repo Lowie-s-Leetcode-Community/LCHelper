@@ -28,6 +28,8 @@ class MonthlyAutomation(commands.Cog):
         await self.logger.on_automation_event("Monthly", "start-monthly")
         # TODO: filter to only continue monthly task at first Monday, but these current fn can run fine daily :)
         # maybe send a message to update last month leaderboard on #general?
+        await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
+        await self.set_leetcoder_of_the_month()
         await self.logger.on_automation_event("Monthly", "purge_left_members()")
         await self.purge_left_members()
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
@@ -82,6 +84,25 @@ class MonthlyAutomation(commands.Cog):
               # handling if problem changes slug?
         await self.client.db_api.create_problems(new_problems)
         # add warning msg for removed_problem?
+        return
+    
+    # Set the top 5 users from leaderboard previous with highest score role "LeetCoder of the Month"
+    async def set_leetcoder_of_the_month(self):
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        role = discord.utils.get(guild.roles, name="Leetcoder of the Month")
+
+        # Deletes roles from users
+        async for member in guild.fetch_members(limit=None):
+            if role in member.roles:
+                await member.remove_roles(role)
+        
+        # Adds roles to top 5 users
+        leaderboard = self.client.db_api.read_last_month_leaderboard()
+        top_members = leaderboard[:5]
+        
+        for member in top_members:
+            user = await guild.fetch_member(int(member["discordId"]))
+            await user.add_roles(role)
         return
 
     @monthly.error

@@ -21,24 +21,23 @@ class help_command(commands.Cog):
         embed.add_field(
             name = "🗃️  Xem thông tin LLC membership",
             value = f"""
-            </profile:1113100702886141995>: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.
-            </tasks:1107228520679231488>: Các nhiệm vụ để có thể kiếm điểm trong LLC.
+            </profile:1206907242784235522>: Các dữ liệu điểm số của thành viên CLB trên hệ thống LLC.
+            </task:1206907242784235521>: Các nhiệm vụ để có thể kiếm điểm trong LLC.
             """,
             inline = False
         )
         embed.add_field(
             name = "📊  Xem các bảng xếp hạng",
             value = f"""
-            </rank:1126870421363503145>: Bảng xếp hạng điểm số và streak daily của các thành viên trong CLB.
-            ⠀
+            </leaderboard current:1206907242784235526>: Bảng xếp hạng điểm số của các thành viên trong CLB.
             """,
             inline = False
         )
         embed.add_field(
             name = "📝  LeetCode Problems",
             value = f"""
-            </daily:1113100702886141994>: Trả về bài Daily trên LeetCode của ngày hôm nay.
-            </gimme:1107228520679231497>: Chọn một bài LeetCode ngẫu nhiên trên CSDL của LeetCode. Member có thể chọn độ khó và chủ đề mong muốn qua các tham số, và loại những chủ đề không mong muốn.
+            </daily:1206907242784235525>: Trả về bài Daily trên LeetCode của ngày hôm nay.
+            </gimme:1206907242784235528>: Chọn một bài LeetCode ngẫu nhiên trên CSDL của LeetCode. Member có thể chọn độ khó và chủ đề mong muốn qua các tham số, và loại những chủ đề không mong muốn.
             """,
             inline = False
         )

@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
@@ -125,6 +127,7 @@ class DatabaseAPILayer:
       # iterates through each month
       for fdom_f, fdom_blob in submissions_blob.items():
         fdom_d = datetime.strptime(fdom_f, "%Y-%m-%d")
+        user_score_earned_delta = {}
 
         # iterates through each day
         for daily_f, daily_blob in fdom_blob.items():
@@ -146,7 +149,9 @@ class DatabaseAPILayer:
               # - monthly create is bugged
               # - user haven't join before this submission
               continue
-            user_daily_object = user_daily_object_controller.read_or_create_one(session, user.id, daily_object.id)
+            user_daily_object = user_daily_object_controller.read_one(session, user.id, daily_object.id)
+            # if not initialize, just construct one object for __calculate_daily_object_delta
+            user_daily_object = user_daily_object or db.UserDailyObject()
             filtered_submissions = []
             # first O(n) loop, to compare new list to database
             for sub in submissions:
@@ -163,10 +168,12 @@ class DatabaseAPILayer:
             # third O(n) loop, to save submissions to db and add logs
             for sub in filtered_submissions:
               problem = problem_controller.read_one(session, titleSlug=sub['titleSlug'])
-              submission = None
-              if problem.id != daily_object.problemId:
-                submission = user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
-              if problem.id != daily_object.problemId or user_daily_object.solvedDaily == 0 or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
+              user_solved_problem = user_solved_problem_controller.read_one(session, user.id, problem.id)
+              if user_solved_problem == None:
+                user_solved_problem_controller.create_one(session, user.id, problem.id, int(sub['id']))
+              if problem.id != daily_object.problemId \
+                  or user_daily_object.solvedDaily == 0 \
+                  or user_daily_object.solvedDaily == None: # hasn't registered daily submission yet
                 obj = {
                   "submission": sub,
                   "user": user.as_dict(),
@@ -181,19 +188,41 @@ class DatabaseAPILayer:
             # update and append changes to daily objects
             daily_if_update = daily_delta['scoreEarned'] + daily_delta['solvedDaily'] + daily_delta['solvedEasy'] + daily_delta['solvedMedium'] + daily_delta['solvedHard']
             if daily_if_update:
-              daily_obj = user_daily_object_controller.update_one(
-                session=session, userId=user.id, dailyObjectId=daily_object.id,
-                scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
-                solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
-                solvedHardDelta=daily_delta['solvedHard'], scoreGacha=None
-              )
-              result.append({ "ObjType": "UserDailyObject", "Obj": { "DailyObject": daily_obj.as_dict(), "delta": daily_delta }})
+              if user_daily_object.id == None:
+                user_daily_object_controller.create_one(
+                  session=session, userId=user.id, dailyObjectId=daily_object.id,
+                  scoreEarned=daily_delta['scoreEarned'], solvedDaily=daily_delta['solvedDaily'],
+                  solvedEasy=daily_delta['solvedEasy'], solvedMedium=daily_delta['solvedMedium'],
+                  solvedHard=daily_delta['solvedHard']
+                )
+              else:
+                user_daily_object_controller.update_one(
+                  session=session, userId=user.id, dailyObjectId=daily_object.id,
+                  scoreEarnedDelta=daily_delta['scoreEarned'], solvedDailyDelta=daily_delta['solvedDaily'],
+                  solvedEasyDelta=daily_delta['solvedEasy'], solvedMediumDelta=daily_delta['solvedMedium'],
+                  solvedHardDelta=daily_delta['solvedHard']
+                )
+              obj = {
+                "user": user.as_dict(),
+                "dailyObject": daily_object.as_dict(),
+                "delta": daily_delta,
+              }
+              result.append({ "ObjType": "UserDailyObject", "Obj": obj})
             # update and append changes to monthly objects
-            monthly_obj = user_monthly_object_controller.update_one(
-              session = session, userId=user.id, fdom=fdom_d, scoreEarnedDelta=daily_delta['scoreEarned']
-            )
-            # disable due to inefficiency
-            # result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
+            if str(user.id) in user_score_earned_delta:
+              user_score_earned_delta[str(user.id)] += daily_delta['scoreEarned']
+            else:
+              user_score_earned_delta[str(user.id)] = daily_delta['scoreEarned']
+
+        # loop to update monthly objects, accumulated from daily deltas
+        for userIdStr, scoreEarnedDelta in user_score_earned_delta.items():
+          if scoreEarnedDelta <= 0:
+            continue
+
+          monthly_obj = user_monthly_object_controller.update_one(
+            session=session, userId=int(userIdStr), fdom=fdom_d, scoreEarnedDelta=scoreEarnedDelta
+          )
+          result.append({ "ObjType": "UserMonthlyObject", "Obj": monthly_obj.as_dict()})
       await self.__commit(session, "RegisterNewCrawl", array_desc=api_utils.crawling_jstrs(result))
     return result
 
@@ -202,7 +231,8 @@ class DatabaseAPILayer:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       monthly_obj = ctrlers.UserMonthlyObjectController().read_one(session, user.id)
       daily_obj = ctrlers.DailyObjectController().read_one_or_latest(session, date=get_today())
-      user_daily_obj = ctrlers.UserDailyObjectController().read_or_create_one(session, user.id, daily_obj.id)
+      user_daily_obj = ctrlers.UserDailyObjectController().read_one(session, user.id, daily_obj.id)
+      user_daily_obj = user_daily_obj or db.UserDailyObject()
       result = {
         "user_daily": user_daily_obj.as_dict(),
         "monthly": monthly_obj.as_dict(),
@@ -296,16 +326,44 @@ class DatabaseAPILayer:
           result.append(prob)
     return result
 
+  def read_quiz(self, quiz_detail):
+    quiz = []
+    with Session(self.engine) as session:
+      difficulty = None
+      category = None
+
+      if 'difficulty' in quiz_detail: difficulty = quiz_detail['difficulty']
+      if 'category' in quiz_detail: category = quiz_detail['category']
+
+      result = ctrlers.QuizController().read_many(session, difficulty, category)
+
+      if len(result) == 0:
+        return []
+      question = result[random.randint(0, len(result) - 1)]
+
+      quiz.append(question)
+      quiz.append(ctrlers.QuizController().read_quiz_answer(session, question.id))
+    return quiz
+
+
   # Desc: update to DB and send a log message (reason)
   async def update_score(self, memberDiscordId: str, delta: int, reason: str):
     result = {}
     with Session(self.engine) as session:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
 
-      user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta
+      user_daily_object = user_daily_object_controller.read_one(
+        session, user.id, daily_obj.id
       )
+
+      if user_daily_object == None:
+        user_daily_object = user_daily_object_controller.create_one(session, user.id, daily_obj.id, scoreEarned=delta)
+      else:
+        user_daily_object = user_daily_object_controller.update_one(
+          session, user.id, daily_obj.id, scoreEarnedDelta=delta
+        )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
       )
@@ -320,10 +378,20 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
 
-      user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta  
+      user_daily_object = user_daily_object_controller.read_one(
+        session, user.id, daily_obj.id
       )
+
+      if user_daily_object == None:
+        user_daily_object = user_daily_object_controller.create_one(
+          session, user.id, daily_obj.id, scoreEarned=delta, scoreGacha=delta
+        )
+      else:
+        user_daily_object = user_daily_object_controller.update_one(
+          session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta
+        )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
       )
@@ -392,6 +460,30 @@ class DatabaseAPILayer:
       )
       await self.__commit(session, "User", json.dumps(result, default=str))
     return result
+
+  async def update_one(self, user_obj: dict):
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+      user_controller.update_one(
+        session,
+        user_obj['leetcodeUsername'],
+        user_obj['discordId'],
+      )
+      try :
+        await self.__commit(session, "User")
+      except Exception as e:
+        print(e)
+
+  async def delete_old_account(self, user_id: int):
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+      user_controller.remove_one(session, user_id)
+      try:
+        await self.__commit(session, f"Users<delete_count:1>", "[]")
+      except Exception as e:
+        print(e)
+    return
+
 
   async def refresh_server_scores(self, firstDayOfMonth: datetime.date):
     with Session(self.engine, autoflush=False) as session:

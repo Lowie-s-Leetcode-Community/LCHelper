@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import select, insert, func, update, delete, inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound, SQLAlchemyError
@@ -48,33 +50,30 @@ class DailyObjectController:
     return new_obj
 
 class UserDailyObjectController:
-  # can't raise MultipleResultFound since the db has unique tupple
+  # can't raise MultipleResultFound since the db has unique tuple
   def read_one(self, session: Session, userId: int, dailyObjectId: int):
     query = select(db.UserDailyObject)\
       .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
       .where(db.UserDailyObject.userId == userId)
     result = session.scalar(query)
     return result
-  
-  # same as above, but will create and return if no result is found
-  # inspect(result) should be persistent or 
-  # according to: https://docs.sqlalchemy.org/en/20/orm/session_state_management.html
-  def read_or_create_one(self, session: Session, userId: int, dailyObjectId: int):
-    result = self.read_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
-    if result == None:
-      result = db.UserDailyObject(
+
+  def create_one(self, session: Session, userId: int, dailyObjectId: int, scoreEarned: int,\
+      solvedDaily: Optional[int] = 0, solvedEasy: Optional[int] = 0,\
+      solvedMedium: Optional[int] = 0, solvedHard: Optional[int] = 0,\
+      scoreGacha: Optional[int] = -1):
+    result = db.UserDailyObject(
         id=get_min_available_id(session, db.UserDailyObject),
         userId=userId,
-        dailyObjectId=dailyObjectId
+        dailyObjectId=dailyObjectId,
+        scoreEarned=scoreEarned,
+        solvedDaily=solvedDaily,
+        solvedEasy=solvedEasy,
+        solvedMedium=solvedMedium,
+        solvedHard=solvedHard,
+        scoreGacha=scoreGacha
       )
-      added = False
-      for obj in session.new:
-        if isinstance(obj, db.UserDailyObject):
-          if obj.userId == result.userId and obj.dailyObjectId == result.dailyObjectId:
-            added = True
-            result = obj
-      if not added:
-        session.add(result)
+    session.add(result)
     return result
 
   # update and divide into cases, whether the object is new or persistent
@@ -82,47 +81,23 @@ class UserDailyObjectController:
       solvedDailyDelta: Optional[int] = None, solvedEasyDelta: Optional[int] = None,\
       solvedMediumDelta: Optional[int] = None, solvedHardDelta: Optional[int] = None,\
       scoreGacha: Optional[int] = None):
-    result = self.read_or_create_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
-    insp = inspect(result)
-    if insp.persistent:
-      update_query = update(db.UserDailyObject)\
-        .returning(db.UserDailyObject)\
-        .where(db.UserDailyObject.userId == userId)\
-        .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
-        .values(scoreEarned = result.scoreEarned + scoreEarnedDelta)
-      if solvedDailyDelta != None:
-        update_query = update_query.values(solvedDaily = result.solvedDaily + solvedDailyDelta)
-      if solvedEasyDelta != None:
-        update_query = update_query.values(solvedEasy = result.solvedEasy + solvedEasyDelta)
-      if solvedMediumDelta != None:
-        update_query = update_query.values(solvedMedium = result.solvedMedium + solvedMediumDelta)
-      if solvedHardDelta != None:
-        update_query = update_query.values(solvedHard = result.solvedHard + solvedHardDelta)
-      if scoreGacha != None:
-        update_query = update_query.values(scoreGacha = scoreGacha)
-      result = session.execute(update_query).one().UserDailyObject
-    elif insp.pending:
-      if result.scoreEarned == None:
-        result.scoreEarned = 0
-      result.scoreEarned += scoreEarnedDelta
-
-      if solvedEasyDelta != None:
-        if result.solvedEasy == None:
-          result.solvedEasy = 0
-        result.solvedEasy += solvedEasyDelta
-
-      if solvedMediumDelta != None:
-        if result.solvedMedium == None:
-          result.solvedMedium = 0
-        result.solvedMedium += solvedMediumDelta
-
-      if solvedHardDelta != None:
-        if result.solvedHard == None:
-          result.solvedHard = 0
-        result.solvedHard = solvedHardDelta
-
-      if scoreGacha != None:
-        result.scoreGacha = scoreGacha
+    result = self.read_one(session=session, userId=userId, dailyObjectId=dailyObjectId)
+    update_query = update(db.UserDailyObject)\
+      .returning(db.UserDailyObject)\
+      .where(db.UserDailyObject.userId == userId)\
+      .where(db.UserDailyObject.dailyObjectId == dailyObjectId)\
+      .values(scoreEarned = result.scoreEarned + scoreEarnedDelta)
+    if solvedDailyDelta != None:
+      update_query = update_query.values(solvedDaily = result.solvedDaily + solvedDailyDelta)
+    if solvedEasyDelta != None:
+      update_query = update_query.values(solvedEasy = result.solvedEasy + solvedEasyDelta)
+    if solvedMediumDelta != None:
+      update_query = update_query.values(solvedMedium = result.solvedMedium + solvedMediumDelta)
+    if solvedHardDelta != None:
+      update_query = update_query.values(solvedHard = result.solvedHard + solvedHardDelta)
+    if scoreGacha != None:
+      update_query = update_query.values(scoreGacha = scoreGacha)
+    result = session.execute(update_query).one().UserDailyObject
     return result
 
 class UserMonthlyObjectController:
@@ -223,20 +198,17 @@ class UserController:
     )
     session.add(new_user)
     return new_user
-  
-  def update_one(self, session: Session, userId: Optional[int], leetcodeUsername: Optional[str], discordId: Optional[str], submissionId: int):
-    result = self.read_one(session, userId, leetcodeUsername, discordId)
-    if read_one == None:
-      result = self.create_one(session, leetcodeUsername, discordId, mostRecentSubId = submissionId)
-    else:
-      update_query = update(db.User)
-      if userId != None:
-        update_query = update_query.where(db.User.id == userId)
-      elif leetcodeUsername != None:
-        update_query = update_query.where(db.User.leetcodeUsername == leetcodeUsername)
-      elif discordId != None:
-        update_query = update_query.where(db.User.discordId == discordId)
+
+  def update_one(self, session: Session, leetcodeUsername: Optional[str], discordId: Optional[str]):
+    update_query = update(db.User)
+    if discordId != None:
+      update_query = update_query.where(db.User.discordId == discordId)
+    update_query = update_query.values(leetcodeUsername=leetcodeUsername)
+    result = self.read_one(session, None, None, discordId)
+    try:
       result = session.execute(update_query).one()
+    except Exception as e:
+      print(e)
     return result
   
   def read_left_users(self, session: Session, current_users_list: List[str]):
@@ -281,9 +253,9 @@ class ProblemController:
   def read_many(self, session: Session, difficulty: Optional[str] = None, isPremium: Optional[bool] = None):
     query = select(db.Problem)
     if difficulty != None:
-      query = query.where(difficulty == difficulty)
+      query = query.where(db.Problem.difficulty == difficulty)
     if isPremium != None:
-      query = query.where(isPremium == isPremium)
+      query = query.where(db.Problem.isPremium == isPremium)
     query = query.order_by(db.Problem.id)
     return session.scalars(query).all()
 
@@ -366,3 +338,28 @@ class LeaderboardController:
       db.UserDailyObject.id == dailyObjectId
     ).order_by(db.UserDailyObject.scoreEarned.desc())
     return session.execute(query).all()
+class QuizController:
+  def read_one(self, session: Session,
+               quesId: Optional[int] = None):
+    query = select(db.DiscordQuiz)
+    if quesId is not None:
+      query = query.where(db.DiscordQuiz.id == quesId)
+    return session.scalar(query)
+
+  def read_quiz_answer(self, session: Session,
+                       quesId: Optional[int] = None):
+    query = select(db.DiscordQuizAnswer)
+    if quesId is not None:
+      query = query.where(db.DiscordQuizAnswer.discordQuizId == quesId)
+    return session.scalars(query).all()
+
+  def read_many(self, session: Session,
+                difficulty: Optional[str] = None,
+                category: Optional[str] = None):
+    query = select(db.DiscordQuiz)
+
+    if difficulty is not None:
+      query = query.where(db.DiscordQuiz.difficulty == difficulty)
+    if category is not None:
+      query = query.where(db.DiscordQuiz.category == category)
+    return session.scalars(query).all()

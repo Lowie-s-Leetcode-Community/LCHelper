@@ -5,7 +5,6 @@ from utils.asset import Assets
 from utils.logger import Logger
 import random
 
-
 class Score(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -24,7 +23,7 @@ class Score(commands.Cog):
             return
         daily_obj = await self.client.db_api.update_score(str(member.id), score, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
-        
+
     @score_group.command(name = 'deduct', description = "Deducts score")
     @app_commands.describe(member = "Member to deduct scores")
     @app_commands.describe(score = "Amount of scores to deduct (should be positive)")

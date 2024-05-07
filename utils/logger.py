@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 import traceback
+import json
 import os
 from datetime import datetime
 
@@ -24,6 +25,25 @@ class Logger:
                     color = Assets.easy
                 )
                 await log_channel.send(msg, embed = embed)
+                json_log = json.loads(message)
+
+                # TODO: refactor to public_log_fwd class
+                if isinstance(json_log, dict):
+                    if "type" in json_log and json_log["type"] == "Submission":
+                        content = json_log["content"]
+                        await self.on_submission(
+                            content["user"],
+                            content["problem"],
+                            content["submission"],
+                            content["is_daily"]
+                        )
+                    if "type" in json_log and json_log["type"] == "Score":
+                        content = json_log["content"]
+                        await self.on_score_add(
+                            content['member_mention'],
+                            content["delta"],
+                            content['reason']
+                        )
             else:
                 msg = f"""
                 {os.getenv('LOGGING_PREFIX')}db_log
