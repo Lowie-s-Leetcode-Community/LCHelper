@@ -52,7 +52,7 @@ class MonthlyAutomation(commands.Cog):
 
     async def show_leaderboard_previous(self):
         month = get_previous_month_letter()
-        title = "Congratulate the top 10 members of " + month + " !!"
+        title = "Congratulations to the top 10 members of " + month + " !!"
         user_list = self.client.db_api.read_current_month_leaderboard()
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
