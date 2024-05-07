@@ -59,6 +59,11 @@ class Crawl(commands.Cog):
     @tasks.loop(minutes = 25)
     async def crawling(self):
         current_utc_time = datetime.now().astimezone(pytz.utc)
+
+        if current_utc_time.hour == 12 and (datetime.today() == 5 or datetime.today() == 7):
+            await self.logger.on_automation_event("Crawl", "No crawl to generate weekly form")
+            return
+
         if current_utc_time.hour == 0:
             await self.logger.on_automation_event("Crawl", "No crawl to avoid conflict with other tasks.")
             return
