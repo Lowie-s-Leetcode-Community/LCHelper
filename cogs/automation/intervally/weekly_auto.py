@@ -33,7 +33,8 @@ class WeeklyAutomation(commands.Cog):
         channel = await guild.fetch_channel("1085456207067762738")
         week, month = get_next_LLC_week_and_month()
         message = (f"Form đăng ký chữa Daily tuần {week} tháng {month} đã chính thức mở. "
-                   f"Mọi người đăng ký nhiệt tình nhé. Chúc các bạn một tuần giải thuật vui vẻ.")
+                   f"Form đăng ký chữa sẽ được mở đến trước 19h ngày Chủ nhật tuần này, "
+                   f"mọi người hãy nhanh tay đăng ký để có một tuần hoạt động sôi nổi nhé !!!")
         content, firstday, lastday = self.get_registration_announce_msg(message)
         name = f"Đăng ký chữa Daily tuần {week} tháng {month} ({firstday}/{month} - {lastday}/{month})"
         if firstday > lastday:
