@@ -8,7 +8,7 @@ import traceback
 import datetime
 from utils.llc_datetime import get_first_day_of_current_month, get_previous_month_letter
 from utils.logger import Logger
-from lib.embed.leaderboard_embed_noInteraction import LeaderboardEmbed
+from lib.embed.leaderboard_embed import LeaderboardEmbed
 import calendar
 
 COG_START_TIMES = [
@@ -57,6 +57,7 @@ class MonthlyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
         embed = LeaderboardEmbed(title, user_list, guild)
+        embed.get_ranking_embed()
 
         message = await log_channel.send(f":new: Leaderboard previous", embed=embed)
 
@@ -150,5 +151,4 @@ class MonthlyAutomation(commands.Cog):
 
 async def setup(client):
     await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
-    
     
