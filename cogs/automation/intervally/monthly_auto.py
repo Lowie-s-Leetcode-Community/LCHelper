@@ -151,3 +151,4 @@ class MonthlyAutomation(commands.Cog):
 async def setup(client):
     await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
     
+    

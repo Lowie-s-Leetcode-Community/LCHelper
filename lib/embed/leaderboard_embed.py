@@ -8,29 +8,17 @@ from utils.asset import Assets
 import traceback
 import aiohttp
 import json
+from lib.embed.leaderboard_embed_noInteraction import LeaderboardEmbedNoInteraction, color_list, medal_list
 
-color_list = [Assets.easy, Assets.medium, Assets.hard]
-medal_list = ["🥇", "🥈", "🥉"]
-
-class LeaderboardEmbed(discord.Embed):
+class LeaderboardEmbed(LeaderboardEmbedNoInteraction):
     def __init__(self, title: str, user_list: list, page_number: int, pages_count: int, embed_limit: int, interaction: discord.Interaction):
-        super().__init__(
-            title=title,
-            color=color_list[0]
-        )
         self.user_list = user_list
         self.page_number = page_number
         self.pages_count = pages_count
         self.embed_limit = embed_limit
         self.interaction = interaction
+        self.guild = self.interaction.guild
         self.get_ranking_embed()
-
-    def get_discord_username(self, discord_id: str):
-        member = discord.utils.find(lambda m: str(m.id) == discord_id, self.interaction.guild.members)
-        if member:
-            return member.name
-        else:
-            return None
         
     def get_index(self, expected_discord_username: str):
         idx = 1
@@ -40,30 +28,17 @@ class LeaderboardEmbed(discord.Embed):
             idx += 1
         return 1
 
-    def get_ranking_embed(self):
-        # The embed description content
-        def format_display_string(user, idx):
-            rank_idx = medal_list[idx - 1] if idx <= len(medal_list) else f"``#{idx}``"
-            discord_username = self.get_discord_username(user['discordId'])
-            leetcode_url = f"https://leetcode.com/{user['leetcodeUsername']}"
-            return f"{rank_idx} [``{user['leetcodeUsername']}``]({leetcode_url} '{discord_username}'): {user['scoreEarned']}\n"
+    def get_ranking_response(self):
         response = ""
         for idx in range(self.embed_limit * (self.page_number - 1) + 1, min(self.embed_limit * self.page_number, len(self.user_list)) + 1):
             user = self.user_list[idx - 1]
-            response += format_display_string(user, idx)
-
+            response += self.format_display_string(user, idx)
         response += "---\n"
-
         # interaction author's ranking
         caller_ranking = self.get_index(expected_discord_username = str(self.interaction.user.id))
-        response += format_display_string(self.user_list[caller_ranking - 1], caller_ranking)
-
-        self.description = response  
-        self.set_thumbnail(
-            url = self.interaction.guild.icon.url
-        )
+        response += self.format_display_string(self.user_list[caller_ranking - 1], caller_ranking)
         self.set_footer(text = f"Hover on each user for their Discord username • Page {self.page_number}/{self.pages_count}")
-        return self
+        return response
 
 class NavModal(discord.ui.Modal):
     def __init__(self, inherited_view = discord.ui.View): 
