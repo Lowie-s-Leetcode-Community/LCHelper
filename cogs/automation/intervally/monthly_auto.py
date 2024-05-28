@@ -9,7 +9,6 @@ import datetime
 from utils.llc_datetime import get_first_day_of_current_month, get_previous_month_letter
 from utils.logger import Logger
 from lib.embed.leaderboard_embed import LeaderboardEmbed
-import calendar
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
@@ -63,7 +62,7 @@ class MonthlyAutomation(commands.Cog):
 
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
-        leaderboard = self.client.db_api.read_last_month_leaderboard()
+        leaderboard = self.client.db_api.read_current_month_leaderboard()
         if len(leaderboard) > 0:
             return
         first_day_of_current_month = get_first_day_of_current_month()
