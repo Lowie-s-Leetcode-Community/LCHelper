@@ -280,14 +280,15 @@ class SystemConfigurationController:
     return session.scalar(query)
 
   def update(self, session: Session, verifiedRoleId: Optional[str] = None,
-      unverifiedRoleId: Optional[str] = None, timeBeforeKick: Optional[str] = None,
-      dailySolveScore: Optional[int] = None, easySolveScore: Optional[int] = None,
-      mediumSolveScore: Optional[int] = None, hardSolveScore: Optional[int] = None,
-      practiceScoreCap: Optional[int] = None, streakBonus: Optional[int] = None,
-      submissionChannelId: Optional[str] = None, scoreLogChannelId: Optional[str] = None, 
-      dailyThreadChannelId: Optional[str] = None, devErrorLogId: Optional[str] = None,
-      databaseLogId: Optional[str] = None, backupChannelId: Optional[str] = None,
-      eventLoggingId: Optional[str] = None):
+             unverifiedRoleId: Optional[str] = None, timeBeforeKick: Optional[str] = None,
+             dailySolveScore: Optional[int] = None, easySolveScore: Optional[int] = None,
+             mediumSolveScore: Optional[int] = None, hardSolveScore: Optional[int] = None,
+             practiceScoreCap: Optional[int] = None, streakBonus: Optional[int] = None,
+             submissionChannelId: Optional[str] = None, scoreLogChannelId: Optional[str] = None,
+             dailyThreadChannelId: Optional[str] = None, devErrorLogId: Optional[str] = None,
+             databaseLogId: Optional[str] = None, backupChannelId: Optional[str] = None,
+             eventLoggingId: Optional[str] = None, weeklyContestId: Optional[int] = None,
+             biweeklyContestId: Optional[int] = None) -> object:
     query = update(db.SystemConfiguration).returning(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)
     if verifiedRoleId != None:
       query = query.values(verifiedRoleId = verifiedRoleId)
