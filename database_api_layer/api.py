@@ -2,17 +2,15 @@ import random
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import NoResultFound
 from typing import Optional
 from datetime import datetime
 import asyncio
 import json
 import os
-from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_datestamp
+from utils.llc_datetime import get_first_day_of_previous_month, get_today, get_fdom_by_datestamp
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
-from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
 
 import database_api_layer.controllers as ctrlers
@@ -352,10 +350,18 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
 
-      user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta
+      user_daily_object = user_daily_object_controller.read_one(
+        session, user.id, daily_obj.id
       )
+
+      if user_daily_object == None:
+        user_daily_object = user_daily_object_controller.create_one(session, user.id, daily_obj.id, scoreEarned=delta)
+      else:
+        user_daily_object = user_daily_object_controller.update_one(
+          session, user.id, daily_obj.id, scoreEarnedDelta=delta
+        )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
       )
@@ -370,10 +376,20 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
       daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_today())
+      user_daily_object_controller = ctrlers.UserDailyObjectController()
 
-      user_daily_object = ctrlers.UserDailyObjectController().update_one(
-        session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta  
+      user_daily_object = user_daily_object_controller.read_one(
+        session, user.id, daily_obj.id
       )
+
+      if user_daily_object == None:
+        user_daily_object = user_daily_object_controller.create_one(
+          session, user.id, daily_obj.id, scoreEarned=delta, scoreGacha=delta
+        )
+      else:
+        user_daily_object = user_daily_object_controller.update_one(
+          session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta
+        )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
         session, user.id, get_fdom_by_datestamp(get_today()), delta
       )
@@ -528,7 +544,7 @@ class DatabaseAPILayer:
       await self.__commit(session, f"Problem<count:{len(result)}>", "[]")
     return result
 
-  def read_latest_configs(self):
+  def read_configs(self):
     with Session(self.engine) as session:
       sys_conf_controller = ctrlers.SystemConfigurationController()
       queryResult = sys_conf_controller.read_latest(session=session)
@@ -551,4 +567,21 @@ class DatabaseAPILayer:
       result = sys_conf_controller.update(session=session, scoreLogChannelId=new_channel_id)
       result = result.SystemConfiguration.as_dict()
       await self.__commit(session, "SystemConfiguration", result)
+    return result
+  
+  def read_contest_configs(self):
+    result = {}
+    with Session(self.engine) as session:
+      controller = ctrlers.ContestConfigurationController()
+      result = controller.read(session=session)
+      result = result.as_dict()
+    return result
+
+  async def update_contest_id(self, new_weekly_id: Optional[int] = None, new_biweekly_id: Optional[int] = None):
+    result = {}
+    with Session(self.engine) as session:
+      controller = ctrlers.ContestConfigurationController()
+      result = controller.update(session=session, weeklyContestId=new_weekly_id, biweeklyContestId=new_biweekly_id)
+      result = result.ContestConfiguration.as_dict()
+      await self.__commit(session, "ContestConfiguration", result)
     return result

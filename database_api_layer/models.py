@@ -188,6 +188,18 @@ class SystemConfiguration(Base):
     databaseLogId = mapped_column(String)
     backupChannelId = mapped_column(String)
     eventLoggingId = mapped_column(String)
+    contestAlertId = mapped_column(String)
+    contestRoleId = mapped_column(String)
+    dailyDiscussionChannelId = mapped_column(String)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class ContestConfiguration(Base):
+    __tablename__ = "ContestConfiguration"
+    id = mapped_column(Integer, primary_key=True)
+    weeklyContestId = mapped_column(Integer)
+    biweeklyContestId = mapped_column(Integer)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
