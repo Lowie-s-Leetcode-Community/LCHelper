@@ -29,10 +29,11 @@ class LeaderboardEmbed(discord.Embed):
     
     def get_ranking_response(self):
         response = ""
-        for idx in range(1,11):
+        # get the first 10 users in the list
+        for idx in range(10):
             if idx <= len(self.user_list):
-                user = self.user_list[idx - 1]
-                response += self.format_display_string(user, idx)
+                user = self.user_list[idx]
+                response += self.format_display_string(user, idx + 1)
         return response
     
     def get_ranking_embed(self):
