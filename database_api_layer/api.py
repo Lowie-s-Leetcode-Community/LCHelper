@@ -8,7 +8,7 @@ from datetime import datetime
 import asyncio
 import json
 import os
-from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_datestamp
+from utils.llc_datetime import get_first_day_of_previous_month, get_today, get_fdom_by_datestamp
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
@@ -546,7 +546,7 @@ class DatabaseAPILayer:
       await self.__commit(session, f"Problem<count:{len(result)}>", "[]")
     return result
 
-  def read_latest_configs(self):
+  def read_configs(self):
     with Session(self.engine) as session:
       sys_conf_controller = ctrlers.SystemConfigurationController()
       queryResult = sys_conf_controller.read_latest(session=session)
