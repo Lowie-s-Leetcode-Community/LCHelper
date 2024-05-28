@@ -52,18 +52,18 @@ class MonthlyAutomation(commands.Cog):
 
     async def show_leaderboard_previous(self):
         month = get_previous_month_letter()
-        title = "Congratulations to the top 10 members of " + month + " !!"
-        user_list = self.client.db_api.read_current_month_leaderboard()
+        title = "Congratulations to the top 10 members of " + month + "!"
+        user_list = self.client.db_api.read_last_month_leaderboard()
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
         embed = LeaderboardEmbed(title, user_list, guild)
         embed.get_ranking_embed()
 
-        message = await log_channel.send(f":new: Leaderboard previous", embed=embed)
+        message = await log_channel.send(":confetti_ball: :confetti_ball: :confetti_ball:", embed=embed)
 
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
-        leaderboard = self.client.db_api.read_current_month_leaderboard()
+        leaderboard = self.client.db_api.read_last_month_leaderboard()
         if len(leaderboard) > 0:
             return
         first_day_of_current_month = get_first_day_of_current_month()
