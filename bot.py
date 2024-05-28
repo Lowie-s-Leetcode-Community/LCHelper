@@ -23,7 +23,8 @@ log_handler = logging.FileHandler(filename = "discord.log", encoding = "utf-8", 
 
 db_api = DatabaseAPILayer(client)
 client.db_api = db_api
-client.config = db_api.read_latest_configs()
+client.config = db_api.read_configs()
+client.config["contest"] = db_api.read_contest_configs()
 
 async def main():
     async with client:

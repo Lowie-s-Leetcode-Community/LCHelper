@@ -2,17 +2,15 @@ import random
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import NoResultFound
 from typing import Optional
 from datetime import datetime
 import asyncio
 import json
 import os
-from utils.llc_datetime import get_first_day_of_previous_month, get_first_day_of_current_month, get_today, get_fdom_by_datestamp
+from utils.llc_datetime import get_first_day_of_previous_month, get_today, get_fdom_by_datestamp
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
-from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
 
 import database_api_layer.controllers as ctrlers
@@ -546,7 +544,7 @@ class DatabaseAPILayer:
       await self.__commit(session, f"Problem<count:{len(result)}>", "[]")
     return result
 
-  def read_latest_configs(self):
+  def read_configs(self):
     with Session(self.engine) as session:
       sys_conf_controller = ctrlers.SystemConfigurationController()
       queryResult = sys_conf_controller.read_latest(session=session)
@@ -569,4 +567,21 @@ class DatabaseAPILayer:
       result = sys_conf_controller.update(session=session, scoreLogChannelId=new_channel_id)
       result = result.SystemConfiguration.as_dict()
       await self.__commit(session, "SystemConfiguration", result)
+    return result
+  
+  def read_contest_configs(self):
+    result = {}
+    with Session(self.engine) as session:
+      controller = ctrlers.ContestConfigurationController()
+      result = controller.read(session=session)
+      result = result.as_dict()
+    return result
+
+  async def update_contest_id(self, new_weekly_id: Optional[int] = None, new_biweekly_id: Optional[int] = None):
+    result = {}
+    with Session(self.engine) as session:
+      controller = ctrlers.ContestConfigurationController()
+      result = controller.update(session=session, weeklyContestId=new_weekly_id, biweeklyContestId=new_biweekly_id)
+      result = result.ContestConfiguration.as_dict()
+      await self.__commit(session, "ContestConfiguration", result)
     return result
