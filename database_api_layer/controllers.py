@@ -74,7 +74,7 @@ class UserDailyObjectController:
         scoreGacha=scoreGacha
       )
     session.add(result)
-    return
+    return result
 
   # update and divide into cases, whether the object is new or persistent
   def update_one(self, session: Session, userId: int, dailyObjectId: int, scoreEarnedDelta: int,\
@@ -253,9 +253,9 @@ class ProblemController:
   def read_many(self, session: Session, difficulty: Optional[str] = None, isPremium: Optional[bool] = None):
     query = select(db.Problem)
     if difficulty != None:
-      query = query.where(difficulty == difficulty)
+      query = query.where(db.Problem.difficulty == difficulty)
     if isPremium != None:
-      query = query.where(isPremium == isPremium)
+      query = query.where(db.Problem.isPremium == isPremium)
     query = query.order_by(db.Problem.id)
     return session.scalars(query).all()
 
@@ -338,6 +338,7 @@ class LeaderboardController:
       db.UserDailyObject.id == dailyObjectId
     ).order_by(db.UserDailyObject.scoreEarned.desc())
     return session.execute(query).all()
+
 class QuizController:
   def read_one(self, session: Session,
                quesId: Optional[int] = None):
@@ -363,3 +364,16 @@ class QuizController:
     if category is not None:
       query = query.where(db.DiscordQuiz.category == category)
     return session.scalars(query).all()
+
+class ContestConfigurationController:
+  def read(self, session: Session):
+    query = select(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)
+    return session.scalar(query)
+
+  def update(self, session, weeklyContestId = None, biweeklyContestId = None):
+    query = update(db.SystemConfiguration).returning(db.SystemConfiguration).where(db.SystemConfiguration.id == 1)
+    if weeklyContestId != None:
+      query = query.values(weeklyContestId = weeklyContestId)
+    if biweeklyContestId != None:
+      query = query.values(biweeklyContestId = biweeklyContestId)
+    return session.execute(query).one()
