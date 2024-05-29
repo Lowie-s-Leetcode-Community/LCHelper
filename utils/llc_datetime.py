@@ -29,3 +29,9 @@ def get_first_day_of_previous_month():
   result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
 
   return result.date()
+
+def get_previous_month_letter():
+  current_first_day = get_first_day_of_current_month()
+  previous_month_first_day = current_first_day - timedelta(days=7)
+  previous_month = datetime(previous_month_first_day.year, previous_month_first_day.month, 1)
+  return previous_month.strftime("%B")

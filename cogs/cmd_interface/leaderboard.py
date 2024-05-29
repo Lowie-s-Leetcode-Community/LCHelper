@@ -8,8 +8,7 @@ from utils.asset import Assets
 import traceback
 import aiohttp
 import json
-from lib.embed.leaderboard_embed import RankingView, LeaderboardEmbed
-
+from lib.embed.interactable_leaderboard_embed import RankingView, InteractableLeaderboardEmbed
 class Leaderboard(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -24,7 +23,7 @@ class Leaderboard(commands.Cog):
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(title, user_list, pages_count, embed_limit)
-        embed = LeaderboardEmbed(title, user_list, 1, pages_count, embed_limit, interaction)
+        embed = InteractableLeaderboardEmbed(title, user_list, 1, pages_count, embed_limit, interaction)
 
         await interaction.followup.send(embed=embed, view=view)
         view.response = await interaction.original_response()
@@ -38,7 +37,7 @@ class Leaderboard(commands.Cog):
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
         view = RankingView(title, user_list, pages_count, embed_limit)
-        embed = LeaderboardEmbed(title, user_list, 1, pages_count, embed_limit, interaction)
+        embed = InteractableLeaderboardEmbed(title, user_list, 1, pages_count, embed_limit, interaction)
 
         await interaction.followup.send(embed=embed, view=view)
         view.response = await interaction.original_response()

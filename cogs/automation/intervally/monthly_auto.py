@@ -6,8 +6,9 @@ from utils.lc_utils import LC_utils
 import os
 import traceback
 import datetime
-from utils.llc_datetime import get_first_day_of_current_month
+from utils.llc_datetime import get_first_day_of_current_month, get_previous_month_letter
 from utils.logger import Logger
+from lib.embed.leaderboard_embed import LeaderboardEmbed
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
@@ -30,6 +31,8 @@ class MonthlyAutomation(commands.Cog):
         # maybe send a message to update last month leaderboard on #general?
         await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
         await self.set_leetcoder_of_the_month()
+        await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
+        await self.show_leaderboard_previous()
         await self.logger.on_automation_event("Monthly", "purge_left_members()")
         await self.purge_left_members()
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
@@ -37,7 +40,7 @@ class MonthlyAutomation(commands.Cog):
         await self.logger.on_automation_event("Monthly", "update_problems_list()")
         await self.update_problems_list()
         await self.logger.on_automation_event("Monthly", "end-monthly")
-
+        
     async def purge_left_members(self):
         guilds = self.client.guilds
         guild = [g for g in guilds if g.id == int(self.client.config['serverId'])]
@@ -45,6 +48,17 @@ class MonthlyAutomation(commands.Cog):
         members = [str(member.id) for member in guild.members]
         await self.client.db_api.purge_left_members(current_users_list=members)
         return
+
+    async def show_leaderboard_previous(self):
+        month = get_previous_month_letter()
+        title = "Congratulations to the top 10 members of " + month + "!"
+        user_list = self.client.db_api.read_last_month_leaderboard()
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
+        embed = LeaderboardEmbed(title, user_list, guild)
+        embed.get_ranking_embed()
+
+        message = await log_channel.send(":confetti_ball: :confetti_ball: :confetti_ball:", embed=embed)
 
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
@@ -85,7 +99,7 @@ class MonthlyAutomation(commands.Cog):
         await self.client.db_api.create_problems(new_problems)
         # add warning msg for removed_problem?
         return
-    
+
     # Set the top 5 users from leaderboard previous with highest score role "LeetCoder of the Month"
     async def set_leetcoder_of_the_month(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
@@ -133,5 +147,7 @@ class MonthlyAutomation(commands.Cog):
         await self.monthly()
         await interaction.followup.send(f"{Assets.green_tick} **Monthly task finished**")
 
+
 async def setup(client):
     await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
+    
