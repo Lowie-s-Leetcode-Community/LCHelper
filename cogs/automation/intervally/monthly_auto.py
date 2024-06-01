@@ -58,7 +58,7 @@ class MonthlyAutomation(commands.Cog):
         embed = LeaderboardEmbed(title, user_list, guild)
         embed.get_ranking_embed()
 
-        message = await log_channel.send(":confetti_ball: :confetti_ball: :confetti_ball:", embed=embed)
+        await log_channel.send(f"<@&{self.client.config['verifiedRoleId']}> :confetti_ball: :confetti_ball: :confetti_ball:", embed=embed)
 
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):

@@ -1,11 +1,10 @@
 import discord
-from discord import app_commands
-from discord.ext import commands
 from utils.asset import Assets
 import traceback
 import json
 import os
 from datetime import datetime
+from lib.embed.submission_embed import SubmissionEmbed
 
 class Logger:
     def __init__(self, client):
@@ -96,46 +95,9 @@ class Logger:
     async def on_submission(self, user, problem, submission, is_daily):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
-        embed_color = Assets.easy if problem['difficulty'] == 'Easy' else Assets.medium if problem['difficulty'] == 'Medium' else Assets.hard
-        submission_str = f"▸ **Submitted:** <t:{int(submission['timestamp'])}:R>"
-        if is_daily:
-            submission_str = "▸ 🗓️ **Daily challenge**\n" + submission_str
-        embed = discord.Embed(
-            title = f"[SOLVED] **{problem['id']}. {problem['title']}**",
-            description = submission_str,
-            url = f"https://leetcode.com/problem/{problem['titleSlug']}",
-            color = embed_color
-        )
-        discord_mention = f"<@{user['discordId']}>"
-        embed.add_field(
-            name = "Author",
-            value = discord_mention
-        )
-        embed.add_field(
-            name = "Problem difficulty",
-            value = problem['difficulty'],
-        )
-        embed.add_field(
-            name = "Topics",
-            value = f"|| {', '.join(problem['topics'])} ||",
-        )
-        embed.add_field(
-            name = "Submission",
-            value = f"[Check out the solution!](https://leetcode.com/submissions/detail/{submission['id']})"
-        )
-        leetcode_username = user['leetcodeUsername']
-        leetcode_url = f"https://leetcode.com/{leetcode_username}"
-        embed.set_author(
-            name = f"Author: {leetcode_username}",
-            icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
-            url = leetcode_url
-        )
-        user = await self.client.fetch_user(int(user['discordId']))
-        avatar_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png"
-        if user.avatar != None:
-            avatar_url = user.avatar.url
-        embed.set_thumbnail(
-            url = avatar_url
-        )
+        submission['is_daily'] = is_daily
+        discord_user = await self.client.fetch_user(int(user['discordId']))
+        user['avatar'] = discord_user.avatar 
+        embed = SubmissionEmbed(user, problem, submission)
 
         await log_channel.send(f":new: AC Alert!", embed = embed)
