@@ -4,7 +4,7 @@ from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 import os
-import traceback
+from datetime import date
 import datetime
 from utils.llc_datetime import get_first_day_of_current_month, get_previous_month_letter
 from utils.logger import Logger
@@ -27,12 +27,11 @@ class MonthlyAutomation(commands.Cog):
     @tasks.loop(time=COG_START_TIMES)
     async def monthly(self):
         await self.logger.on_automation_event("Monthly", "start-monthly")
-        # TODO: filter to only continue monthly task at first Monday, but these current fn can run fine daily :)
-        # maybe send a message to update last month leaderboard on #general?
-        await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
-        await self.set_leetcoder_of_the_month()
-        await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
-        await self.show_leaderboard_previous()
+        if date.today() == get_first_day_of_current_month():
+            await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
+            await self.set_leetcoder_of_the_month()
+            await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
+            await self.show_leaderboard_previous()
         await self.logger.on_automation_event("Monthly", "purge_left_members()")
         await self.purge_left_members()
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
