@@ -30,7 +30,7 @@ class WeeklyAutomation(commands.Cog):
     async def create_weekly_thread(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         ## Id for Discussion Channel, You should create a column in Config table
-        channel = await guild.fetch_channel("1089769159807733831")
+        channel = await guild.fetch_channel("1085456207067762738")
         week, month = get_next_LLC_week_and_month()
         message = (f"Form đăng ký chữa Daily tuần {week} tháng {month} đã chính thức mở. "
                    f"Form đăng ký chữa sẽ được mở đến trước 19h ngày Chủ nhật tuần này, "
@@ -63,9 +63,8 @@ class WeeklyAutomation(commands.Cog):
         for i in range(6):
             weekdays.append(next_mon + datetime.timedelta(days=i + 1))
 
-        ##<@&{self.client.config['verifiedRoleId']}>
         reg_msg = f"""
-        Xin chào buổi tối, các thành viên LLC ,
+        Xin chào buổi tối, các thành viên LLC <@&{self.client.config['verifiedRoleId']}>,
         {message}
 
         2️⃣: Thứ 2, {weekdays[0]}
@@ -100,7 +99,7 @@ class WeeklyAutomation(commands.Cog):
 
     async def get_member_solve_problem(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel("1089769159807733831")
+        channel = await guild.fetch_channel("1085456207067762738")
         if self.thread_id is None:
             self.thread_id = channel.last_message_id
         thread = await guild.fetch_channel(self.thread_id)
@@ -153,13 +152,13 @@ class WeeklyAutomation(commands.Cog):
 
     async def create_weekend_form(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel("1089769159807733831")
+        channel = await guild.fetch_channel("1085446257847308308")
         message = await self.get_announce_form()
         await channel.send(message)
     @tasks.loop(time=COG_START_TIMES)
     async def weekly(self):
-        # if datetime.date.today().weekday() != 5:
-        #     return
+        if datetime.date.today().weekday() != 5:
+            return
         await self.logger.on_automation_event("Weekly ", "create_weekly_form")
         await self.create_weekly_thread()
 
@@ -174,8 +173,8 @@ class WeeklyAutomation(commands.Cog):
 
     @tasks.loop(time=COG_START_TIMES)
     async def weekend(self):
-        # if datetime.date.today().weekday() != 7:
-        #     return
+        if datetime.date.today().weekday() != 7:
+            return
 
         await self.logger.on_automation_event("Weekend ", "create_weekend_form")
         await self.create_weekend_form()
