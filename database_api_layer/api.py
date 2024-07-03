@@ -125,7 +125,6 @@ class DatabaseAPILayer:
       # iterates through each month
       for fdom_f, fdom_blob in submissions_blob.items():
         fdom_d = datetime.strptime(fdom_f, "%Y-%m-%d")
-        user_score_earned_delta = {}
 
         # iterates through each day
         for daily_f, daily_blob in fdom_blob.items():
@@ -584,6 +583,21 @@ class DatabaseAPILayer:
       result = controller.update(session=session, weeklyContestId=new_weekly_id, biweeklyContestId=new_biweekly_id)
       result = result.ContestConfiguration.as_dict()
       await self.__commit(session, "ContestConfiguration", result)
+    return result
+
+  async def read_priority_candidate(self, user_id):
+    result = {}
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+
+      user = user_controller.read_one(session, discordId=user_id)
+      if user == None:
+          return result
+      user_monthly_object = ctrlers.UserMonthlyObjectController().read_one(
+        session, user.id
+      )
+      result['monthScore'] = user_monthly_object.scoreEarned
+
     return result
 
   async def read_priority_candidate(self, user_id):
