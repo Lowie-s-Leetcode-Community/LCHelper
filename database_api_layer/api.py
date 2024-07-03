@@ -2,7 +2,6 @@ import random
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import NoResultFound
 from typing import Optional
 from datetime import datetime
 import asyncio
@@ -12,7 +11,6 @@ from utils.llc_datetime import get_first_day_of_previous_month, get_today, get_f
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
-from sqlalchemy.exc import SQLAlchemyError
 import utils.api_utils as api_utils
 
 import database_api_layer.controllers as ctrlers
@@ -570,31 +568,35 @@ class DatabaseAPILayer:
       result = result.SystemConfiguration.as_dict()
       await self.__commit(session, "SystemConfiguration", result)
     return result
-  async def update_weekly_contest_id(self, weekly_contest_id: int):
+
+  def read_contest_configs(self):
+    result = {}
     with Session(self.engine) as session:
-      sys_conf_controller = ctrlers.SystemConfigurationController()
-      result = sys_conf_controller.update(session=session, weeklyContestId=weekly_contest_id)
-      result = result.SystemConfiguration.as_dict()
-      await self.__commit(session, "WeeklyContest", result)
+      controller = ctrlers.ContestConfigurationController()
+      result = controller.read(session=session)
+      result = result.as_dict()
     return result
 
-  async def update_biweekly_contest_id(self, biweekly_contest_id: int):
+  async def update_contest_id(self, new_weekly_id: Optional[int] = None, new_biweekly_id: Optional[int] = None):
+    result = {}
     with Session(self.engine) as session:
-      sys_conf_controller = ctrlers.SystemConfigurationController()
-      result = sys_conf_controller.update(session=session, biweeklyContestId=biweekly_contest_id)
-      result = result.SystemConfiguration.as_dict()
-      await self.__commit(session, "BiweeklyContest", result)
+      controller = ctrlers.ContestConfigurationController()
+      result = controller.update(session=session, weeklyContestId=new_weekly_id, biweeklyContestId=new_biweekly_id)
+      result = result.ContestConfiguration.as_dict()
+      await self.__commit(session, "ContestConfiguration", result)
     return result
 
-  async def get_weekly_contest_id(self):
-    with Session(self) as session:
-      sys_conf_controller = ctrlers.SystemConfigurationController()
-      queryResult = sys_conf_controller.read_latest(session=session)
-      queryResult = queryResult.SystemConfiguration.as_dict()
-    return queryResult
+  async def read_priority_candidate(self, user_id):
+    result = {}
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
 
-  async def get_biweekly_contest_id(self):
-    with Session(self) as session:
-      sys_conf_controller = ctrlers.SystemConfigurationController()
-      queryResult = sys_conf_controller.read_latest(session=session)
+      user = user_controller.read_one(session, discordId=user_id)
+      if user == None:
+          return result
+      user_monthly_object = ctrlers.UserMonthlyObjectController().read_one(
+        session, user.id
+      )
+      result['monthScore'] = user_monthly_object.scoreEarned
 
+    return result

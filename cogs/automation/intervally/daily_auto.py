@@ -10,7 +10,6 @@ import datetime
 from utils.llc_datetime import get_today
 from utils.logger import Logger
 from lib.embed.problem import ProblemEmbed
-from utils.llc_datetime import get_weekday
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
@@ -45,40 +44,9 @@ class DailyAutomation(commands.Cog):
         embed = ProblemEmbed(problem)
 
         display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
+        
         await thread.send(f"Daily Challenge - {display_date}", embed = embed)
         return 
-
-    async def weekly_contest_remind(self):
-        #Tính ngày trong tuần
-        weekday = get_weekday()
-        #Gửi tin nhắn ping khi hôm nay có contest
-        if weekday == 'Saturday':
-            guild = await self.client.fetch_guild(self.client.config['serverId'])
-            channel = await self.client.fetch_channel(self.client.config['eventLoggingId'])
-            leetcode_contest_link = 'https://leetcode.com/contest/weekly-contest-'
-            contestNum = 394
-            leetcode_contest_link = leetcode_contest_link + str(contestNum)
-            currTime = datetime.datetime.utcnow()
-            contestTime = currTime.replace(hour=2, minute=30, second=0).timestamp()
-            trueTime = f"<t:{int(contestTime)}:R>"
-            contestName = "Weekly Contest " + str(contestNum)
-            message = (f"Dear <@&{self.client.config['verifiedRoleId']}>,Contest hàng tuần sắp diễn ra, Các bạn hãy đăng ký tham gia")
-            embed = discord.Embed(
-                title=contestName,
-                url=leetcode_contest_link,
-                color=discord.Color.blue()
-            )
-            embed.add_field(
-                name="**Time until contest**",
-                value=trueTime
-            )
-            embed.add_field(
-                name="**Contest number**",
-                value=str(contestNum)
-            )
-            await channel.send(message, embed=embed)
-            return
-
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
@@ -88,8 +56,6 @@ class DailyAutomation(commands.Cog):
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
         # await self.prune_unverified_members()
-        await self.logger.on_automation_event("Daily", "weekly_contest_remind()")
-        await self.weekly_contest_remind()
         await self.logger.on_automation_event("Daily", "end-daily")
 
     @daily.error

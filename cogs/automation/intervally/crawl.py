@@ -12,9 +12,6 @@ from datetime import datetime
 import pytz
 from utils.logger import Logger
 import time
-from utils.llc_datetime import get_weekday
-
-
 
 class Crawl(commands.Cog):
     def __init__(self, client):
@@ -59,34 +56,14 @@ class Crawl(commands.Cog):
                 submissions_blob[month_f][daily_f][username].append(submission)
         await self.client.db_api.register_new_crawl(submissions_blob)
 
-    async def weekly_contest_remind(self):
-        #Thời gian diễn ra weekly contest
-        weekly_contest_time = datetime.datetime.now().replace(hour=9, minute=30, second=0)
-        #Tính ngày trong tuần
-        weekday = get_weekday()
-        #Tính thời gian còn lại trước khi diễn ra contest
-        now = datetime.now()
-        contest_time_delta = weekly_contest_time - now
-        hour = contest_time_delta.hour
-        #Gửi tin nhắn ping khi còn 2 tiếng trước khi xảy ra contest
-        if True:
-            guild = await self.client.fetch_guild(self.client.config['serverId'])
-            channel = await guild.fetch_channel(1089769159807733831)
-            leetcode_contest_link = 'https://leetcode.com/contest/weekly-contest-392'
-            message = f"""
-            Xin chào các bạn <@&{self.client.config['verifiedRoleId']}>,
-            Contest hàng tuần sắp diễn ra 
-            Các bạn hãy đăng ký trước tại đường link sau {leetcode_contest_link}
-            Chúc các bạn đạt được thành tích cao trong contest lần này
-            """
-            await channel.send(message)
-        return
-
-
-
     @tasks.loop(minutes = 25)
     async def crawling(self):
         current_utc_time = datetime.now().astimezone(pytz.utc)
+
+        if current_utc_time.hour == 12 and (datetime.today() == 5 or datetime.today() == 7):
+            await self.logger.on_automation_event("Crawl", "No crawl to generate weekly form")
+            return
+
         if current_utc_time.hour == 0:
             await self.logger.on_automation_event("Crawl", "No crawl to avoid conflict with other tasks.")
             return
@@ -94,9 +71,7 @@ class Crawl(commands.Cog):
         await self.logger.on_automation_event("Crawl", "start-crawl")
         await self.logger.on_automation_event("Crawl", "submissions()")
         await self.submissions()
-        #await self.weekly_contest_remind(self)
         await self.logger.on_automation_event("Crawl", "end-crawl")
-
 
     @crawling.error
     async def on_error(self, exception):
@@ -122,4 +97,3 @@ class Crawl(commands.Cog):
 
 async def setup(client):
     await client.add_cog(Crawl(client), guilds=[discord.Object(id=client.config['serverId'])])
-
