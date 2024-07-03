@@ -585,3 +585,18 @@ class DatabaseAPILayer:
       result = result.ContestConfiguration.as_dict()
       await self.__commit(session, "ContestConfiguration", result)
     return result
+
+  async def read_priority_candidate(self, user_id):
+    result = {}
+    with Session(self.engine) as session:
+      user_controller = ctrlers.UserController()
+
+      user = user_controller.read_one(session, discordId=user_id)
+      if user == None:
+        return result
+      user_monthly_object = ctrlers.UserMonthlyObjectController().read_one(
+        session, user.id
+      )
+      result['monthScore'] = user_monthly_object.scoreEarned
+
+    return result
