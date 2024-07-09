@@ -8,6 +8,7 @@ import datetime
 from utils.asset import Assets
 from utils.logger import Logger
 from utils.llc_datetime import next_weekday, get_next_LLC_week_and_month
+import random
 
 COG_START_TIMES = [
     datetime.time(hour=12, minute=00, tzinfo=datetime.timezone.utc)
@@ -129,7 +130,13 @@ class WeeklyAutomation(commands.Cog):
         result = []
         for i in range(7):
             # Get the candidate with the highest priority
-            result.append(candidates_for_day[i][0] if len(candidates_for_day[i]) > 0 else [])
+            if len(candidates_for_day[i]) > 0:
+                min_priority = candidates_for_day[i][0]['score']
+                list_candidate_with_min_score = [candidate_ for candidate_ in candidates_for_day[i]
+                                                 if candidate_['score'] == min_priority]
+                result.append(random.choice(list_candidate_with_min_score))
+            else:
+                result.append([])
         return result
 
     async def get_announce_form(self):
@@ -157,7 +164,7 @@ class WeeklyAutomation(commands.Cog):
         await channel.send(message)
     @tasks.loop(time=COG_START_TIMES)
     async def weekly(self):
-        if datetime.date.today().weekday() != 5:
+        if datetime.date.today().weekday() != 4:
             return
         await self.logger.on_automation_event("Weekly ", "create_weekly_form")
         await self.create_weekly_thread()
@@ -173,7 +180,7 @@ class WeeklyAutomation(commands.Cog):
 
     @tasks.loop(time=COG_START_TIMES)
     async def weekend(self):
-        if datetime.date.today().weekday() != 7:
+        if datetime.date.today().weekday() != 6:
             return
 
         await self.logger.on_automation_event("Weekend ", "create_weekend_form")
