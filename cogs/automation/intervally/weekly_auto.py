@@ -81,7 +81,7 @@ class WeeklyAutomation(commands.Cog):
         return textwrap.dedent(reg_msg), weekdays[0].day, weekdays[6].day
 
 
-    async def get_candidate(self, user_id, user_name, user_role, guild):
+    async def get_candidate(self, user_id, user_name, user_role, user_frequency, guild):
         candidate = {}
         priority = await self.client.db_api.read_priority_candidate(str(user_id))
         role = 0
@@ -95,7 +95,7 @@ class WeeklyAutomation(commands.Cog):
         candidate['name'] = user_name
         candidate['role'] = role
         candidate['score'] = priority['monthScore']
-
+        candidate['frequency'] = user_frequency
         return candidate
 
     async def get_member_solve_problem(self):
@@ -111,47 +111,79 @@ class WeeklyAutomation(commands.Cog):
         reactions = message.reactions
         candidates_for_day = [[] for _ in range (7)]
         candidates = {}
+        candidates_frequent = {}
+        result = [[]]
         idx = 0
         for reaction in reactions:
             async for user in reaction.users():
                 if user.bot:
                     continue
                 if user.id in candidates:
+                    candidates[user.id]['frequency'] = candidates_frequent[user.id]
                     candidates_for_day[idx].append(candidates[user.id])
                 else:
                     member = await guild.fetch_member(user.id)
                     member_roles = member.roles
-                    candidate = await self.get_candidate(user.id, user.name, member_roles, guild)
+
+                    if user.id not in candidates_frequent:
+                        candidates_frequent[user.id] = 0
+                    candidate = await self.get_candidate(user.id,
+                                                         user.name,
+                                                         member_roles,
+                                                         candidates_frequent[user.id],
+                                                         guild)
                     candidates[user.id] = candidate
                     candidates_for_day[idx].append(candidate)
-            candidates_for_day[idx] = sorted(candidates_for_day[idx], key= lambda x : (x['role'], x['score']))
-            idx += 1
+            # Get candidate for each day in order of frequency, role, score
+            candidates_for_day[idx] = sorted(candidates_for_day[idx],
+                                             key= lambda x : (x['frequency'], x['role'], x['score']))
+            # Get candidate with lowest frequency
+            list_candidate_with_low_frequency = [candidate_ for candidate_ in candidates_for_day[idx]
+                                                 if candidate_['frequency'] < 2
+                                                 and candidate_['frequency'] == candidates_for_day[idx][0]['frequency']]
+            # Check if there are more than 1 candidate with lowest frequency in same day
+            if len(list_candidate_with_low_frequency) > 1:
+                selected_candidate = random.choice(list_candidate_with_low_frequency)
 
-        result = []
-        for i in range(7):
-            # Get the candidate with the highest priority
-            if len(candidates_for_day[i]) > 0:
-                min_priority = candidates_for_day[i][0]['score']
-                list_candidate_with_min_score = [candidate_ for candidate_ in candidates_for_day[i]
-                                                 if candidate_['score'] == min_priority]
-                result.append(random.choice(list_candidate_with_min_score))
+                if result[-1]: # Check coincide with previous day
+                    while selected_candidate['id'] == result[-1]['id']:
+                        selected_candidate = random.choice(list_candidate_with_low_frequency)
+
+                candidates_frequent[selected_candidate['id']] += 1
+                result.append(selected_candidate)
+            elif len(list_candidate_with_low_frequency) == 1:
+                selected_candidate = random.choice(list_candidate_with_low_frequency)
+
+                if result[-1]: # Check coincide with previous day
+                    if selected_candidate['id'] == result[-1]['id']:
+                        result.append([]) # if coincide, add empty list
+                    else:
+                        result.append(selected_candidate)
+                        candidates_frequent[selected_candidate['id']] += 1
+                else:
+                    result.append(selected_candidate)
+                    candidates_frequent[selected_candidate['id']] += 1
+
             else:
                 result.append([])
-        return result
+            idx += 1
+
+        return result[1:] # Remove the temp empty list
 
     async def get_announce_form(self):
         candidate = await self.get_member_solve_problem()
         week, month = get_next_LLC_week_and_month()
+        EXPERT = 1085445503858249740
         message = f"""
         Danh sách chữa Daily tuần {week} tháng {month}: người chữa + người hỗ trợ (nếu có)
 
-        2️⃣: Thứ 2, <@{candidate[0]['id'] if len(candidate[0]) > 0 else "No one"}>
-        3️⃣: Thứ 3, <@{candidate[1]['id'] if len(candidate[1]) > 0 else "No one"}>
-        4️⃣: Thứ 4, <@{candidate[2]['id'] if len(candidate[2]) > 0 else "No one"}>
-        5️⃣: Thứ 5, <@{candidate[3]['id'] if len(candidate[3]) > 0 else "No one"}>
-        6️⃣: Thứ 6, <@{candidate[4]['id'] if len(candidate[4]) > 0 else "No one"}>
-        7️⃣: Thứ 7, <@{candidate[5]['id'] if len(candidate[5]) > 0 else "No one"}>
-        8️⃣: Chủ Nhật, <@{candidate[6]['id'] if len(candidate[6]) > 0 else "No one"}>
+        2️⃣: Thứ 2, <@{candidate[0]['id'] if len(candidate[0]) > 0 else EXPERT}>
+        3️⃣: Thứ 3, <@{candidate[1]['id'] if len(candidate[1]) > 0 else EXPERT}>
+        4️⃣: Thứ 4, <@{candidate[2]['id'] if len(candidate[2]) > 0 else EXPERT}>
+        5️⃣: Thứ 5, <@{candidate[3]['id'] if len(candidate[3]) > 0 else EXPERT}>
+        6️⃣: Thứ 6, <@{candidate[4]['id'] if len(candidate[4]) > 0 else EXPERT}>
+        7️⃣: Thứ 7, <@{candidate[5]['id'] if len(candidate[5]) > 0 else EXPERT}>
+        8️⃣: Chủ Nhật, <@{candidate[6]['id'] if len(candidate[6]) > 0 else EXPERT}>
 
         Sincerely,
         """
