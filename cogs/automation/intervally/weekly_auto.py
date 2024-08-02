@@ -24,6 +24,35 @@ class WeeklyAutomation(commands.Cog):
         self.thread_id = None
         self.message_id = None
 
+    def backtrack_get_member(self, candidates_in_day: list,
+                             current_list: list,
+                             result: list,
+                             frequency: dict,
+                             day: int,
+                             min_empty: list):
+        if day == 7:
+            empty = current_list.count({})
+            min_empty[0] = min(min_empty[0], empty)
+            result.append(current_list.copy())
+            return
+        if len(candidates_in_day[day]) == 0:
+            current_list.append({})
+            self.backtrack_get_member(candidates_in_day, current_list, result, frequency, day + 1, min_empty)
+            current_list.pop()
+            return
+
+        for candidate in candidates_in_day[day]:
+            if candidate == current_list[-1] or frequency.get(candidate['id'], 0) >= 2:
+                current_list.append({})
+                self.backtrack_get_member(candidates_in_day, current_list, result, frequency, day + 1, min_empty)
+                current_list.pop()
+            else:
+                current_list.append(candidate)
+                frequency[candidate['id']] = frequency.get(candidate['id'], 0) + 1
+                self.backtrack_get_member(candidates_in_day, current_list, result, frequency, day + 1, min_empty)
+                frequency[candidate['id']] -= 1
+                current_list.pop()
+
     def cog_unload(self):
         self.weekly.cancel()
         self.weekend.cancel()
@@ -81,7 +110,7 @@ class WeeklyAutomation(commands.Cog):
         return textwrap.dedent(reg_msg), weekdays[0].day, weekdays[6].day
 
 
-    async def get_candidate(self, user_id, user_name, user_role, user_frequency, guild):
+    async def get_candidate(self, user_id, user_name, user_role, guild):
         candidate = {}
         priority = await self.client.db_api.read_priority_candidate(str(user_id))
         role = 0
@@ -95,7 +124,6 @@ class WeeklyAutomation(commands.Cog):
         candidate['name'] = user_name
         candidate['role'] = role
         candidate['score'] = priority['monthScore']
-        candidate['frequency'] = user_frequency
         return candidate
 
     async def get_member_solve_problem(self):
@@ -112,14 +140,13 @@ class WeeklyAutomation(commands.Cog):
         candidates_for_day = [[] for _ in range (7)]
         candidates = {}
         candidates_frequent = {}
-        result = [[]]
+        result = []
         idx = 0
         for reaction in reactions:
             async for user in reaction.users():
                 if user.bot:
                     continue
                 if user.id in candidates:
-                    candidates[user.id]['frequency'] = candidates_frequent[user.id]
                     candidates_for_day[idx].append(candidates[user.id])
                 else:
                     member = await guild.fetch_member(user.id)
@@ -130,45 +157,20 @@ class WeeklyAutomation(commands.Cog):
                     candidate = await self.get_candidate(user.id,
                                                          user.name,
                                                          member_roles,
-                                                         candidates_frequent[user.id],
                                                          guild)
                     candidates[user.id] = candidate
                     candidates_for_day[idx].append(candidate)
-            # Get candidate for each day in order of frequency, role, score
-            candidates_for_day[idx] = sorted(candidates_for_day[idx],
-                                             key= lambda x : (x['frequency'], x['role'], x['score']))
-            # Get candidate with lowest frequency
-            list_candidate_with_low_frequency = [candidate_ for candidate_ in candidates_for_day[idx]
-                                                 if candidate_['frequency'] < 2
-                                                 and candidate_['frequency'] == candidates_for_day[idx][0]['frequency']]
-            # Check if there are more than 1 candidate with lowest frequency in same day
-            if len(list_candidate_with_low_frequency) > 1:
-                selected_candidate = random.choice(list_candidate_with_low_frequency)
-
-                if result[-1]: # Check coincide with previous day
-                    while selected_candidate['id'] == result[-1]['id']:
-                        selected_candidate = random.choice(list_candidate_with_low_frequency)
-
-                candidates_frequent[selected_candidate['id']] += 1
-                result.append(selected_candidate)
-            elif len(list_candidate_with_low_frequency) == 1:
-                selected_candidate = random.choice(list_candidate_with_low_frequency)
-
-                if result[-1]: # Check coincide with previous day
-                    if selected_candidate['id'] == result[-1]['id']:
-                        result.append([]) # if coincide, add empty list
-                    else:
-                        result.append(selected_candidate)
-                        candidates_frequent[selected_candidate['id']] += 1
-                else:
-                    result.append(selected_candidate)
-                    candidates_frequent[selected_candidate['id']] += 1
-
-            else:
-                result.append([])
+            if len(candidates_for_day[idx]) >= 5:
+                candidates_for_day[idx] = random.sample(candidates_for_day[idx], 5)
             idx += 1
 
-        return result[1:] # Remove the temp empty list
+        current_list = [{}]
+        frequency = {}
+        min_empty = [7]
+        self.backtrack_get_member(candidates_for_day, current_list, result, frequency, 0, min_empty)
+        suitable_list = [lis for lis in result if lis.count({}) == min_empty[0]]
+        return random.choice(suitable_list)[1:]
+
 
     async def get_announce_form(self):
         candidate = await self.get_member_solve_problem()
