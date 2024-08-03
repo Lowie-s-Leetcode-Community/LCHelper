@@ -146,9 +146,7 @@ class Quiz(commands.Cog):
             quiz_detail['difficulty'] = difficulty.name
         if category:
             quiz_detail['category'] = category
-
         quiz_result = self.client.db_api.read_quiz(quiz_detail)
-
         if len(quiz_result) == 0:
             await interaction.followup.send(embed=discord.Embed(
                 description="Sorry, we cannot find a question with the given parameters."))
@@ -166,7 +164,6 @@ class Quiz(commands.Cog):
     async def _quiz_autocomplete(self, interaction: discord.Interaction, current: str):
         tags = TOPIC_TAGS
         return [app_commands.Choice(name=tag, value=tag) for tag in tags][:len(TOPIC_TAGS)]
-
 
 async def setup(client):
     await client.add_cog(Quiz(client), guilds=[discord.Object(id=client.config['serverId'])])
