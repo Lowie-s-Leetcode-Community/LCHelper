@@ -138,6 +138,9 @@ query recentAcSubmissions($username: String!, $limit: Int!) {
         title 
         titleSlug    
         timestamp
+        langName
+        runtime
+        memory
     }
 }
 """
