@@ -11,8 +11,6 @@ from utils.llc_datetime import get_today
 from utils.logger import Logger
 from lib.embed.problem import ProblemEmbed
 
-import random
-
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
 
 COG_START_TIMES = [
@@ -26,7 +24,7 @@ class DailyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
         if os.getenv('START_UP_TASKS') == "True":
-            self.daily.start
+            self.daily.start()
         self.logger = Logger(client)
 
     def cog_unload(self):
@@ -44,7 +42,6 @@ class DailyAutomation(commands.Cog):
         channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         name = f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
         thread = await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
-
         # Calling /daily automatically
         daily_obj = self.client.db_api.read_latest_daily_object()
         problem = daily_obj['problem']
