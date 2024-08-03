@@ -13,7 +13,6 @@ from lib.embed.problem import ProblemEmbed
 
 import random
 
-keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E. ', 'F. ']
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
 
 COG_START_TIMES = [
@@ -73,7 +72,7 @@ class DailyAutomation(commands.Cog):
         last_quiz = quiz_result
         last_quiz_message = quiz_message
         
-    async def handle_quiz_answers(self): 
+    async def handle_preQuiz_answers(self): 
         global correct_users
         global last_quiz_message
         guild = await self.client.fetch_guild(self.client.config['serverId'])
@@ -141,6 +140,8 @@ class DailyAutomation(commands.Cog):
         daily_challenge_info = await self.create_new_daily_object()
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
+        await self.logger.on_automation_event("Daily", "handle_preQuiz_answers()")
+        await self.handle_preQuiz_answers()
         await self.logger.on_automation_event("Daily", "create_daily_quiz()")
         await self.create_daily_quiz()
         
@@ -172,11 +173,7 @@ class DailyAutomation(commands.Cog):
     @app_commands.checks.has_permissions(administrator = True)
     async def _daily_simulate(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
-        # await self.daily()
-        await self.logger.on_automation_event("Daily", "count_quiz_reaction()")
-        await self.handle_quiz_answers()
-        await self.logger.on_automation_event("Daily", "create_daily_quiz()")
-        await self.create_daily_quiz()
+        await self.daily()
         await interaction.followup.send(f"{Assets.green_tick} **Daily Task finished**")
 
 async def setup(client):
