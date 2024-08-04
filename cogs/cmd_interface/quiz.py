@@ -31,6 +31,12 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
     )
 
     embed.add_field(
+        name="Question ID",
+        value=question.id,
+        inline=True
+    )
+
+    embed.add_field(
         name="Difficulty",
         value=question.difficulty,
         inline=True
@@ -84,14 +90,14 @@ class AnswerButton(discord.ui.Button['ChooseQuestion']):
         if self.is_correct:
             embed.add_field(
                 name="You're correct !!!",
-                value='',
+                value='Found an error in this question? Please, let us know in <#1085444549666680906>!',
                 inline=False
             )
         else:
             embed.add_field(
                 name="Wrong! You chose " + keyAns[self.button_type] + " But the correct answer is " + keyAns[
                     self.view.correct_answer],
-                value='',
+                value='Found an error in this question? Please, let us know in <#1085444549666680906>!',
                 inline=False
             )
         self.view.disable_answers()
