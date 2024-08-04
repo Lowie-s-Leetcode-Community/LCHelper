@@ -1,14 +1,9 @@
 import discord
-import sys
 from discord import app_commands
 from discord.ext import commands
-import datetime
-import typing
-from utils.asset import Assets
-import traceback
-import aiohttp
-import json
 from lib.embed.interactable_leaderboard_embed import RankingView, InteractableLeaderboardEmbed
+from utils.llc_datetime import get_month_string, get_previous_month_string, get_current_date_range, get_previous_date_range
+
 class Leaderboard(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -18,7 +13,8 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_current(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        title = "Current month ranking"
+        title = f"{get_month_string()} ranking {get_current_date_range()}"
+
         user_list = self.client.db_api.read_current_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
@@ -32,7 +28,7 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_previous(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        title = "Previous month ranking"
+        title = f"{get_previous_month_string()} ranking {get_previous_date_range()}"
         user_list = self.client.db_api.read_last_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
