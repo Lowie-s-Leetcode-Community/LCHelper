@@ -30,11 +30,6 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
         inline=False
     )
 
-    embed.add_field(
-        name="Question ID",
-        value=question.id,
-        inline=True
-    )
 
     embed.add_field(
         name="Difficulty",
@@ -47,6 +42,13 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
         value=f"||{question.category}||",
         inline=True
     )
+
+    embed.add_field(
+        name="Question ID",
+        value=question.id,
+        inline=True
+    )
+
     answer_view = ""
     if choice == -1:
         for i in range(len(answers)):
