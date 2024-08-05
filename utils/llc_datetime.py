@@ -22,14 +22,14 @@ def get_fdom_by_datestamp(datestamp):
 def get_first_day_of_current_month():
   return get_fdom_by_datestamp(get_today())
 
-def get_first_day_of_previous_month():
-  current_first_day = get_first_day_of_current_month()
+def get_first_day_of_previous_month(datestamp=get_today()):
+  current_first_day = get_fdom_by_datestamp(datestamp)
   monday = current_first_day - timedelta(days=7)
 
-  return get_fdom_by_datestamp(monday).date()
+  return get_fdom_by_datestamp(monday)
 
-def get_first_day_of_next_month():
-  cfd = get_first_day_of_current_month()
+def get_first_day_of_next_month(datestamp=get_today()):
+  cfd = get_fdom_by_datestamp(datestamp)
   cfd += timedelta(weeks=6)
   return get_fdom_by_datestamp(cfd)
 
@@ -40,7 +40,7 @@ def get_previous_month_string():
   return get_month_string(get_first_day_of_previous_month())
 
 def get_date_range(datestamp=get_first_day_of_current_month()):
-  d1 = get_first_day_of_current_month()
+  d1 = get_fdom_by_datestamp(datestamp)
   d2 = get_first_day_of_next_month() - timedelta(days=1)
   dformat = "%d/%m/%y"
   return f"({d1.strftime(dformat)} - {d2.strftime(dformat)})"
@@ -56,7 +56,6 @@ def next_weekday(d, weekday):
   if days_ahead <= 0:
     days_ahead += 7
   return d + timedelta(days_ahead)
-
 
 def get_next_LLC_week_and_month():
   d = date.today()
