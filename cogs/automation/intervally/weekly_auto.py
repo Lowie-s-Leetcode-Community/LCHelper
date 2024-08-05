@@ -31,7 +31,7 @@ class WeeklyAutomation(commands.Cog):
     async def create_weekly_thread(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         ## Id for Discussion Channel, You should create a column in Config table
-        channel = await guild.fetch_channel("1085456207067762738")
+        channel = await guild.fetch_channel("1089769159807733831")
         week, month = get_next_LLC_week_and_month()
         message = (f"Form đăng ký chữa Daily tuần {week} tháng {month} đã chính thức mở. "
                    f"Form đăng ký chữa sẽ được mở đến trước 19h ngày Chủ nhật tuần này, "
@@ -65,7 +65,7 @@ class WeeklyAutomation(commands.Cog):
             weekdays.append(next_mon + datetime.timedelta(days=i + 1))
 
         reg_msg = f"""
-        Xin chào buổi tối, các thành viên LLC <@&{self.client.config['verifiedRoleId']}>,
+        Xin chào buổi tối, các thành viên LLC <>,
         {message}
 
         2️⃣: Thứ 2, {weekdays[0]}
@@ -100,7 +100,7 @@ class WeeklyAutomation(commands.Cog):
 
     async def get_member_solve_problem(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel("1085456207067762738")
+        channel = await guild.fetch_channel("1268846652001882113")
         if self.thread_id is None:
             self.thread_id = channel.last_message_id
         thread = await guild.fetch_channel(self.thread_id)

@@ -1,9 +1,7 @@
 import discord
-from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from cogs.cmd_interface.task import Task
 import os
 import asyncio
 import traceback
@@ -38,10 +36,6 @@ class Crawl(commands.Cog):
                 uniqued_recent_info[sub['titleSlug']] = sub
             uniqued_recent_info = uniqued_recent_info.values()
 
-            user_blob = {
-                "userId": user['id'],
-                "newSubmissions": []
-            }
             for submission in uniqued_recent_info:
                 date = get_date_from_timestamp(int(submission['timestamp']))
                 fdom = get_fdom_by_datestamp(date)
