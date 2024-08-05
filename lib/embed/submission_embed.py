@@ -26,6 +26,19 @@ class SubmissionEmbed(discord.Embed):
       name = "Topics",
       value = f"|| {', '.join(problem['topics'])} ||",
     )
+    
+    self.add_field(
+       name = "Language",
+       value = submission.get('langName', 'Unknown')
+    )  
+    self.add_field(
+       name = "Run Time",
+       value = submission.get('runtime', 'Unknown')
+    )
+    self.add_field(
+       name = "Memory",
+       value = submission.get('memory', 'Unknown')
+    )
     self.add_field(
       name = "Submission",
       value = f"[Check out the solution!](https://leetcode.com/submissions/detail/{submission['id']})"
