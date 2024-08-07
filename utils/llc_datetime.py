@@ -41,7 +41,7 @@ def get_previous_month_string():
 
 def get_date_range(datestamp=get_first_day_of_current_month()):
   d1 = get_fdom_by_datestamp(datestamp)
-  d2 = get_first_day_of_next_month() - timedelta(days=1)
+  d2 = get_first_day_of_next_month(datestamp) - timedelta(days=1)
   dformat = "%d/%m/%y"
   return f"({d1.strftime(dformat)} - {d2.strftime(dformat)})"
 
