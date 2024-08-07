@@ -6,7 +6,7 @@ from utils.lc_utils import LC_utils
 import os
 from datetime import date
 import datetime
-from utils.llc_datetime import get_first_day_of_current_month, get_previous_month_string, get_previous_date_range
+from utils.llc_datetime import LLCMonth
 from utils.logger import Logger
 from lib.embed.leaderboard_embed import LeaderboardEmbed
 from cogs.automation.intervally.crawl import Crawl
@@ -34,7 +34,7 @@ class MonthlyAutomation(commands.Cog):
         await self.purge_left_members()
         await self.logger.on_automation_event("Crawl", "submissions()")
         await Crawl(self.client).submissions()
-        if date.today() == get_first_day_of_current_month():
+        if date.today() == LLCMonth().first_day_of_month():
             await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
             await self.set_leetcoder_of_the_month()
             await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
@@ -52,8 +52,8 @@ class MonthlyAutomation(commands.Cog):
         return
 
     async def show_leaderboard_previous(self):
-        month = get_previous_month_string()
-        title = f"Congratulations to the top 10 members of {month}! ({get_previous_date_range()})"
+        month = LLCMonth(previous=True)
+        title = f"Congratulations to the top 10 members of {month.month_string()}! ({month.date_range()})"
         user_list = self.client.db_api.read_last_month_leaderboard()
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
@@ -67,7 +67,7 @@ class MonthlyAutomation(commands.Cog):
         leaderboard = self.client.db_api.read_current_month_leaderboard()
         if len(leaderboard) > 0:
             return
-        first_day_of_current_month = get_first_day_of_current_month()
+        first_day_of_current_month = LLCMonth().first_day_of_month()
         await self.client.db_api.refresh_server_scores(firstDayOfMonth=first_day_of_current_month)
         return
 

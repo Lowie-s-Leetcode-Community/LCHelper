@@ -5,7 +5,7 @@ from utils.lc_utils import LC_utils
 import os
 import asyncio
 import traceback
-from utils.llc_datetime import get_date_from_timestamp, get_fdom_by_datestamp
+from utils.llc_datetime import get_date_from_timestamp, LLCMonth
 from datetime import datetime
 import pytz
 from utils.logger import Logger
@@ -38,7 +38,7 @@ class Crawl(commands.Cog):
 
             for submission in uniqued_recent_info:
                 date = get_date_from_timestamp(int(submission['timestamp']))
-                fdom = get_fdom_by_datestamp(date)
+                fdom = LLCMonth(datestamp=date).first_day_of_month()
                 daily_f = date.strftime("%Y-%m-%d")
                 month_f = fdom.strftime("%Y-%m-%d")
                 if month_f not in submissions_blob:
