@@ -332,9 +332,8 @@ class DatabaseAPILayer:
 
       if 'difficulty' in quiz_detail: difficulty = quiz_detail['difficulty']
       if 'category' in quiz_detail: category = quiz_detail['category']
-
       result = ctrlers.QuizController().read_many(session, difficulty, category)
-
+    
       if len(result) == 0:
         return []
       question = result[random.randint(0, len(result) - 1)]
