@@ -12,44 +12,43 @@ def get_today():
   result = current_utc_time.date()
   return result
 
-def get_fdom_by_datestamp(datestamp):
-  monday = datestamp - timedelta(days=datestamp.weekday())
-  day_in_week_1 = datetime(monday.year, monday.month, 7)
-  result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
+class LLCMonth:
+  __day__ = None
+  def __fdom__(self):
+    monday = self.__day__ - timedelta(days=self.__day__.weekday())
+    day_in_week_1 = datetime(monday.year, monday.month, 7)
+    result = day_in_week_1 - timedelta(days=day_in_week_1.weekday())
 
-  return result.date()
+    return result.date()
 
-def get_first_day_of_current_month():
-  return get_fdom_by_datestamp(get_today())
+  def __init__(self, datestamp=get_today(), previous=False, next=False):
+    self.__day__ = datestamp
+    self.__day__ = self.__fdom__()
+    # if nothing passes, default to current
+    if previous:
+      self.__day__ -= timedelta(days=7)
+      return
+    if next:
+      self.__day__ += timedelta(days=42)
 
-def get_first_day_of_previous_month(datestamp=get_today()):
-  current_first_day = get_fdom_by_datestamp(datestamp)
-  monday = current_first_day - timedelta(days=7)
+  def first_day_of_month(self):
+    return self.__fdom__()
 
-  return get_fdom_by_datestamp(monday)
+  def last_day_of_previous_month(self):
+    return self.__fdom__() - timedelta(days=1)
 
-def get_first_day_of_next_month(datestamp=get_today()):
-  cfd = get_fdom_by_datestamp(datestamp)
-  cfd += timedelta(weeks=6)
-  return get_fdom_by_datestamp(cfd)
+  def month_string(self):
+    return self.__fdom__().strftime("%B %Y")
 
-def get_month_string(day=get_first_day_of_current_month()):
-  return day.strftime("%B %Y")
+  def format_fdom(self):
+    return self.__fdom__().strftime("%d/%m/%y")
 
-def get_previous_month_string():
-  return get_month_string(get_first_day_of_previous_month())
+  def format_ldom(self):
+    return self.last_day_of_previous_month().strftime("%d/%m/%y")
 
-def get_date_range(datestamp=get_first_day_of_current_month()):
-  d1 = get_fdom_by_datestamp(datestamp)
-  d2 = get_first_day_of_next_month(datestamp) - timedelta(days=1)
-  dformat = "%d/%m/%y"
-  return f"({d1.strftime(dformat)} - {d2.strftime(dformat)})"
-
-def get_current_date_range():
-  return get_date_range()
-
-def get_previous_date_range():
-  return get_date_range(get_first_day_of_previous_month())
+  def date_range(self):
+    following_month = LLCMonth(datestamp=self.__day__, next=True)
+    return f"({self.format_fdom()} - {following_month.format_ldom()})"
 
 def next_weekday(d, weekday):
   days_ahead = weekday - d.weekday()

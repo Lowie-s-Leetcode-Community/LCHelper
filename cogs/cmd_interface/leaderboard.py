@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from lib.embed.interactable_leaderboard_embed import RankingView, InteractableLeaderboardEmbed
-from utils.llc_datetime import get_month_string, get_previous_month_string, get_current_date_range, get_previous_date_range
+from utils.llc_datetime import LLCMonth
 
 class Leaderboard(commands.Cog):
     def __init__(self, client):
@@ -13,7 +13,8 @@ class Leaderboard(commands.Cog):
     async def _leaderboard_current(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
         # Update current month name
-        title = f"{get_month_string()} ranking {get_current_date_range()}"
+        month = LLCMonth()
+        title = f"{month.month_string()} ranking {month.date_range()}"
 
         user_list = self.client.db_api.read_current_month_leaderboard()
         embed_limit = 10
@@ -27,8 +28,8 @@ class Leaderboard(commands.Cog):
     @rank_group.command(name = "previous", description = "Take a look at LLC's previous Hall of Fame")
     async def _leaderboard_previous(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
-        # Update current month name
-        title = f"{get_previous_month_string()} ranking {get_previous_date_range()}"
+        month = LLCMonth(previous=True)
+        title = f"{month.month_string()} ranking {month.date_range()}"
         user_list = self.client.db_api.read_last_month_leaderboard()
         embed_limit = 10
         pages_count = (len(user_list) + (embed_limit - 1)) // embed_limit
