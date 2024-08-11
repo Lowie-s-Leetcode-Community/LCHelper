@@ -1,14 +1,11 @@
 import discord
-from discord.ext import commands, tasks
-from discord.utils import get
+from discord.ext import commands
 from discord import Interaction, app_commands
 from discord.app_commands import AppCommandError
 import os
 import asyncio
 from dotenv import load_dotenv
-from utils.asset import Assets
 import traceback
-from pathlib import Path
 import logging
 from database_api_layer.api import DatabaseAPILayer
 
