@@ -75,7 +75,7 @@ class Crawl(commands.Cog):
         await self.logger.on_automation_event("Crawl", "error found")
         time.sleep(90)
 
-        self.crawling.restart()
+        # self.crawling.restart()
 
     @commands.command()
     @commands.has_permissions(administrator = True)

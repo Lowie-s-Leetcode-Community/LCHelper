@@ -32,9 +32,10 @@ class MonthlyAutomation(commands.Cog):
         await self.update_problems_list()
         await self.logger.on_automation_event("Monthly", "purge_left_members()")
         await self.purge_left_members()
-        await self.logger.on_automation_event("Crawl", "submissions()")
-        await Crawl(self.client).submissions()
         if date.today() == LLCMonth().first_day_of_month():
+            await self.logger.on_automation_event("Crawl", "submissions()")
+            with Crawl(self.client) as crawl:
+               crawl.submissions()
             await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
             await self.set_leetcoder_of_the_month()
             await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
