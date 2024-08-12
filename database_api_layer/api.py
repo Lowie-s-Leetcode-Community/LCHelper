@@ -279,7 +279,7 @@ class DatabaseAPILayer:
       leaderboard_controller = ctrlers.LeaderboardController()
       query_result = leaderboard_controller.read_monthly(
         session=session,
-        fdom=LLCMonth().first_day_of_month()
+        fdom=LLCMonth(previous=True).first_day_of_month()
       )
       for res in query_result:
         result.append({**res.User.as_dict(), **res.UserMonthlyObject.as_dict()})
