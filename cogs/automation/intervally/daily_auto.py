@@ -61,7 +61,7 @@ class DailyAutomation(commands.Cog):
         if current_time.timestamp() <= next_contests["biweekly"]["timestamp"] <= time_in_24h.timestamp():
             embed = ContestEmbed(True, next_contests["biweekly"])
 
-        message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: There is a contest today!"
+        message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: :ninja: There is a contest today!"
         await channel.send(message=message, embed=embed)
 
     @tasks.loop(time=COG_START_TIMES)
@@ -71,7 +71,8 @@ class DailyAutomation(commands.Cog):
         daily_challenge_info = await self.create_new_daily_object()
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
-        # await self.prune_unverified_members()
+        await self.logger.on_automation_event("Daily", "contest_remind()")
+        await self.contest_remind()
         await self.logger.on_automation_event("Daily", "end-daily")
 
     @daily.error
