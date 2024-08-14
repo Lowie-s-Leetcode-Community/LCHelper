@@ -8,7 +8,6 @@ from utils.asset import Assets
 
 keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E. ', 'F. ']
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
-TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems','Software Architecture', 'Complexity Theory']
 
 
 def createEmbed(_question: None, _answer: None, choice: int = -1):
@@ -172,8 +171,8 @@ class Quiz(commands.Cog):
 
     @_quiz.autocomplete('category')
     async def _quiz_autocomplete(self, interaction: discord.Interaction, current: str):
-        tags = TOPIC_TAGS
-        return [app_commands.Choice(name=tag, value=tag) for tag in tags][:len(TOPIC_TAGS)]
+        tags = await self.client.db_api.read_category_quiz()
+        return [app_commands.Choice(name=tag, value=tag) for tag in tags][:len(tags)]
 
 
 async def setup(client):
