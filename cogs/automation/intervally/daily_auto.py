@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import tasks, commands
+from lib.embed.contest_embed import ContestEmbed
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 import os
@@ -46,7 +47,22 @@ class DailyAutomation(commands.Cog):
         display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
         
         await thread.send(f"Daily Challenge - {display_date}", embed = embed)
-        return 
+        return
+
+    async def contest_remind(self):
+        next_contests = LC_utils.get_next_contests_info()
+        current_time = datetime.datetime.now()
+        time_in_24h = current_time + datetime.timedelta(days=1)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
+        embed = None
+        if current_time.timestamp() <= next_contests["weekly"]["timestamp"] <= time_in_24h.timestamp():
+            embed = ContestEmbed(False, next_contests["weekly"])
+        if current_time.timestamp() <= next_contests["biweekly"]["timestamp"] <= time_in_24h.timestamp():
+            embed = ContestEmbed(True, next_contests["biweekly"])
+
+        message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: There is a contest today!"
+        await channel.send(message=message, embed=embed)
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
