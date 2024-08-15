@@ -55,14 +55,17 @@ class DailyAutomation(commands.Cog):
         time_in_24h = current_time + datetime.timedelta(days=1)
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
-        embed = None
+        embeds = []
         if current_time.timestamp() <= next_contests["weekly"]["timestamp"] <= time_in_24h.timestamp():
-            embed = ContestEmbed(False, next_contests["weekly"])
+            embeds.append(ContestEmbed(False, next_contests["weekly"]))
         if current_time.timestamp() <= next_contests["biweekly"]["timestamp"] <= time_in_24h.timestamp():
-            embed = ContestEmbed(True, next_contests["biweekly"])
+            embeds.append(ContestEmbed(True, next_contests["biweekly"]))
+        
+        if len(embeds) == 0:
+            return
 
         message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: :ninja: There is a contest today!"
-        await channel.send(message=message, embed=embed)
+        await channel.send(message=message, embeds=embeds)
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
