@@ -65,7 +65,7 @@ class DailyAutomation(commands.Cog):
             return
 
         message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: :ninja: There is a contest today!"
-        await channel.send(message=message, embeds=embeds)
+        await channel.send(message, embeds=embeds)
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
