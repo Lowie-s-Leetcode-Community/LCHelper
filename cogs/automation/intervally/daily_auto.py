@@ -1,16 +1,18 @@
+import asyncio
+import datetime
+import os
+import traceback
+
 import discord
 from discord import app_commands
-from discord.ext import tasks, commands
+from discord.ext import commands, tasks
+
 from lib.embed.contest_embed import ContestEmbed
+from lib.embed.problem import ProblemEmbed
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-import os
-import asyncio
-import traceback
-import datetime
 from utils.llc_datetime import get_today
 from utils.logger import Logger
-from lib.embed.problem import ProblemEmbed
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
@@ -23,7 +25,7 @@ class DailyAutomation(commands.Cog):
             self.daily.start()
         self.logger = Logger(client)
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.daily.cancel()
 
     async def create_new_daily_object(self):
@@ -60,7 +62,7 @@ class DailyAutomation(commands.Cog):
             embeds.append(ContestEmbed(False, next_contests["weekly"]))
         if current_time.timestamp() <= next_contests["biweekly"]["timestamp"] <= time_in_24h.timestamp():
             embeds.append(ContestEmbed(True, next_contests["biweekly"]))
-        
+
         if len(embeds) == 0:
             return
 
