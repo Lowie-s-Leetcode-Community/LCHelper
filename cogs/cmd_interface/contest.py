@@ -13,10 +13,8 @@ class Contest(commands.Cog):
     @contest_group.command(name = 'list', description = "List recent and upcoming Leetcode contests")
     async def _contest(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking = True)
-        next_contests = LC_utils.get_next_contests_info()
-        embed_1 = ContestEmbed(False, next_contests["weekly"])
-        embed_2 = ContestEmbed(True, next_contests["biweekly"])
-        embeds = [embed_1, embed_2]
+        next_contests = LC_utils.get_next_contests_info()[:4]
+        embeds = list(map(lambda x: ContestEmbed(x), next_contests))
         await interaction.followup.send(f":man_technologist: :ninja: Here are the closest contests we've found!", embeds=embeds)
 
 async def setup(client):

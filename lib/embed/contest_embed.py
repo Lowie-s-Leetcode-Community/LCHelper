@@ -3,26 +3,27 @@ import discord
 from utils.asset import Assets
 
 class ContestEmbed(discord.Embed):
-  def __init__(self, is_biweekly: bool, contest: dict):
-    c_type = "Biweekly" if is_biweekly else "Weekly"
+  def __init__(self, contest: dict):
     id = contest["contestId"]
-    url = f"https://leetcode.com/contest/{c_type.lower()}-contest-{id}/"
+    c_type = contest["type"]
+    url = f"https://leetcode.com/contest/{c_type}-contest-{id}/"
+    ts = datetime.datetime.fromtimestamp(int(contest['timestamp']))
+    is_future_contest = ts > datetime.datetime.now()
     super().__init__(
-      title=f"{c_type} Contest {id}",
+      title=f"{c_type.capitalize()} Contest {id}",
       url=url,
-      color=Assets.medium if is_biweekly else Assets.easy
+      color=Assets.medium if is_future_contest else Assets.easy,
     )
-    desc = f"{Assets.leetcode} This LeetCode contest is sponsored by LeetCode. Join now to win amazing prizes, such at goodies and [LeetCoins](https://leetcode.com/store/)!"
+    desc = f"{Assets.leetcode} [Join now]({url}) to win amazing prizes, such at goodies and [LeetCoins](https://leetcode.com/store/)!"
     self.add_field(
       name="Description",
       value=desc,
       inline = False
     )
 
-    ts = datetime.datetime.fromtimestamp(int(contest['timestamp']))
     formatted_time = ts.strftime("%I:%M %p. %a, %b %d, %Y")
 
-    icon = Assets.hourglass if ts > datetime.datetime.now() else Assets.green_tick
+    icon = Assets.hourglass if is_future_contest else Assets.green_tick
 
     self.add_field(
       name="When?",
@@ -31,7 +32,7 @@ class ContestEmbed(discord.Embed):
     )
 
     self.add_field(
-      name="Sign up",
-      value=f"[Click here to sign up!]({url})",
+      name="Duration",
+      value="90 minutes",
       inline=True
     )
