@@ -3,11 +3,13 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from typing import Optional
 import random
 import string
-import datetime
 import traceback
+
+ACCOUNT_USED_MSG = "Có vấn đề trong việc xác minh tài khoản. Rất có thể một người khác ở server này đã sử dụng tài khoản này của bạn!"
+UNMATCHED_CODE_MSG = "Code chưa đúng. Vui lòng thử lại theo hướng dẫn trên."
+INSTRUCTION_MSG = "**Hãy nhập đoạn serie này: `{}` vào mục [profile summary](https://leetcode.com/profile/) của bạn trên Leetcode, sau đó bấm nút 'Xác minh tôi!' bên dưới trong 5 phút tới.**"
 
 class ConfirmView(discord.ui.View):
     def __init__(self, client, code, username, user_id):
@@ -21,12 +23,12 @@ class ConfirmView(discord.ui.View):
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
-            child.label = "Timeout!"
+            child.label = "Quá thời gian!"
             child.emoji = "⏰"
         await self.response.edit(view = self)
 
     # TODO: handle "update user"
-    @discord.ui.button(label = "Verify Me!", style = discord.ButtonStyle.primary)
+    @discord.ui.button(label = "Xác minh tôi!", style = discord.ButtonStyle.primary)
     async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
         assert interaction.user.id == self.user_id
         await interaction.response.defer(thinking = True)
@@ -48,13 +50,13 @@ class ConfirmView(discord.ui.View):
             try:
                 await self.client.db_api.create_user(user_obj)
             except:
-                await interaction.followup.send(content = f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
+                await interaction.followup.send(content = f"{Assets.red_tick} **{ACCOUNT_USED_MSG}**")
             else: 
                 await member.add_roles(verified_role)
                 await member.remove_roles(unverified_role)
-                await interaction.followup.send(content = f"{Assets.green_tick} **Account linked successfully.**")
+                await interaction.followup.send(content = f"{Assets.green_tick} **Tài khoản đã được kết nối thành công.**")
         else:
-            await interaction.followup.send(content = f"{Assets.red_tick} **Unmatched code. Please try again.**")
+            await interaction.followup.send(content = f"{Assets.red_tick} **{UNMATCHED_CODE_MSG}**")
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
         print(traceback.format_exc())
         await interaction.followup.send(error)
@@ -71,7 +73,7 @@ class ReConfirmView(discord.ui.View):
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
-            child.label = "Timeout!"
+            child.label = "Quá thời gian!"
             child.emoji = "⏰"
         await self.response.edit(view=self)
     @discord.ui.button(label="Re-verify now!", style=discord.ButtonStyle.primary)
@@ -89,11 +91,11 @@ class ReConfirmView(discord.ui.View):
                 await self.client.db_api.update_one(user_obj)
             except Exception as e:
                 await interaction.followup.send(
-                    content=f"{Assets.red_tick} **There's a problem when verifying. Someone in this server might have already linked with this account**")
+                    content=f"{Assets.red_tick} **{ACCOUNT_USED_MSG}**")
             else:
-                await interaction.followup.send(content=f"{Assets.green_tick} **Account relinked successfully.**")
+                await interaction.followup.send(content=f"{Assets.green_tick} **Tài khoản đã được kết nối lại thành công.**")
         else:
-            await interaction.followup.send(content=f"{Assets.red_tick} **Unmatched code. Please try again.**")
+            await interaction.followup.send(content=f"{Assets.red_tick} **{UNMATCHED_CODE_MSG}**")
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
         print(traceback.format_exc())
@@ -111,10 +113,10 @@ class DeleteOldAccountView(discord.ui.View):
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
-            child.label = "Timeout!"
+            child.label = "Quá thời gian!"
             child.emoji = "⏰"
         await self.response.edit(view=self)
-    @discord.ui.button(label="Delete now!", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Gỡ liên kết ngay!", style=discord.ButtonStyle.primary)
     async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
         assert interaction.user.id == self.user_discord_id
         await interaction.response.defer(thinking=True)
@@ -123,44 +125,41 @@ class DeleteOldAccountView(discord.ui.View):
             await self.client.db_api.delete_old_account(self.user_lc_id)
         except Exception as e:
             await interaction.followup.send(
-                content=f"{Assets.red_tick} Something went wrong")
-        await interaction.followup.send(content=f"{Assets.green_tick} **Delete old account linked successfully.**\n"
-                                                f"Now you can link your leetcode account with `/link`")
+                content=f"{Assets.red_tick} Có vấn đề xảy ra. Vui lòng thử lại!")
+        await interaction.followup.send(content=f"{Assets.green_tick} **Gỡ liên kết tài khoản thành công.**\n"
+                                                f"Giờ bạn có thể kết nối tài khoản mới bằng lệnh </link:1206907242784235523>.")
 
 class verify(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @app_commands.command(name = 'link', description = "Links your Discord with a LeetCode account")
-    @app_commands.describe(username = "Specify a username")
+    @app_commands.command(name = 'link', description = "Kết nối tài khoản Leetcode của bạn")
+    @app_commands.describe(username = "Username của bạn")
     async def _link(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking = True)
         user_profile = self.client.db_api.read_profile(str(interaction.user.id))
         if user_profile != None:
-            await interaction.followup.send(f"You've already linked your profile.\n"
-                f"Please use `/change-leetcode-username` if you want to change leetcode username or your LeetCode account.")
+            await interaction.followup.send(f"Bạn đã xác minh tài khoản của mình rồi!\n"
+                f"Hãy sử dụng `/change_leetcode_username` nếu bạn muốn thay đổi tài khoản Leetcode của mình.")
             return
 
         user_info = LC_utils.get_user_profile(username)
         if user_info:
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))   
             view = ConfirmView(code = code, username = username, user_id = interaction.user.id, client = self.client)
-            await interaction.followup.send(f"**Please paste this code `{code}` "
-                                            f"at the start of your [profile summary](https://leetcode.com/profile/), "
-                                            f"then click the button below**", view = view)
+            await interaction.followup.send(INSTRUCTION_MSG.format(code), view = view)
             view.response = await interaction.original_response()
         else:
-            await interaction.followup.send(f"{Assets.red_tick} **Username doesn't exist, please double check.**")
+            await interaction.followup.send(f"{Assets.red_tick} **Tài khoản không tồn tại. Vui lòng kiểm tra lại.**\nLưu ý: nếu URL tài khoản của bạn là `https://leetcode.com/u/lowie_/`, thì username bạn cần nhập là `lowie_`.")
 
-    @app_commands.command(name='change-leetcode-username', description="Re-link your account when you've just changed your username on Leetcode.")
-    @app_commands.describe(username="Specify a username")
+    @app_commands.command(name='change_leetcode_username', description="Chỉ sử dụng để xác minh lại sau khi đổi tên tài khoản Leetcode.")
+    @app_commands.describe(username="Username Leetcode của bạn")
     async def _change_leetcode_username(self, interaction: discord.Interaction, username: str):
         await interaction.response.defer(thinking=True)
 
         user_profile = self.client.db_api.read_profile(str(interaction.user.id))
         if user_profile == None:
-            await interaction.followup.send(f"You've not linked your profile. "
-                                            f"Use `/link` instead!")
+            await interaction.followup.send(f"Bạn chưa từng kết nối tài khoản. Hãy sử dụng </link:1206907242784235523> nhé!")
             return
 
         user_leetcode_old_info = LC_utils.get_user_profile(user_profile['leetcodeUsername'])
@@ -168,24 +167,15 @@ class verify(commands.Cog):
             view = DeleteOldAccountView(client= self.client,
                                         user_lc_id= user_profile['id'],
                                         user_discord_id= interaction.user.id)
-            await interaction.followup.send(f"Your Discord is currently linking to another Leetcode account\n"
-                                            f"Do you want to **DELETE** your current account?\n\n"
-                                            f":warning:**Warning**: this will erase all of your previous progress in the community, "
-                                            f"as we do not endorse usage of multiple accounts. "
-                                            f"Please only use `/change-leetcode-username` when you change your Leetcode username.", view = view)
+            await interaction.followup.send(f"Tài khoản Discord của bạn đang được kết nối với một tài khoản khác.\n"
+                                            f"Bạn có muốn **GỠ LIÊN KẾT** khỏi tài khoản hiện thời?\n\n"
+                                            f":warning:**Cảnh báo**: hành động này sẽ xóa toàn bộ tiến độ của bạn đã lưu trữ trên cộng đồng, bao gồm điểm số, chuỗi, các lần nộp bài, "
+                                            f"và chúng mình không ủng hộ việc các bạn sử dụng nhiều tài khoản. "
+                                            f"Chỉ nên sử dụng `/change_leetcode_username` khi bạn đã thay đổi username của mình trên Leetcode.", view = view)
             return
-
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        view = ReConfirmView(code=code,
-                             username=username,
-                             user_id=interaction.user.id,
-                             client=self.client)
-        await interaction.followup.send(
-            f"**Please paste this code `{code}` "
-            f"at the start of your [profile summary](https://leetcode.com/profile/), "
-            f"then click the button below**",
-            view=view)
-
+        view = ReConfirmView(code=code, username=username, user_id=interaction.user.id, client=self.client)
+        await interaction.followup.send(INSTRUCTION_MSG.format(code), view=view)
         return
 
 async def setup(client):

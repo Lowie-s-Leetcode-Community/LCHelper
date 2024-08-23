@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+import random
 import traceback
 
 import discord
@@ -50,6 +51,21 @@ class DailyAutomation(commands.Cog):
         
         await thread.send(f"Daily Challenge - {display_date}", embed = embed)
         return
+    
+    async def remind_unverified(self):
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        channel = await guild.fetch_channel("1090084731560927274")
+        random_prompts = [
+            ":blob_victory: :blob_victory: Hãy sử dụng lệnh </link:1206907242784235523> để kết nối tài khoản Leetcode của mình và khám phá những tính năng độc đáo của chúng mình nhé!",
+            "Hãy </link:1206907242784235523> tài khoản bằng LLC Assistant để luyện tập cùng chúng mình nào! :blob_taco: :blob_taco:",
+            "Ồ, chào bạn. Có vẻ bạn quên </link:1206907242784235523> tài khoản Leetcode nè! :blob_maman: :blob_maman: :blob_taco:",
+            ":eyes: :eyes: Bạn có biết, </link:1206907242784235523> tài khoản Leetcode với chúng mình sẽ giúp bạn đạt mục tiêu dễ dàng hơn?",
+            ":100: :100: :100: :100: :100: Đã có trên 200 người </link:1206907242784235523> tài khoản với chúng mình. Một phần không nhỏ đã đạt được mục tiêu 500 bài. Liệu bạn có phải người tiếp theo? :blob_taco: :blob_taco:",
+            ":beers: :game_die: </link:1206907242784235523> tài khoản, tham gia cùng server, để không bỏ lỡ thông báo mới nhất về các buổi offline nhé! :blob_taco: :blob_taco: :blob_taco: :blob_taco:",
+            ":eyes: :blob_taco: :blob_taco: Chúng mình có bí kíp code khủng mà vẫn được chạm cỏ thường xuyên. :eyes: :eyes: -> </link:1206907242784235523>",
+        ]
+        prompt = random.choice(random_prompts)
+        await channel.send(f"<@&{self.client.config['unverifiedRoleId']}> {prompt}")
 
     async def contest_remind(self):
         next_contests = LC_utils.get_next_contests_info()
@@ -58,10 +74,9 @@ class DailyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         embeds = []
-        if current_time.timestamp() <= next_contests["weekly"]["timestamp"] <= time_in_24h.timestamp():
-            embeds.append(ContestEmbed(False, next_contests["weekly"]))
-        if current_time.timestamp() <= next_contests["biweekly"]["timestamp"] <= time_in_24h.timestamp():
-            embeds.append(ContestEmbed(True, next_contests["biweekly"]))
+        for contest in next_contests:
+            if current_time.timestamp() <= contest["timestamp"] <= time_in_24h.timestamp():
+                embeds.append(ContestEmbed(contest))
 
         if len(embeds) == 0:
             return
@@ -78,6 +93,8 @@ class DailyAutomation(commands.Cog):
         await self.create_daily_thread(daily_challenge_info)
         await self.logger.on_automation_event("Daily", "contest_remind()")
         await self.contest_remind()
+        await self.logger.on_automation_event("Daily", "remind_unverified()")
+        await self.remind_unverified()
         await self.logger.on_automation_event("Daily", "end-daily")
 
     @daily.error
