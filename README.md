@@ -71,10 +71,25 @@ Leave the rest as it is.
 
 ### 5. Database
 
+#### PostgresSQL
+
 We'll set up the database using llc-webapp repo, using Prisma tool.
 
 Clone the web app to somewhere else: [llc-webapp](https://github.com/Lowie-s-Leetcode-Community/llc-webapp)
 Follow part 1, 2, 3 in README.md in llc-webapp to set up postgreSQL
+
+#### Redis
+
+On linux distros:
+
+```sh
+apt-get update
+apt-get install redis-server
+systemctl start redis-server
+systemctl status redis-server
+```
+
+On windows, follow [this guide](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-windows/).
 
 ### 6. Add your app as a bot into our server
 
