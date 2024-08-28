@@ -52,8 +52,10 @@ class Duel(commands.Cog):
         self.current_problem = None
         self.players = []
         self.max_duel_timeout = 600  # seconds
+        self.duel_timeout_task: asyncio.Task = None
 
     rank_group = app_commands.Group(name="duel", description="Ranking Group")
+
     @rank_group.command(name='start', description="I challenge you to a duel!")
     async def duel(self, interaction: discord.Interaction, opponent: discord.Member):
         if not await self.__check_verify(interaction, opponent):
@@ -81,7 +83,6 @@ class Duel(commands.Cog):
                 return
 
         self.is_duel_active = True
-        self.players = [interaction.user, opponent]
 
         view = DuelView(opponent)
         await interaction.response.send_message(
@@ -92,8 +93,9 @@ class Duel(commands.Cog):
 
         if view.response is None:
             await interaction.followup.send("Duel request timed out.")
-            self.__reset_duel()
+            self.is_duel_active = False
         elif view.response:
+            self.players = [interaction.user, opponent]
             self.current_problem = random.choice(self.problem_list)
             embed = ProblemEmbed(self.current_problem)
             await interaction.followup.send(
@@ -102,12 +104,12 @@ class Duel(commands.Cog):
                 embed=embed
             )
             # Start the timer
-            self.duel_timeout_task = asyncio.create_task(self.__duel_timeout_handler(interaction=interaction))
+            self.duel_timeout_task = asyncio.create_task(self.__duel_timeout_coro(interaction=interaction))
         else:
             await interaction.followup.send(f"{opponent.mention} has declined the duel request.")
-            self.__reset_duel()
+            self.is_duel_active = False
 
-    async def __duel_timeout_handler(self, interaction: discord.Interaction):
+    async def __duel_timeout_coro(self, interaction: discord.Interaction):
         await asyncio.sleep(self.max_duel_timeout)
         if self.is_duel_active:
             await interaction.followup.send("The duel has ended due to timeout.")
@@ -155,6 +157,7 @@ class Duel(commands.Cog):
         self.is_duel_active = False
         self.current_problem = None
         self.players = []
+        self.duel_timeout_task.cancel()
 
     @rank_group.command(name='submit', description="Submit your solution!")
     async def submit(self, interaction: discord.Interaction):
