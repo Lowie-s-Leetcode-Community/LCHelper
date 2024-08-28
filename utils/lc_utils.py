@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import json
 
@@ -340,8 +341,24 @@ class LC_utils:
         
             return int(digits) if digits else 0
 
+        def generate_next_contests(last: dict, type: str) -> list:
+            week = 60 * 60 * 24 * 7
+            ts = last["timestamp"]
+            delta = 2 if type == 'biweekly' else 1
+            res = []
+            cid = last["contestId"]
+            while ts - week * delta < datetime.now().timestamp():
+                res.append({
+                    "type": type,
+                    "timestamp": ts,
+                    "contestId": cid
+                })
+                ts += week * delta
+                cid += 1
+            return res
+
         contest_list = LC_utils.get_contest_list()
-        res = {
+        latests = {
             "weekly": {
                 "timestamp": 0,
                 "contestId": 0
@@ -351,24 +368,28 @@ class LC_utils:
                 "contestId": 0
             }
         }
-        week = 60 * 60 * 24 * 7
         for c in contest_list:
             c_name = str(c["title"])
             c_type = c_name.split()[0]
             c_stamp = c["startTime"]
             if c_type == "Biweekly":
-                if c_stamp < res["biweekly"]["timestamp"]:
+                if c_stamp < latests["biweekly"]["timestamp"]:
                     continue
-                res['biweekly'] = {
-                    "timestamp": c_stamp + week * 2,
-                    "contestId": int(extract_contests_id(c_name)) + 1
+                latests['biweekly'] = {
+                    "timestamp": c_stamp,
+                    "contestId": int(extract_contests_id(c_name))
                 }
                 continue
             if c_type == "Weekly":
-                if c_stamp < res["weekly"]["timestamp"]:
+                if c_stamp < latests["weekly"]["timestamp"]:
                     continue
-                res['weekly'] = {
-                    "timestamp": c_stamp + week,
-                    "contestId": int(extract_contests_id(c_name)) + 1
+                latests['weekly'] = {
+                    "timestamp": c_stamp,
+                    "contestId": int(extract_contests_id(c_name))
                 }
+
+        res = []
+        for type, last in latests.items():
+            res += generate_next_contests(last, type)
+        res.sort(key=lambda x: -x["timestamp"])
         return res
