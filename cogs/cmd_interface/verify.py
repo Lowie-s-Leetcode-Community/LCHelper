@@ -167,11 +167,11 @@ class verify(commands.Cog):
             view = DeleteOldAccountView(client= self.client,
                                         user_lc_id= user_profile['id'],
                                         user_discord_id= interaction.user.id)
-            await interaction.followup.send(f"Tài khoản Discord của bạn đang được kết nối với một tài khoản khác.\n"
-                                            f"Bạn có muốn **GỠ LIÊN KẾT** khỏi tài khoản hiện thời?\n\n"
-                                            f":warning:**Cảnh báo**: hành động này sẽ xóa toàn bộ tiến độ của bạn đã lưu trữ trên cộng đồng, bao gồm điểm số, chuỗi, các lần nộp bài, "
-                                            f"và chúng mình không ủng hộ việc các bạn sử dụng nhiều tài khoản. "
-                                            f"Chỉ nên sử dụng `/change_leetcode_username` khi bạn đã thay đổi username của mình trên Leetcode.", view = view)
+            await interaction.followup.send("Tài khoản Discord của bạn đang được kết nối với một tài khoản khác.\n"
+                                            "Bạn có muốn **GỠ LIÊN KẾT** khỏi tài khoản hiện thời?\n\n"
+                                            ":warning:**Cảnh báo**: hành động này sẽ xóa toàn bộ tiến độ của bạn đã lưu trữ trên cộng đồng, bao gồm điểm số, chuỗi, các lần nộp bài, "
+                                            "và chúng mình không ủng hộ việc các bạn sử dụng nhiều tài khoản. "
+                                            "Chỉ nên sử dụng `/change_leetcode_username` khi bạn đã thay đổi username của mình trên Leetcode.", view = view)
             return
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
         view = ReConfirmView(code=code, username=username, user_id=interaction.user.id, client=self.client)

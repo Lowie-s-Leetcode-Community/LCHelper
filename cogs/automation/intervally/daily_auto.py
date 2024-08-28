@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import os
 import random
@@ -56,13 +55,13 @@ class DailyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel("1090084731560927274")
         random_prompts = [
-            ":blob_victory: :blob_victory: Hãy sử dụng lệnh </link:1206907242784235523> để kết nối tài khoản Leetcode của mình và khám phá những tính năng độc đáo của chúng mình nhé!",
-            "Hãy </link:1206907242784235523> tài khoản bằng LLC Assistant để luyện tập cùng chúng mình nào! :blob_taco: :blob_taco:",
-            "Ồ, chào bạn. Có vẻ bạn quên </link:1206907242784235523> tài khoản Leetcode nè! :blob_maman: :blob_maman: :blob_taco:",
-            ":eyes: :eyes: Bạn có biết, </link:1206907242784235523> tài khoản Leetcode với chúng mình sẽ giúp bạn đạt mục tiêu dễ dàng hơn?",
-            ":100: :100: :100: :100: :100: Đã có trên 200 người </link:1206907242784235523> tài khoản với chúng mình. Một phần không nhỏ đã đạt được mục tiêu 500 bài. Liệu bạn có phải người tiếp theo? :blob_taco: :blob_taco:",
-            ":beers: :game_die: </link:1206907242784235523> tài khoản, tham gia cùng server, để không bỏ lỡ thông báo mới nhất về các buổi offline nhé! :blob_taco: :blob_taco: :blob_taco: :blob_taco:",
-            ":eyes: :blob_taco: :blob_taco: Chúng mình có bí kíp code khủng mà vẫn được chạm cỏ thường xuyên. :eyes: :eyes: -> </link:1206907242784235523>",
+            f"{Assets.blob_victory} {Assets.blob_victory} Hãy sử dụng lệnh {Assets.link_command} để kết nối tài khoản Leetcode của mình và khám phá những tính năng độc đáo của chúng mình nhé!",
+            f"Hãy {Assets.link_command} tài khoản bằng LLC Assistant để luyện tập cùng chúng mình nào! {Assets.blob_taco} {Assets.blob_taco}",
+            f"Ồ, chào bạn. Có vẻ bạn quên {Assets.link_command} tài khoản Leetcode nè! {Assets.blob_maman} {Assets.blob_taco}",
+            f":eyes: :eyes: Bạn có biết, {Assets.link_command} tài khoản Leetcode với chúng mình sẽ giúp bạn đạt mục tiêu dễ dàng hơn?",
+            f":100: :100: :100: :100: :100: Đã có trên 200 người {Assets.link_command} tài khoản với chúng mình. Một phần không nhỏ đã đạt được mục tiêu 500 bài. Liệu bạn có phải người tiếp theo? {Assets.blob_taco} {Assets.blob_taco}",
+            f":beers: :game_die: {Assets.link_command} tài khoản, tham gia cùng server, để không bỏ lỡ thông báo mới nhất về các buổi offline nhé! {Assets.blob_taco} {Assets.blob_taco} {Assets.blob_taco}",
+            f":eyes: {Assets.blob_taco} {Assets.blob_taco} Chúng mình có bí kíp code khủng mà vẫn được chạm cỏ thường xuyên. :eyes: :eyes: -> {Assets.link_command}",
         ]
         prompt = random.choice(random_prompts)
         await channel.send(f"<@&{self.client.config['unverifiedRoleId']}> {prompt}")
@@ -98,7 +97,7 @@ class DailyAutomation(commands.Cog):
         await self.logger.on_automation_event("Daily", "end-daily")
 
     @daily.error
-    async def on_error(self, exception):
+    async def on_error(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['serverId'])
         await channel.send(f"Daily initiate error:\n```py\n{traceback.format_exc()[:800]}```\nPlease re-start.")

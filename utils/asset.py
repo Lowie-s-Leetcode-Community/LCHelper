@@ -10,6 +10,10 @@ class Assets:
     clock = "<:clock:1273256413761765408>"
     blank = "<:blank:1273255855713685506>"
     leetcode = "<:leetcode:1085915048167358554>"
+    link_command = "</link:1206907242784235523>"
+    blob_taco = "<a:blob_taco:1086131891796709457>"
+    blob_maman = "<a:blob_maman:1086131882141433916>"
+    blob_victory = "<a:blob_victory:1086119727719534642>"
     hourglass = ":hourglass:"
     easy = 0x00b8a3
     medium = 0xffc01e
