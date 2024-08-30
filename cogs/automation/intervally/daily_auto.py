@@ -107,7 +107,6 @@ class DailyReminder(commands.Cog):
 
     async def run_score_add(self, interaction: discord.Interaction, assignee):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         if self.problem['difficulty'] == 'Easy':
             score_value = 8
         elif self.problem['difficulty'] == 'Medium':
