@@ -189,6 +189,14 @@ class WeeklyAutomation(commands.Cog):
 
         Sincerely,
         """
+
+        with open("resrc/weekly.txt", "w+") as wf:
+            for i in range(7):
+                if len(candidate[i]) > 0:
+                    wf.write(f"{candidate[i]['id']}\n")
+                else:
+                    wf.write(f"EXPERT\n")
+
         return message
 
     async def create_weekend_form(self):
@@ -242,6 +250,10 @@ class WeeklyAutomation(commands.Cog):
         await interaction.response.defer(thinking=True)
         await self.weekend()
         await interaction.followup.send(f"{Assets.green_tick} **Weekly Task 2 finished**")
+
+
+async def setup(client):
+    await client.add_cog(WeeklyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
 
 
 async def setup(client):

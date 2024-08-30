@@ -18,9 +18,119 @@ COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
 ]
 
+REMINDER_MESSAGES = {
+    datetime.time(hour=8, minute=30, tzinfo=datetime.timezone.utc): "Hi {mention}, it's your turn to write the editorial today! Please complete it by 6pm to help other community members in need! <:blob_victory:1086119727719534642>",
+    datetime.time(hour=15, minute=00, tzinfo=datetime.timezone.utc): "Hi {mention}, remember to turn in your editorial by 6PM today! <:blob_plead:1086119745717284984>",
+    datetime.time(hour=18, minute=30, tzinfo=datetime.timezone.utc): "Hi {mention}, please turn in your editorial immediately! If you need help, please contact Community members for help! <:blob_dead:1086131876575580160>"
+}
+
+
+class DailyReminder(commands.Cog):
+    def __init__(self, client):
+        self.client = client
+        self.task_completed = False
+        self.reminder_task.start()
+        self.daily_thread = None
+        self.problem = None
+        self.assignee_id = None
+
+    @tasks.loop(minutes=1)
+    async def reminder_task(self):
+        now = datetime.datetime.now()
+        for reminder_time in REMINDER_MESSAGES.keys():
+            if now.hour == reminder_time.hour and now.minute == reminder_time.minute:
+                if not self.task_completed:
+                    await self.send_reminder(reminder_time)
+
+                    if reminder_time == max(REMINDER_MESSAGES.keys()) and not self.task_completed:
+                        await self.notify_experts()
+
+    async def send_reminder(self, reminder_time):
+        if not self.daily_thread:
+            return
+
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        assignee = None
+        message = REMINDER_MESSAGES.get(reminder_time)
+
+        if self.assignee_id == "EXPERT":
+            expert_role = discord.utils.get(guild.roles, name="Community Expert")
+            if expert_role:
+                await self.daily_thread.send(message.format(mention=expert_role.mention))
+        else:
+            result = self.client.db_api.read_profile(memberDiscordId=str(self.assignee_id))
+            assignee = await self.client.fetch_user(result['discordId'])
+            if assignee:
+                await self.daily_thread.send(message.format(mention=assignee.mention))
+
+    async def notify_experts(self):
+        expert_channel = await self.client.fetch_channel("1085446453230571520")
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        expert_role = discord.utils.get(guild.roles, name="Community Expert")
+
+        if self.assignee_id and expert_channel:
+            if self.assignee_id == "EXPERT":
+                await expert_channel.send(
+                    f"{expert_role.mention}: Attention all Community Experts!\n\n"
+                    f"Today's editorial task has been assigned to an expert, but we need to make sure it's done on time. "
+                    f"Please review the work or step in if necessary, ASAP. Thank you!"
+                )
+            else:
+                result = await self.client.db_api.read_profile(memberDiscordId=str(self.assignee_id))
+                assignee = await self.client.fetch_user(result['discordId'])
+
+                await expert_channel.send(
+                    f"{expert_role.mention}: Houston, we've got a problem!\n\n"
+                    f"Seems like {assignee.mention} needs our help on turning in the solution for the daily problem today. " 
+                    f"Please contact them directly to help, and assign substitution if needed!"
+                )
+
+    async def get_assignee_id_today(self):
+        weekday = datetime.date.today().weekday()  # 0 = Monday, 6 = Sunday
+        with open("resrc/weekly.txt", "r") as file:
+            assignees = [line.strip() for line in file if line.strip()]
+
+        if weekday >= len(assignees):
+            return None
+
+        assignee_id = assignees[weekday]
+
+        if assignee_id == "EXPERT":
+            return assignee_id
+        else:
+            result = self.client.db_api.read_profile(memberDiscordId = str(assignee_id))
+            assignee = await self.client.fetch_user(result['discordId'])
+            if assignee:
+                return assignee_id
+
+        return None
+
+    async def run_score_add(self, interaction: discord.Interaction, assignee):
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
+        if self.problem['difficulty'] == 'Easy':
+            score_value = 8
+        elif self.problem['difficulty'] == 'Medium':
+            score_value = 10
+        else:
+            score_value = 12
+
+        today = datetime.date.today().strftime("%B %d")
+        reason = f"{today} Daily Editorial ({self.problem['difficulty']})"
+
+        # Add score
+        await interaction.response.defer(thinking = True)
+        if score_value <= 0:
+            await interaction.followup.send(f"{Assets.red_tick} **Score should be positive. Use /score deduct instead.**")
+            return
+        daily_obj = await self.client.db_api.update_score(str(assignee), score_value, reason)
+        await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
+
+
 class DailyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.daily_reminder = DailyReminder(client)
         if os.getenv('START_UP_TASKS') == "True":
             self.daily.start()
         self.logger = Logger(client)
@@ -35,21 +145,22 @@ class DailyAutomation(commands.Cog):
         return daily_challenge_info
 
     async def create_daily_thread(self, daily_challenge_info):
-        # Creating daily thread
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
         name = f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
-        thread = await channel.create_thread(name = name, type = discord.ChannelType.public_thread)
+        thread = await channel.create_thread(name=name, type=discord.ChannelType.public_thread)
 
-        # Calling /daily automatically
         daily_obj = self.client.db_api.read_latest_daily_object()
-        problem = daily_obj['problem']
-        embed = ProblemEmbed(problem)
+        self.daily_reminder.problem = daily_obj['problem']
+        embed = ProblemEmbed(daily_obj['problem'])
 
         display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
-        
-        await thread.send(f"Daily Challenge - {display_date}", embed = embed)
-        return
+        await thread.send(f"Daily Challenge - {display_date}", embed=embed)
+
+        self.daily_reminder.daily_thread = thread
+        self.daily_reminder.assignee_id = await self.daily_reminder.get_assignee_id_today()
+
+        return thread
     
     async def remind_unverified(self):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
@@ -123,6 +234,72 @@ class DailyAutomation(commands.Cog):
         await interaction.response.defer(thinking = True)
         await self.daily()
         await interaction.followup.send(f"{Assets.green_tick} **Daily Task finished**")
+
+    @app_commands.command(name = 'turn_in_daily_editorial', description = "Turn in your editorial for the daily challenge.")
+    async def _turn_in_daily_editorial(self, interaction: discord.Interaction):
+        if self.daily_reminder.task_completed:
+            await interaction.response.send_message("Solution have been accepted!")
+            return
+
+        assignee_id = self.daily_reminder.assignee_id
+        guild = interaction.guild
+        expert_role = discord.utils.get(guild.roles, name="Community Expert")
+
+        if assignee_id == "EXPERT":
+            if expert_role in interaction.user.roles:
+                await interaction.response.send_message(
+                    f"{interaction.user.mention}, as a Community Expert, you've turned in the solution. "
+                    f"Other experts, please review it."
+                )
+            else:
+                await interaction.response.send_message(
+                    f"{interaction.user.mention}, you do not have the Community Expert role and cannot turn in this editorial."
+                )
+            return
+
+        result = self.client.db_api.read_profile(memberDiscordId = str(assignee_id))
+        assignee = await self.client.fetch_user(result['discordId'])
+
+        await interaction.response.defer(thinking=True)
+
+        if interaction.user == assignee:
+            await interaction.followup.send(
+                f"{assignee.mention} has turned in their solution. Experts, please review it."
+            )
+        else:
+            await interaction.followup.send(
+                f"{interaction.user.mention}, you are not the assignee for today's editorial. Please wait for your turn."
+            )
+
+    @app_commands.command(name = 'accept_editorial', description = "Accept the editorial")
+    async def _accept_editorial(self, interaction: discord.Interaction):
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        expert_role = discord.utils.get(guild.roles, name="Community Expert")
+
+        if self.daily_reminder.task_completed:
+            await interaction.response.send_message("Solution have been accepted!")
+            return
+
+        assignee_id = self.daily_reminder.assignee_id
+        if not assignee_id:
+            await interaction.response.send_message("There is no assignee found for today's editorial.")
+            return
+
+        if assignee_id == "EXPERT":
+            self.daily_reminder.task_completed = True
+            await interaction.response.send_message(
+                "Editorial has been accepted. The score will be handled manually."
+            )
+            return
+
+        if expert_role not in interaction.user.roles:
+            await interaction.response.send_message(
+                "You are not a Community Expert and don't have the privilege to accept the editorial."
+            )
+            return
+
+        self.daily_reminder.task_completed = True
+        await self.daily_reminder.run_score_add(interaction, assignee_id)
 
 async def setup(client):
     await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
