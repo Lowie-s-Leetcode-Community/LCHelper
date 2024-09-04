@@ -19,9 +19,9 @@ COG_START_TIMES = [
 ]
 
 REMINDER_MESSAGES = {
-    datetime.time(hour=8, minute=30, tzinfo=datetime.timezone.utc): "Hi {mention}, it's your turn to write the editorial today! Please complete it by 6pm to help other community members in need! <:blob_victory:1086119727719534642>",
-    datetime.time(hour=15, minute=00, tzinfo=datetime.timezone.utc): "Hi {mention}, remember to turn in your editorial by 6PM today! <:blob_plead:1086119745717284984>",
-    datetime.time(hour=18, minute=30, tzinfo=datetime.timezone.utc): "Hi {mention}, please turn in your editorial immediately! If you need help, please contact Community members for help! <:blob_dead:1086131876575580160>"
+    datetime.time(hour=8, minute=30, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, it's your turn to write the editorial today! Please complete it by 6pm to help other community members in need! {Assets.blob_victory}",
+    datetime.time(hour=17, minute=43, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, remember to turn in your editorial by 6PM today! {Assets.blob_maman}",
+    datetime.time(hour=18, minute=30, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, please turn in your editorial immediately! If you need help, please contact Community members for help! {Assets.blob_taco}"
 }
 
 
@@ -107,22 +107,19 @@ class DailyReminder(commands.Cog):
 
     async def run_score_add(self, interaction: discord.Interaction, assignee):
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        if self.problem['difficulty'] == 'Easy':
-            score_value = 8
-        elif self.problem['difficulty'] == 'Medium':
-            score_value = 10
-        else:
-            score_value = 12
+        difficulty_scores = {
+            'Easy': 8,
+            'Medium': 10,
+            'Hard': 12
+        }
+        score_value = difficulty_scores.get(self.problem['difficulty'])
 
         today = datetime.date.today().strftime("%B %d")
         reason = f"{today} Daily Editorial ({self.problem['difficulty']})"
 
         # Add score
         await interaction.response.defer(thinking = True)
-        if score_value <= 0:
-            await interaction.followup.send(f"{Assets.red_tick} **Score should be positive. Use /score deduct instead.**")
-            return
-        daily_obj = await self.client.db_api.update_score(str(assignee), score_value, reason)
+        await self.client.db_api.update_score(str(assignee), score_value, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
 
 
