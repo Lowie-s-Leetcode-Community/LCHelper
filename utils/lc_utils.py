@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import json
 
@@ -127,7 +128,20 @@ query userContestRankingInfo($username: String!) {
         topPercentage    
         badge {      
             name    
-        } 
+        }
+    }
+    userContestRankingHistory(username: $username) {
+        attended
+        rating
+        ranking
+        trendDirection
+        problemsSolved
+        totalProblems
+        finishTimeInSeconds
+        contest {
+            title
+            startTime
+        }
     }
 }
 """
@@ -306,3 +320,76 @@ class LC_utils:
             print(f"Warning, crawl failed for user {username}. Please try again!")
             return []
         return recent_list
+
+    def get_contest_list():
+        community_account = "lwleetcodeclass"
+        payload = {"query": QUERY_USER_CONTEST_INFO, "variables": {"username": community_account}}
+        try:
+            response = requests.get(API_URL, json = payload)
+            resp_content = json.loads(response.content)
+            ranking_history = resp_content["data"]["userContestRankingHistory"]
+            contest_history = list(map(lambda x: x["contest"], ranking_history))
+        except Exception as exc:
+            print(f"Retrieve contest list unsuccessfully. {exc}")
+            return []
+        return contest_history
+    
+    def get_next_contests_info():
+        def extract_contests_id(contest_name: str) -> int:
+            str = contest_name.split()[2]
+            digits = ''.join(c for c in str if c.isdigit())
+        
+            return int(digits) if digits else 0
+
+        def generate_next_contests(last: dict, type: str) -> list:
+            week = 60 * 60 * 24 * 7
+            ts = last["timestamp"]
+            delta = 2 if type == 'biweekly' else 1
+            res = []
+            cid = last["contestId"]
+            while ts - week * delta < datetime.now().timestamp():
+                res.append({
+                    "type": type,
+                    "timestamp": ts,
+                    "contestId": cid
+                })
+                ts += week * delta
+                cid += 1
+            return res
+
+        contest_list = LC_utils.get_contest_list()
+        latests = {
+            "weekly": {
+                "timestamp": 0,
+                "contestId": 0
+            },
+            "biweekly": {
+                "timestamp": 0,
+                "contestId": 0
+            }
+        }
+        for c in contest_list:
+            c_name = str(c["title"])
+            c_type = c_name.split()[0]
+            c_stamp = c["startTime"]
+            if c_type == "Biweekly":
+                if c_stamp < latests["biweekly"]["timestamp"]:
+                    continue
+                latests['biweekly'] = {
+                    "timestamp": c_stamp,
+                    "contestId": int(extract_contests_id(c_name))
+                }
+                continue
+            if c_type == "Weekly":
+                if c_stamp < latests["weekly"]["timestamp"]:
+                    continue
+                latests['weekly'] = {
+                    "timestamp": c_stamp,
+                    "contestId": int(extract_contests_id(c_name))
+                }
+
+        res = []
+        for type, last in latests.items():
+            res += generate_next_contests(last, type)
+        res.sort(key=lambda x: -x["timestamp"])
+        return res

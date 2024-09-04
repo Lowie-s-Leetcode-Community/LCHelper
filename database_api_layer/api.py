@@ -7,7 +7,7 @@ from datetime import datetime
 import asyncio
 import json
 import os
-from utils.llc_datetime import get_first_day_of_previous_month, get_today, get_fdom_by_datestamp
+from utils.llc_datetime import get_today, LLCMonth
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
@@ -279,7 +279,7 @@ class DatabaseAPILayer:
       leaderboard_controller = ctrlers.LeaderboardController()
       query_result = leaderboard_controller.read_monthly(
         session=session,
-        fdom=get_first_day_of_previous_month()
+        fdom=LLCMonth(previous=True).first_day_of_month()
       )
       for res in query_result:
         result.append({**res.User.as_dict(), **res.UserMonthlyObject.as_dict()})
@@ -362,7 +362,7 @@ class DatabaseAPILayer:
           session, user.id, daily_obj.id, scoreEarnedDelta=delta
         )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
-        session, user.id, get_fdom_by_datestamp(get_today()), delta
+        session, user.id, LLCMonth().first_day_of_month(), delta
       )
 
       result = {"daily": user_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
@@ -390,7 +390,7 @@ class DatabaseAPILayer:
           session, user.id, daily_obj.id, scoreEarnedDelta=delta, scoreGacha=delta
         )
       monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
-        session, user.id, get_fdom_by_datestamp(get_today()), delta
+        session, user.id, LLCMonth().first_day_of_month(), delta
       )
 
       result = {"daily": user_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
@@ -556,7 +556,7 @@ class DatabaseAPILayer:
       sys_conf_controller = ctrlers.SystemConfigurationController()
       result = sys_conf_controller.update(session=session, submissionChannelId=new_channel_id)
       result = result.SystemConfiguration.as_dict()
-      await self.__commit(session, "SystemConfiguration", result)
+      await self.__commit(session, "SystemConfiguration", json.dumps(result))
     return result
 
   async def update_score_channel(self, new_channel_id: str):
@@ -565,7 +565,7 @@ class DatabaseAPILayer:
       sys_conf_controller = ctrlers.SystemConfigurationController()
       result = sys_conf_controller.update(session=session, scoreLogChannelId=new_channel_id)
       result = result.SystemConfiguration.as_dict()
-      await self.__commit(session, "SystemConfiguration", result)
+      await self.__commit(session, "SystemConfiguration", json.dumps(result))
     return result
   
   def read_contest_configs(self):

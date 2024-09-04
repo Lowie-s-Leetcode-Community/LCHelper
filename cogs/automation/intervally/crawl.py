@@ -1,13 +1,11 @@
 import discord
-from discord import app_commands
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
-from cogs.cmd_interface.task import Task
 import os
 import asyncio
 import traceback
-from utils.llc_datetime import get_date_from_timestamp, get_fdom_by_datestamp
+from utils.llc_datetime import get_date_from_timestamp, LLCMonth
 from datetime import datetime
 import pytz
 from utils.logger import Logger
@@ -38,13 +36,9 @@ class Crawl(commands.Cog):
                 uniqued_recent_info[sub['titleSlug']] = sub
             uniqued_recent_info = uniqued_recent_info.values()
 
-            user_blob = {
-                "userId": user['id'],
-                "newSubmissions": []
-            }
             for submission in uniqued_recent_info:
                 date = get_date_from_timestamp(int(submission['timestamp']))
-                fdom = get_fdom_by_datestamp(date)
+                fdom = LLCMonth(datestamp=date).first_day_of_month()
                 daily_f = date.strftime("%Y-%m-%d")
                 month_f = fdom.strftime("%Y-%m-%d")
                 if month_f not in submissions_blob:
@@ -60,7 +54,7 @@ class Crawl(commands.Cog):
     async def crawling(self):
         current_utc_time = datetime.now().astimezone(pytz.utc)
 
-        if current_utc_time.hour == 12 and (datetime.today() == 5 or datetime.today() == 7):
+        if current_utc_time.hour == 12 and (datetime.today() == 4 or datetime.today() == 6):
             await self.logger.on_automation_event("Crawl", "No crawl to generate weekly form")
             return
 
@@ -81,7 +75,7 @@ class Crawl(commands.Cog):
         await self.logger.on_automation_event("Crawl", "error found")
         time.sleep(90)
 
-        self.crawling.restart()
+        # self.crawling.restart()
 
     @commands.command()
     @commands.has_permissions(administrator = True)

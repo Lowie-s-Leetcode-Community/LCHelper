@@ -6,9 +6,10 @@ from utils.lc_utils import LC_utils
 import os
 from datetime import date
 import datetime
-from utils.llc_datetime import get_first_day_of_current_month, get_previous_month_letter
+from utils.llc_datetime import LLCMonth
 from utils.logger import Logger
 from lib.embed.leaderboard_embed import LeaderboardEmbed
+from cogs.automation.intervally.crawl import Crawl
 
 COG_START_TIMES = [
     datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
@@ -27,17 +28,20 @@ class MonthlyAutomation(commands.Cog):
     @tasks.loop(time=COG_START_TIMES)
     async def monthly(self):
         await self.logger.on_automation_event("Monthly", "start-monthly")
-        if date.today() == get_first_day_of_current_month():
+        await self.logger.on_automation_event("Monthly", "update_problems_list()")
+        await self.update_problems_list()
+        await self.logger.on_automation_event("Monthly", "purge_left_members()")
+        await self.purge_left_members()
+        if date.today() == LLCMonth().first_day_of_month():
+            await self.logger.on_automation_event("Crawl", "submissions()")
+            with Crawl(self.client) as crawl:
+               crawl.submissions()
             await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
             await self.set_leetcoder_of_the_month()
             await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
             await self.show_leaderboard_previous()
-        await self.logger.on_automation_event("Monthly", "purge_left_members()")
-        await self.purge_left_members()
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
         await self.update_leaderboard()
-        await self.logger.on_automation_event("Monthly", "update_problems_list()")
-        await self.update_problems_list()
         await self.logger.on_automation_event("Monthly", "end-monthly")
         
     async def purge_left_members(self):
@@ -49,8 +53,8 @@ class MonthlyAutomation(commands.Cog):
         return
 
     async def show_leaderboard_previous(self):
-        month = get_previous_month_letter()
-        title = "Congratulations to the top 10 members of " + month + "!"
+        month = LLCMonth(previous=True)
+        title = f"Congratulations to the top 10 members of {month.month_string()}! ({month.date_range()})"
         user_list = self.client.db_api.read_last_month_leaderboard()
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
@@ -64,7 +68,7 @@ class MonthlyAutomation(commands.Cog):
         leaderboard = self.client.db_api.read_current_month_leaderboard()
         if len(leaderboard) > 0:
             return
-        first_day_of_current_month = get_first_day_of_current_month()
+        first_day_of_current_month = LLCMonth().first_day_of_month()
         await self.client.db_api.refresh_server_scores(firstDayOfMonth=first_day_of_current_month)
         return
 

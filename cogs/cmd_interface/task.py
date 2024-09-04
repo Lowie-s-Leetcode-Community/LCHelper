@@ -20,7 +20,7 @@ class Task(commands.Cog):
         embed = discord.Embed(
             title = f"{interaction.user.name}'s Tasks",
             description = """
-            *<a:blob_gaming:1093831896212971540> You can earn monthly LLC Score by completing these tasks. [More info](https://www.notion.so/lowie-writes/How-does-LLC-s-Scoring-System-work-33e3316e95024b448690eac31173e795?pvs=4)*
+            *<a:blob_gaming:1093831896212971540> You can earn monthly LLC Score by completing these tasks. [More info](https://hackmd.io/@lowies-leetcode-club/SJAdxP4An)*
             """,
             color = discord.Colour.blue()
         )
@@ -49,7 +49,7 @@ class Task(commands.Cog):
             daily_msg += f"**{Assets.red_tick} Complete Daily Challenge 🗓️ ({daily_conf['daily']} pts)** -> </daily:1206907242784235525>\n"
 
         if user_progress['user_daily']['scoreGacha'] is None or user_progress['user_daily']['scoreGacha'] < 0:
-            daily_msg += f"{Assets.red_tick} **Test your luck!** -> </gacha:1206907242784235527> **(1-?? pts)**\n"
+            daily_msg += f"{Assets.red_tick} **Test your luck! (1-?? pts)** -> </gacha:1206907242784235527>\n"
         else:
             daily_msg += f"{Assets.green_tick} Test your luck! ({user_progress['user_daily']['scoreGacha']} pts)\n"
         
@@ -61,7 +61,7 @@ class Task(commands.Cog):
         if practice_score == daily_conf['practiceCap']:
             daily_msg += f"{Assets.green_tick} Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)\n"
         else:
-            daily_msg += f"{'⌛' if practice_score else Assets.red_tick} **Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)**\n"
+            daily_msg += f"{'⌛' if practice_score else Assets.red_tick} **Self-practice ({practice_score}/{daily_conf['practiceCap']} pts)** -> </gimme:1206907242784235528>\n"
 
         
         daily_msg += f"{Assets.blank} - *Solve an Easy problem ({daily_conf['easy']} pts): **{solved_easy}** solved*\n"

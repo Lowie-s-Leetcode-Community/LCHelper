@@ -1,14 +1,11 @@
-import random
 
-from sqlalchemy import select, insert, func, update, delete, inspect
+from sqlalchemy import select, update, delete, inspect
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound, SQLAlchemyError
 from typing import Optional, List
-import os
-from utils.llc_datetime import get_first_day_of_current_month
+from utils.llc_datetime import LLCMonth
 import database_api_layer.models as db
 from database_api_layer.db_utils import get_min_available_id
-from datetime import datetime, date
+from datetime import date
 
 # Controllers are responsible for direct interact with daily and returns the correct
 # model object to each sessions
@@ -102,7 +99,7 @@ class UserDailyObjectController:
 
 class UserMonthlyObjectController:
   # can't raise MultipleResultFound since the db has unique tupple
-  def read_one(self, session: Session, userId: int, fdom: date = get_first_day_of_current_month()):
+  def read_one(self, session: Session, userId: int, fdom: date = LLCMonth().first_day_of_month()):
     query = select(db.UserMonthlyObject)\
       .where(db.UserMonthlyObject.userId == userId)\
       .where(db.UserMonthlyObject.firstDayOfMonth == fdom)
@@ -111,7 +108,7 @@ class UserMonthlyObjectController:
   # same as above, but will create and return if no result is found
   # inspect(result) should be persistent or 
   # according to: https://docs.sqlalchemy.org/en/20/orm/session_state_management.html
-  def create_one(self, session: Session, userId: int, fdom: date = get_first_day_of_current_month()):
+  def create_one(self, session: Session, userId: int, fdom: date = LLCMonth().first_day_of_month()):
     result = db.UserMonthlyObject(
       id=get_min_available_id(session, db.UserMonthlyObject),
       userId=userId,
@@ -325,7 +322,7 @@ class SystemConfigurationController:
 
 # Only controller that needs joining :)
 class LeaderboardController:
-  def read_monthly(self, session: Session, fdom: date = get_first_day_of_current_month()):
+  def read_monthly(self, session: Session, fdom: date = LLCMonth().first_day_of_month()):
     query = select(db.UserMonthlyObject, db.User).join_from(
       db.UserMonthlyObject, db.User).where(
       db.UserMonthlyObject.firstDayOfMonth == fdom
