@@ -12,9 +12,27 @@ class Profile(commands.Cog):
     # will add feature to get from username next!
     @app_commands.command(name = 'profile', description = "Returns a Leetcode profile")
     @app_commands.describe(member = "Specify a member. Left empty if you want to check yours")
-    async def _profile(self, interaction: discord.Interaction, member: Optional[discord.Member] = None):
+    async def _profile(self, interaction: discord.Interaction, member: Optional[discord.Member] = None, username : str = None):
         await interaction.response.defer(thinking = True)
-
+        if member == None and username == None:
+           discord_id = interaction.user.id
+           embed = await Profile._find_profile_by_member(self, member=member, discord_id=discord_id)
+           await interaction.followup.send(embed = embed)
+           return
+              
+        if member != None:
+           discord_id = member.id
+           embed = await Profile._find_profile_by_member(self, member = member, discord_id = discord_id)
+           await interaction.followup.send(embed = embed)
+           return
+        
+        if username != None:
+            discord_id = interaction.user.id
+            embed = await Profile._find_profile_by_username(self, username = username, discord_id = discord_id)
+            await interaction.followup.send(embed = embed)
+            return
+  
+    async def _find_profile_by_member(self, member: Optional[discord.Member], discord_id = None):
         result = None
         embed = discord.Embed(
             description = f"""
@@ -22,23 +40,13 @@ class Profile(commands.Cog):
             """,
             color = 0xffffff
         )
-        if member == None:
-            discord_id = interaction.user.id
-            result = self.client.db_api.read_profile(memberDiscordId = str(discord_id))
-            if result == None:
-                embed = discord.Embed(
-                    title = "Error",
-                    description = "Are *you* verified? Type `/verify` to (re)verify yourself immediately!",
-                    color = 0xef4743
-                )
-        else:
-            result = self.client.db_api.read_profile(memberDiscordId = str(member.id))
-            if result == None:
-                embed = discord.Embed(
-                    title = "Error",
-                    description = "Is this person verified?",
-                    color = 0xef4743
-                )
+        result = self.client.db_api.read_profile(memberDiscordId = str(discord_id))
+        if result == None:
+            embed = discord.Embed(
+                title = "Error",
+                description = "This account (or your account) is not verified yet. Please use /verify to verify if it's your account",
+                color = 0xef4743
+            )
         # Will wait for leetcode layer to add more info
         # missing: streak
         if result != None:
@@ -70,7 +78,47 @@ class Profile(commands.Cog):
                 icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
                 url = result['link']
             )
-        await interaction.followup.send(embed = embed)
+        return embed
+
+
+
+    async def _find_profile_by_username(self, username : str, discord_id):
+        embed = discord.Embed(
+            description = f"""
+            Type '/help profile' to further understand how this feature works!'
+            """,
+            color = 0xffffff
+        )
+        result = LC_utils.get_user_profile(username = username)
+
+        if result == None:
+            #Invalid username case
+            embed = discord.Embed(
+                title = "Error",
+                description = "The user you seek doesn't exist",
+                color = 0xef4743
+            )
+        else:
+            #Return the information
+            discord_user = await self.client.fetch_user(str(discord_id))
+            embed.set_thumbnail(url=result['profile']['avatar'])
+            embed.add_field(
+                name = "🏡 Leetcode profile",
+                value = f"""
+                ▸ **Leetcode ID**: {username}
+                {Assets.blank} ▸ **Name**: {result['profile']['name']}
+                {Assets.blank} ▸ **Ranking**: {result['profile']['rank']}
+                {Assets.blank} ▸ **Country**: {result['profile']['country']}
+                """,
+                inline = False
+            )
+            embed.set_author(
+                name = f"LeetCode profile requested from {discord_user.display_name}",
+                icon_url = "https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
+                url = result['profile']['link']
+            )
+        return embed
+    
 
 async def setup(client):
     await client.add_cog(Profile(client), guilds=[discord.Object(id=client.config['serverId'])])
