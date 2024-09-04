@@ -8,6 +8,7 @@ from utils.asset import Assets
 
 keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E. ', 'F. ']
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
+TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems', 'Software Architecture', 'Complexity Theory']
 
 
 def createEmbed(_question: None, _answer: None, choice: int = -1):
@@ -17,7 +18,7 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
     correct_answer = question.correctAnswerId - answers[0].id
 
     embed = discord.Embed(
-        color= getattr(Assets, question.difficulty.lower())
+        color=getattr(Assets, question.difficulty.lower())
     )
     embed.set_author(
         name="Quiz:",
@@ -28,7 +29,6 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
         value="",
         inline=False
     )
-
 
     embed.add_field(
         name="Difficulty",
@@ -72,13 +72,13 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
 
 class AnswerButton(discord.ui.Button['ChooseQuestion']):
     def __init__(
-        self,
-        button_type: int,
-        is_correct: bool,
-        style: discord.ButtonStyle,
-        is_disabled: bool = False,
-        emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
-        label: str = None
+            self,
+            button_type: int,
+            is_correct: bool,
+            style: discord.ButtonStyle,
+            is_disabled: bool = False,
+            emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
+            label: str = None
     ):
         super().__init__(style=style, label=label, disabled=is_disabled, emoji=emoji)
         self.button_type = button_type
@@ -171,7 +171,10 @@ class Quiz(commands.Cog):
 
     @_quiz.autocomplete('category')
     async def _quiz_autocomplete(self, interaction: discord.Interaction, current: str):
-        tags = await self.client.db_api.read_category_quiz()
+        try:
+            tags = await self.client.db_api.read_category_quiz()
+        except Exception as e:
+            tags = TOPIC_TAGS
         return [app_commands.Choice(name=tag, value=tag) for tag in tags][:len(tags)]
 
 
