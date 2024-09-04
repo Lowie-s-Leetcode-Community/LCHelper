@@ -1,5 +1,5 @@
 import discord
-from discord import app_commands
+from discord import app_commands, Embed
 from discord.ext import tasks, commands
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
@@ -10,15 +10,15 @@ import datetime
 from utils.llc_datetime import get_today
 from utils.logger import Logger
 from lib.embed.problem import ProblemEmbed
+from cogs.cmd_interface.quiz import createEmbed
 
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
-
+keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E. ', 'F. ']
+quiz_bonus = 1
+test_quiz_channel_id = 1258083345133207635
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
 ]
-
-last_quiz = None
-last_quiz_message = None
 
 class DailyAutomation(commands.Cog):
     def __init__(self, client):
@@ -26,6 +26,9 @@ class DailyAutomation(commands.Cog):
         if os.getenv('START_UP_TASKS') == "True":
             self.daily.start()
         self.logger = Logger(client)
+        self.last_quiz = None
+        self.last_quiz_message = None
+        self.correct_users = set()
 
     def cog_unload(self):
         self.daily.cancel()
@@ -53,92 +56,115 @@ class DailyAutomation(commands.Cog):
         return 
     
     async def create_daily_quiz(self): 
-        global last_quiz
-        global last_quiz_message
         quiz_detail = {}
         quiz_result = self.client.db_api.read_quiz(quiz_detail)
 
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        # đang để tạm id channel cần gửi dailyquiz
-        log_channel = await guild.fetch_channel(1258083345133207635)
-        quiz_message = await log_channel.send(embed = self.createEmbed(quiz_result[0], quiz_result[1]))
+        log_channel = await guild.fetch_channel(test_quiz_channel_id)
+        quiz_message = await log_channel.send(embed = createEmbed(quiz_result[0], quiz_result[1]))
         answers = quiz_result[1]
         for i in range(len(answers)):
             await quiz_message.add_reaction(iconKey[i])
         
-        last_quiz = quiz_result
-        last_quiz_message = quiz_message
+        self.last_quiz = quiz_result
+        self.last_quiz_message = quiz_message
         
-    async def handle_preQuiz_answers(self): 
-        global correct_users
-        global last_quiz_message
+    async def handle_prev_quiz_answers(self): 
         guild = await self.client.fetch_guild(self.client.config['serverId'])
-        # đang để tạm id channel cần gửi dailyquiz
-        channel = await guild.fetch_channel(1258083345133207635)
-        
-        if (last_quiz == None):
-            print("No quiz before!")
+        log_channel = await guild.fetch_channel(test_quiz_channel_id)
+        self.correct_users.clear()
+        if (self.last_quiz == None):
+            await log_channel.send("There is no previous daily quiz.")
             return
-        correct_answer = last_quiz[0].correctAnswerId - last_quiz[1][0].id
+        correct_answer = self.last_quiz[0].correctAnswerId - self.last_quiz[1][0].id
         correct_emoji = iconKey[correct_answer]
-        last_quiz_message = await channel.fetch_message(last_quiz_message.id)
+        self.last_quiz_message = await log_channel.fetch_message(self.last_quiz_message.id)
 
-        for reaction in last_quiz_message.reactions:
-            if reaction.emoji == correct_emoji:
-                async for user in reaction.users():
-                    if user != self.client.user:
-                        # who answers the quiz correctly gets 1 point
-                        await self.client.db_api.update_score(str(user.id), 1, "Correct answer daily quiz")
+        answered_members = set()
+        for reaction in self.last_quiz_message.reactions:
+            async for user in reaction.users():
+                if user != self.client.user:
+                    if user not in answered_members and reaction.emoji != correct_emoji:
+                        answered_members.add(user)
+                    # Who answers the quiz correctly gets 1 point
+                    elif user not in self.correct_users and reaction.emoji == correct_emoji: 
+                        self.correct_users.add(user)
+                    await self.client.db_api.update_score(str(user.id), quiz_bonus, "Correct answer for the daily quiz.")
+        answered_members = answered_members & self.correct_users
+        self.correct_users = self.correct_users - answered_members
 
-    def createEmbed(self,_question, _answer):
-        question = _question
-        answers = _answer
+        await self.send_correct_users_list(log_channel)
 
-        embed = discord.Embed(
-            color= getattr(Assets, question.difficulty.lower())
-        )
-        embed.set_author(
-            name="Quiz:",
-            icon_url="https://assets.leetcode.com/users/leetcode/avatar_1568224780.png"
-        )
-        embed.add_field(
-            name=question.question,
-            value="",
-            inline=False
-        )
+    async def send_correct_users_list(self, channel):
+        if self.correct_users:
+            x = len(self.correct_users)
+            if x == 1: 
+                description = "There is only one member who answered the previous quiz correctly"
+            else:
+                description = f"There are {x} members who answered the previous daily quiz correctly"
+            embed = Embed(colour = discord.Colour.dark_teal(), description = description,
+                          title="Daily Quiz - List of users answering correctly")
+            i = 1
+            for user in self.correct_users:
+                embed.add_field(name = "", value = f"**{i}.** {user.name}", inline = False)
+                i = i + 1
+                # print(user.name)
+            await channel.send(embed=embed)
+            
+        else:
+            # print("No one answered the previous daily quiz correctly.")
+            await channel.send("No one answered the previous daily quiz correctly.")
 
-        embed.add_field(
-            name="Difficulty",
-            value=question.difficulty,
-            inline=True
-        )
+    # def createEmbed(self,_question, _answer):
+    #     question = _question
+    #     answers = _answer
 
-        embed.add_field(
-            name="Topic",
-            value=f"||{question.category}||",
-            inline=True
-        )
-        answer_view = ""
+    #     embed = discord.Embed(
+    #         color= getattr(Assets, question.difficulty.lower())
+    #     )
+    #     embed.set_author(
+    #         name="Quiz:",
+    #         icon_url="https://assets.leetcode.com/users/leetcode/avatar_1568224780.png"
+    #     )
+    #     embed.add_field(
+    #         name=question.question,
+    #         value="",
+    #         inline=False
+    #     )
 
-        for i in range(len(answers)):
-            answer_view += f"```\n{iconKey[i] + answers[i].answer}\n```"
+    #     embed.add_field(
+    #         name="Difficulty",
+    #         value=question.difficulty,
+    #         inline=True
+    #     )
+
+    #     embed.add_field(
+    #         name="Topic",
+    #         value=f"||{question.category}||",
+    #         inline=True
+    #     )
+    #     answer_view = ""
+
+    #     for i in range(len(answers)):
+    #         answer_view += f"```\n{keyAns[i] + answers[i].answer}\n```"
         
-        embed.add_field(
-            name="Answer",
-            value=answer_view,
-            inline=False
-        )
-        return embed
+    #     embed.add_field(
+    #         name="Answer",
+    #         value=answer_view,
+    #         inline=False
+    #     )
+    #     return embed
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
+        await self.logger.on_automation_event("Daily", "handle_prev_quiz_answers()")
+        await self.handle_prev_quiz_answers()
         await self.logger.on_automation_event("Daily", "start-daily")
         await self.logger.on_automation_event("Daily", "create_new_daily_object()")
         daily_challenge_info = await self.create_new_daily_object()
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
-        await self.logger.on_automation_event("Daily", "handle_preQuiz_answers()")
-        await self.handle_preQuiz_answers()
+        
         await self.logger.on_automation_event("Daily", "create_daily_quiz()")
         await self.create_daily_quiz()
         
@@ -172,6 +198,10 @@ class DailyAutomation(commands.Cog):
         await interaction.response.defer(thinking = True)
         await self.daily()
         await interaction.followup.send(f"{Assets.green_tick} **Daily Task finished**")
+        # await self.logger.on_automation_event("Daily", "handle_prev_quiz_answers()")
+        # await self.handle_prev_quiz_answers()
+        # await self.logger.on_automation_event("Daily", "create_daily_quiz()")
+        # await self.create_daily_quiz()
 
 async def setup(client):
     await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
