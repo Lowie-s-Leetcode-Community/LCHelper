@@ -254,7 +254,3 @@ class WeeklyAutomation(commands.Cog):
 
 async def setup(client):
     await client.add_cog(WeeklyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
-
-
-async def setup(client):
-    await client.add_cog(WeeklyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
