@@ -158,6 +158,8 @@ class DiscordQuiz(Base):
     difficulty = mapped_column(String)
     correctAnswerId = mapped_column(Integer)
     discordQuizAnswer: Mapped[List[DiscordQuizAnswer]] = relationship(back_populates="discordQuiz")
+    hint = mapped_column(String)
+    answerExplanation = mapped_column(String)
 
 class DiscordQuizAnswer(Base):
     __tablename__ = "DiscordQuizAnswer"

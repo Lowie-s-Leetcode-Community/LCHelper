@@ -38,12 +38,18 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
 
     embed.add_field(
         name="Topic",
-        value=f"||{question.category}||",
+        value=f"||{question.category}||".ljust(10),
         inline=True
     )
 
     embed.add_field(
-        name="Question ID",
+        name="Hint",
+        value=f"||{question.hint if question.hint else 'No hint provided' }||".ljust(10),
+        inline=True
+    )
+
+    embed.add_field(
+        name="Question ID".ljust(10),
         value=question.id,
         inline=True
     )
@@ -101,6 +107,11 @@ class AnswerButton(discord.ui.Button['ChooseQuestion']):
                 value='Found an error in this question? Please, let us know in <#1085444549666680906>!',
                 inline=False
             )
+        embed.add_field(
+            name="Our explanation:",
+            value=f"||{self.view.question.answerExplanation if self.view.question.answerExplanation else 'No explanation provided'}||",
+            inline=False
+        )
         self.view.disable_answers()
         await interaction.edit_original_response(embed=embed, view=self.view)
 
