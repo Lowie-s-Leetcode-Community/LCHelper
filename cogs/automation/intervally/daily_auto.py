@@ -20,7 +20,7 @@ COG_START_TIMES = [
 
 REMINDER_MESSAGES = {
     datetime.time(hour=8, minute=30, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, it's your turn to write the editorial today! Please complete it by 6pm to help other community members in need! {Assets.blob_victory}",
-    datetime.time(hour=17, minute=43, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, remember to turn in your editorial by 6PM today! {Assets.blob_maman}",
+    datetime.time(hour=15, minute=00, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, remember to turn in your editorial by 6PM today! {Assets.blob_maman}",
     datetime.time(hour=18, minute=30, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, please turn in your editorial immediately! If you need help, please contact Community members for help! {Assets.blob_taco}"
 }
 
@@ -37,13 +37,16 @@ class DailyReminder(commands.Cog):
     @tasks.loop(minutes=1)
     async def reminder_task(self):
         now = datetime.datetime.now()
-        for reminder_time in REMINDER_MESSAGES.keys():
-            if now.hour == reminder_time.hour and now.minute == reminder_time.minute:
-                if not self.task_completed:
-                    await self.send_reminder(reminder_time)
+        current_time = datetime.time(hour=now.hour, minute=now.minute, tzinfo=datetime.timezone.utc)
 
-                    if reminder_time == max(REMINDER_MESSAGES.keys()) and not self.task_completed:
-                        await self.notify_experts()
+        if current_time not in REMINDER_MESSAGES.keys():
+            return
+
+        if not self.task_completed:
+            await self.send_reminder(current_time)
+
+            if current_time == max(REMINDER_MESSAGES.keys()) and not self.task_completed:
+                await self.notify_experts()
 
     async def send_reminder(self, reminder_time):
         if not self.daily_thread:
