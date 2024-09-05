@@ -4,6 +4,14 @@ from utils.asset import Assets
 color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
 
+role_emojies = {
+    "1280167940775481365": Assets.student, # llclass
+    "1085444843691577404": Assets.leader, # leader
+    "1148541475353788477": Assets.blob_victory, # lotm
+    "1087746207511757002": Assets.cat_typing, # bot team
+    "1085445066484621362": ":military_medal:", # core team
+}
+
 class LeaderboardEmbed(discord.Embed):
     def __init__(self, title: str, user_list: list, guild: discord.guild):
         super().__init__(
@@ -17,16 +25,26 @@ class LeaderboardEmbed(discord.Embed):
         member = discord.utils.find(lambda m: str(m.id) == discord_id, self.guild.members)
         if member:
             return member.name
-        else:
-            return None
-        
+        return None
+
+    def get_role_emojies(self, user):
+        res = ""
+        member = discord.utils.find(lambda m: str(m.id) == user['discordId'], self.guild.members)
+        for role, emoji in role_emojies.items():
+            m_role = member.get_role(int(role))
+            if m_role == None:
+                continue
+            res += emoji
+            break
+        return res
+
     # The Embed description content
     def format_display_string(self, user, idx):
         rank_idx = medal_list[idx - 1] if idx <= len(medal_list) else f"``#{idx}.``"
         discord_username = self.get_discord_username(user['discordId'])
         leetcode_url = f"https://leetcode.com/{user['leetcodeUsername']}"
-        return f"{rank_idx} [``{user['leetcodeUsername']}``]({leetcode_url} '{discord_username}'): {user['scoreEarned']}\n"
-    
+        return f"{rank_idx} [``{user['leetcodeUsername']}``]({leetcode_url} '{discord_username}') {self.get_role_emojies(user)}: {user['scoreEarned']}\n"
+
     def get_ranking_response(self):
         response = ""
         # get the first 10 users in the list
@@ -35,7 +53,7 @@ class LeaderboardEmbed(discord.Embed):
                 user = self.user_list[idx]
                 response += self.format_display_string(user, idx + 1)
         return response
-    
+
     def get_ranking_embed(self):
         response = self.get_ranking_response()
         self.description = response  
