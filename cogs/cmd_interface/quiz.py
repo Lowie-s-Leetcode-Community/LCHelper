@@ -8,7 +8,7 @@ from utils.asset import Assets
 
 keyAns = ['A. ', 'B. ', 'C. ', 'D. ', 'E. ', 'F. ']
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
-TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems','Software Architecture', 'Complexity Theory']
+TOPIC_TAGS = ['Algorithms', 'Concurrency', 'Distributed Systems', 'Software Architecture', 'Complexity Theory']
 
 
 def createEmbed(_question: None, _answer: None, choice: int = -1):
@@ -18,7 +18,7 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
     correct_answer = question.correctAnswerId - answers[0].id
 
     embed = discord.Embed(
-        color= getattr(Assets, question.difficulty.lower())
+        color=getattr(Assets, question.difficulty.lower())
     )
     embed.set_author(
         name="Quiz:",
@@ -30,7 +30,6 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
         inline=False
     )
 
-
     embed.add_field(
         name="Difficulty",
         value=question.difficulty,
@@ -39,12 +38,18 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
 
     embed.add_field(
         name="Topic",
-        value=f"||{question.category}||",
+        value=f"||{question.category}||".ljust(10),
         inline=True
     )
 
     embed.add_field(
-        name="Question ID",
+        name="Hint",
+        value=f"||{question.hint if question.hint else 'No hint provided' }||".ljust(10),
+        inline=True
+    )
+
+    embed.add_field(
+        name="Question ID".ljust(10),
         value=question.id,
         inline=True
     )
@@ -73,13 +78,13 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
 
 class AnswerButton(discord.ui.Button['ChooseQuestion']):
     def __init__(
-        self,
-        button_type: int,
-        is_correct: bool,
-        style: discord.ButtonStyle,
-        is_disabled: bool = False,
-        emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
-        label: str = None
+            self,
+            button_type: int,
+            is_correct: bool,
+            style: discord.ButtonStyle,
+            is_disabled: bool = False,
+            emoji: typing.Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
+            label: str = None
     ):
         super().__init__(style=style, label=label, disabled=is_disabled, emoji=emoji)
         self.button_type = button_type
@@ -102,6 +107,11 @@ class AnswerButton(discord.ui.Button['ChooseQuestion']):
                 value='Found an error in this question? Please, let us know in <#1085444549666680906>!',
                 inline=False
             )
+        embed.add_field(
+            name="Our explanation:",
+            value=f"||{self.view.question.answerExplanation if self.view.question.answerExplanation else 'No explanation provided'}||",
+            inline=False
+        )
         self.view.disable_answers()
         await interaction.edit_original_response(embed=embed, view=self.view)
 
@@ -172,8 +182,11 @@ class Quiz(commands.Cog):
 
     @_quiz.autocomplete('category')
     async def _quiz_autocomplete(self, interaction: discord.Interaction, current: str):
-        tags = TOPIC_TAGS
-        return [app_commands.Choice(name=tag, value=tag) for tag in tags][:len(TOPIC_TAGS)]
+        try:
+            tags = await self.client.db_api.read_category_quiz()
+        except Exception as e:
+            tags = TOPIC_TAGS
+        return [app_commands.Choice(name=tag, value=tag) for tag in tags][:len(tags)]
 
 
 async def setup(client):
