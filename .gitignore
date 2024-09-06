@@ -7,3 +7,4 @@ backup.json
 test_api.py
 .idea/**
 env/**
+resrc/**
