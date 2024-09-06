@@ -189,6 +189,14 @@ class WeeklyAutomation(commands.Cog):
 
         Sincerely,
         """
+
+        with open("resrc/weekly.txt", "w+") as wf:
+            for i in range(7):
+                if len(candidate[i]) > 0:
+                    wf.write(f"{candidate[i]['id']}\n")
+                else:
+                    wf.write(f"EXPERT\n")
+
         return message
 
     async def create_weekend_form(self):

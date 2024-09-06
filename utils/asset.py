@@ -12,10 +12,9 @@ class Assets:
     leetcode = "<:leetcode:1085915048167358554>"
     link_command = "</link:1206907242784235523>"
     blob_taco = "<a:blob_taco:1086131891796709457>"
-    blob_maman = "<a:blob_maman:1086131882141433916>"
-    blob_victory = "<a:blob_victory:1086119727719534642>"
+    blob_maman = "<:blob_maman:1086131882141433916>"
+    blob_victory = "<:blob_victory:1086119727719534642>"
     hourglass = ":hourglass:"
     easy = 0x00b8a3
     medium = 0xffc01e
     hard = 0xef4743
-
