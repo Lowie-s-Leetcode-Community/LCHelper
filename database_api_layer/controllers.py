@@ -351,6 +351,10 @@ class QuizController:
       query = query.where(db.DiscordQuizAnswer.discordQuizId == quesId)
     return session.scalars(query).all()
 
+  def read_quiz_category(self, session: Session):
+    query = select(db.DiscordQuiz.category).distinct()
+    return session.scalars(query).all()
+
   def read_many(self, session: Session,
                 difficulty: Optional[str] = None,
                 category: Optional[str] = None):
