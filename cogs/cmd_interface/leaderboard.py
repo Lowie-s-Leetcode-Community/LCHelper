@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from lib.embed.interactable_leaderboard_embed import RankingView, InteractableLeaderboardEmbed
 from utils.llc_datetime import LLCMonth
-from lib.embed.leaderboard_embed import role_emojies
+from utils.asset import Assets
 
 class Leaderboard(commands.Cog):
     def __init__(self, client):
@@ -11,16 +11,18 @@ class Leaderboard(commands.Cog):
 
     rank_group = app_commands.Group(name = "leaderboard", description = "Ranking Group")
 
-    @rank_group.command(name = "current", description = "Take a look at LLC's Hall of Fame")
+    @rank_group.command(name="current", description="Take a look at LLC's Hall of Fame")
     @app_commands.describe(by_user="User sorted by role")
-    @app_commands.choices(by_user=[
-        app_commands.Choice(name="Leetcoder of the Month", value="Leetcoder of the Month"),
-        app_commands.Choice(name="LLClass Student", value="LLClass Student"),
-        app_commands.Choice(name="Core Members", value="Core Members"),
-        app_commands.Choice(name="Bot Developer", value="Bot Developer"),
-    ])
+    @app_commands.choices(
+        by_user=list(
+            map(
+                lambda x: app_commands.Choice(name=x, value=x), 
+                ["Leetcoder of the Month", "LLClass Student", "Core Members", "Bot Developer"]
+            )
+        )
+    )
     async def _leaderboard_current(self, interaction: discord.Interaction, by_user: app_commands.Choice[str] = None):
-        await interaction.response.defer(thinking = True)
+        await interaction.response.defer(thinking=True)
         # Update current month name
         month = LLCMonth()
         title = f"{month.month_string()} ranking {month.date_range()}\n"
@@ -39,12 +41,14 @@ class Leaderboard(commands.Cog):
     
     @rank_group.command(name="previous", description="Take a look at LLC's previous Hall of Fame")
     @app_commands.describe(by_user="User sorted by role")
-    @app_commands.choices(by_user=[
-        app_commands.Choice(name="Leetcoder of the Month", value="Leetcoder of the Month"),
-        app_commands.Choice(name="LLClass Student", value="LLClass Student"),
-        app_commands.Choice(name="Core Members", value="Core Members"),
-        app_commands.Choice(name="Bot Developer", value="Bot Developer"),
-    ])
+    @app_commands.choices(
+        by_user=list(
+            map(
+                lambda role: app_commands.Choice(name=role, value=role), 
+                ["Leetcoder of the Month", "LLClass Student", "Core Members", "Bot Developer"]
+            )
+        )
+    )
     async def _leaderboard_previous(self, interaction: discord.Interaction, by_user: app_commands.Choice[str] = None):
         await interaction.response.defer(thinking = True)
         month = LLCMonth(previous=True)
@@ -68,7 +72,7 @@ class Leaderboard(commands.Cog):
             guild = interaction.guild
             role = discord.utils.get(guild.roles, name=by_user.value)
             user_list = [user for user in user_list if role in guild.get_member(int(user['discordId'])).roles]
-            role_emoji = role_emojies.get(str(role.id), "")
+            role_emoji = Assets.role_emojies.get(str(role.id), "")
             title += (' ' * ((len(title) - len(by_user.value)) // 2)) 
             title += f"(filtered by: {role_emoji} {by_user.value})"
         return user_list, title

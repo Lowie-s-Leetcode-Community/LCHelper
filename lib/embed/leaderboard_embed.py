@@ -4,13 +4,6 @@ from utils.asset import Assets
 color_list = [Assets.easy, Assets.medium, Assets.hard]
 medal_list = ["🥇", "🥈", "🥉"]
 
-role_emojies = {
-    "1280167940775481365": Assets.student, # llclass
-    "1085444843691577404": Assets.leader, # leader
-    "1148541475353788477": Assets.blob_victory, # lotm
-    "1087746207511757002": Assets.cat_typing, # bot team
-    "1085445066484621362": ":military_medal:", # core team
-}
 
 class LeaderboardEmbed(discord.Embed):
     def __init__(self, title: str, user_list: list, guild: discord.guild):
@@ -30,7 +23,7 @@ class LeaderboardEmbed(discord.Embed):
     def get_role_emojies(self, user):
         res = ""
         member = discord.utils.find(lambda m: str(m.id) == user['discordId'], self.guild.members)
-        for role, emoji in role_emojies.items():
+        for role, emoji in Assets.role_emojies.items():
             m_role = member.get_role(int(role))
             if m_role == None:
                 continue
