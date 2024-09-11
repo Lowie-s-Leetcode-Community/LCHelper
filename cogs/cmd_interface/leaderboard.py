@@ -64,14 +64,14 @@ class Leaderboard(commands.Cog):
     # will definitely need a help guide. Also streak count, ...
 
     async def filter_by_role(self, interaction, user_list, by_user, title):
-            if by_user is not None:
-                guild = interaction.guild
-                role = discord.utils.get(guild.roles, name=by_user.value)
-                user_list = [user for user in user_list if role in guild.get_member(int(user['discordId'])).roles]
-                role_emoji = role_emojies.get(str(role.id), "")
-                title += (' ' * ((len(title) - len(by_user.value)) // 2)) 
-                title += f"(filtered by: {role_emoji} {by_user.value})"
-            return user_list, title
+        if by_user is not None:
+            guild = interaction.guild
+            role = discord.utils.get(guild.roles, name=by_user.value)
+            user_list = [user for user in user_list if role in guild.get_member(int(user['discordId'])).roles]
+            role_emoji = role_emojies.get(str(role.id), "")
+            title += (' ' * ((len(title) - len(by_user.value)) // 2)) 
+            title += f"(filtered by: {role_emoji} {by_user.value})"
+        return user_list, title
 
 async def setup(client):
     await client.add_cog(Leaderboard(client), guilds=[discord.Object(id=client.config['serverId'])])
