@@ -32,12 +32,12 @@ class RedisAdmin(commands.Cog):
     async def _read(self, ctx, key: str):
         value = self.redis.hget("testing", key)
         desc_str =  f"Value at {key} doesn't exist!"
-        if value != None:
+        if value is not None:
             desc_str =  f"Value at {key} is {value.decode('utf-8')}!"
         embed = discord.Embed(
             title=":diamonds: Redis Get",
             description=desc_str,
-            color=Assets.hard if value == None else Assets.easy,
+            color=Assets.hard if value is None else Assets.easy,
             timestamp = ctx.message.created_at
         )
         embed.set_footer(
