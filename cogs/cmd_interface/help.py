@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 
-class help_command(commands.Cog):
+class Help(commands.Cog):
     def __init__(self, client):
         self.client = client
 
@@ -50,4 +50,4 @@ class help_command(commands.Cog):
 
 
 async def setup(client):
-    await client.add_cog(help_command(client), guilds=[discord.Object(id=client.config['serverId'])])
+    await client.add_cog(Help(client), guilds=[discord.Object(id=client.config['serverId'])])

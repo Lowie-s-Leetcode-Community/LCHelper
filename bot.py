@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import Interaction, app_commands
 from discord.app_commands import AppCommandError
+import redis
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -22,6 +23,7 @@ db_api = DatabaseAPILayer(client)
 client.db_api = db_api
 client.config = db_api.read_configs()
 client.config["contest"] = db_api.read_contest_configs()
+client.redis = redis.Redis(host='localhost', port=6379)
 
 async def main():
     async with client:

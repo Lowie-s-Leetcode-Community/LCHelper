@@ -27,7 +27,6 @@ class ConfirmView(discord.ui.View):
             child.emoji = "⏰"
         await self.response.edit(view = self)
 
-    # TODO: handle "update user"
     @discord.ui.button(label = "Xác minh tôi!", style = discord.ButtonStyle.primary)
     async def call_back(self, interaction: discord.Interaction, button: discord.ui.Button):
         assert interaction.user.id == self.user_id
