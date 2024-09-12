@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.ext import commands
 from utils.asset import Assets
 from utils.logger import Logger
-import random
 
 class Score(commands.Cog):
     def __init__(self, client):
@@ -21,7 +20,7 @@ class Score(commands.Cog):
         if score <= 0:
             await interaction.followup.send(f"{Assets.red_tick} **`Score` should be positive. Use `/score deduct` instead.**")
             return
-        daily_obj = await self.client.db_api.update_score(str(member.id), score, reason)
+        await self.client.db_api.update_score(str(member.id), score, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
 
     @score_group.command(name = 'deduct', description = "Deducts score")
@@ -35,7 +34,7 @@ class Score(commands.Cog):
             await interaction.followup.send(f"{Assets.red_tick} **`Score` should be positive. Use `/score add` instead.**")
             return
 
-        daily_obj = await self.client.db_api.update_score(str(member.id), -score, reason)
+        await self.client.db_api.update_score(str(member.id), -score, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score deducted.**")
 
 async def setup(client):
