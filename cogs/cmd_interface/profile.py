@@ -26,10 +26,11 @@ class Profile(commands.Cog):
            await interaction.followup.send(embed = embed)
            return
         
-        discord_id = interaction.user.id
-        embed = await Profile._find_profile_by_username(self, username = username, discord_id = discord_id)
-        await interaction.followup.send(embed = embed)
-        return
+        if username != None:
+            discord_id = interaction.user.id
+            embed = await Profile._find_profile_by_username(self, username = username, discord_id = discord_id)
+            await interaction.followup.send(embed = embed)
+            return
   
     async def _find_profile_by_member(self, member: Optional[discord.Member], discord_id = None):
         result = None
