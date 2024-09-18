@@ -14,19 +14,19 @@ class Profile(commands.Cog):
     @app_commands.describe(member = "Specify a member. Left empty if you want to check yours")
     async def _profile(self, interaction: discord.Interaction, member: Optional[discord.Member] = None, username : str = None):
         await interaction.response.defer(thinking = True)
-        if member == None and username == None:
+        if member is None and username is None:
            discord_id = interaction.user.id
            embed = await self._find_profile_by_member(self, member=member, discord_id=discord_id)
            await interaction.followup.send(embed = embed)
            return
               
-        if member != None:
+        if member is not None:
            discord_id = member.id
            embed = await self._find_profile_by_member(self, member = member, discord_id = discord_id)
            await interaction.followup.send(embed = embed)
            return
         
-        if username != None:
+        if username is not None:
             discord_id = interaction.user.id
             embed = await Profile._find_profile_by_username(self, username = username, discord_id = discord_id)
             await interaction.followup.send(embed = embed)
@@ -41,7 +41,7 @@ class Profile(commands.Cog):
             color = 0xffffff
         )
         result = self.client.db_api.read_profile(memberDiscordId = str(discord_id))
-        if result == None:
+        if result is None:
             embed = discord.Embed(
                 title = "Error",
                 description = "This account (or your account) is not verified yet. Please use /verify to verify if it's your account",
@@ -80,8 +80,6 @@ class Profile(commands.Cog):
             )
         return embed
 
-
-
     async def _find_profile_by_username(self, username : str, discord_id):
         embed = discord.Embed(
             description = f"""
@@ -91,7 +89,7 @@ class Profile(commands.Cog):
         )
         result = LC_utils.get_user_profile(username = username)
 
-        if result == None:
+        if result is None:
             #Invalid username case
             embed = discord.Embed(
                 title = "Error",
