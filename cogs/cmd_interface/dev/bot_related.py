@@ -1,8 +1,7 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
-import json
-# from bson import json_util
+
+from utils.asset import Assets
 
 class bot_related(commands.Cog):
     def __init__(self, client):
@@ -28,9 +27,7 @@ class bot_related(commands.Cog):
         )
         response = await ctx.send(embed = embed)
         embed = discord.Embed(
-            #title = "Pong!",
-            #description = "Here is my ping :)",
-            color = 0x03cffc,
+            color = Assets.easy,
             timestamp = ctx.message.created_at
         )
 

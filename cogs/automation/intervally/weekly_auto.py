@@ -175,7 +175,7 @@ class WeeklyAutomation(commands.Cog):
     async def get_announce_form(self):
         candidate = await self.get_member_solve_problem()
         week, month = get_next_LLC_week_and_month()
-        EXPERT = 1085445503858249740
+        EXPERT = "&1085445503858249740"
         message = f"""
         Danh sách chữa Daily tuần {week} tháng {month}: người chữa + người hỗ trợ (nếu có)
 
@@ -189,6 +189,14 @@ class WeeklyAutomation(commands.Cog):
 
         Sincerely,
         """
+
+        with open("resrc/weekly.txt", "w+") as wf:
+            for i in range(7):
+                if len(candidate[i]) > 0:
+                    wf.write(f"{candidate[i]['id']}\n")
+                else:
+                    wf.write(f"EXPERT\n")
+
         return message
 
     async def create_weekend_form(self):

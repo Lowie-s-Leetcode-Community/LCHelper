@@ -21,6 +21,7 @@ class MonthlyAutomation(commands.Cog):
         if os.getenv('START_UP_TASKS') == "True":
             self.monthly.start()
         self.logger = Logger(client)
+        self.crawl = Crawl(self.client)
 
     def cog_unload(self):
         self.monthly.cancel()
@@ -34,8 +35,7 @@ class MonthlyAutomation(commands.Cog):
         await self.purge_left_members()
         if date.today() == LLCMonth().first_day_of_month():
             await self.logger.on_automation_event("Crawl", "submissions()")
-            with Crawl(self.client) as crawl:
-               crawl.submissions()
+            await self.crawl.submissions()
             await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
             await self.set_leetcoder_of_the_month()
             await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
@@ -43,7 +43,7 @@ class MonthlyAutomation(commands.Cog):
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
         await self.update_leaderboard()
         await self.logger.on_automation_event("Monthly", "end-monthly")
-        
+
     async def purge_left_members(self):
         guilds = self.client.guilds
         guild = [g for g in guilds if g.id == int(self.client.config['serverId'])]
@@ -153,4 +153,3 @@ class MonthlyAutomation(commands.Cog):
 
 async def setup(client):
     await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
-    

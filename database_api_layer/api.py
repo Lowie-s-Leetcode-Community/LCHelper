@@ -626,3 +626,10 @@ class DatabaseAPILayer:
       result['monthScore'] = user_monthly_object.scoreEarned
 
     return result
+
+  async def read_category_quiz(self):
+    result = []
+    with Session(self.engine) as session:
+      controller = ctrlers.QuizController()
+      result = controller.read_quiz_category(session=session)
+    return result
