@@ -7,7 +7,7 @@ from datetime import datetime
 import asyncio
 import json
 import os
-from utils.llc_datetime import get_today, LLCMonth
+from utils.llc_datetime import get_today, get_previous_day, LLCMonth
 import database_api_layer.models as db
 from utils.logger import Logger
 from typing import Optional, List
@@ -366,6 +366,33 @@ class DatabaseAPILayer:
       )
 
       result = {"daily": user_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
+      await self.__commit(session, "Scoring",\
+        api_utils.score_update_jstr(memberDiscordId, delta, reason))
+    return result
+
+  async def update_daily_quiz_score(self, memberDiscordId: str, delta: int, reason: str):
+    result = {}
+    with Session(self.engine) as session:
+      user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
+      prev_daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_previous_day())
+      user_prev_daily_object_controller = ctrlers.UserDailyObjectController()
+      user_prev_daily_object = user_prev_daily_object_controller.read_one(session, user.id, prev_daily_obj.id)
+      if user_prev_daily_object == None:
+        user_prev_daily_object = user_prev_daily_object_controller.create_one(session, user.id, prev_daily_obj.id, scoreEarned=delta)
+      else:
+        user_prev_daily_object = user_prev_daily_object_controller.update_one(
+          session, user.id, prev_daily_obj.id, scoreEarnedDelta=delta
+        )
+      
+      if get_today().day == 1:
+        monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
+        session, user.id, LLCMonth(previous = True).first_day_of_month(), delta
+      )
+      else: 
+        monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
+        session, user.id, LLCMonth().first_day_of_month(), delta
+      )
+      result = {"daily": user_prev_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
       await self.__commit(session, "Scoring",\
         api_utils.score_update_jstr(memberDiscordId, delta, reason))
     return result
