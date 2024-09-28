@@ -251,7 +251,7 @@ class DailyAutomation(commands.Cog):
                           title="🎉 Daily Quiz - Correct Answers 🎉")
             i = 1
             for user in self.correct_users:
-                embed.add_field(name = "", value = f"**{i}.** {user.name}", inline = False)
+                embed.add_field(name = "", value = f"**{i}.** {user.mention}", inline = False)
                 i = i + 1
             embed.set_footer(text="Keep up the great work!")
             await channel.send(embed=embed)
@@ -269,7 +269,6 @@ class DailyAutomation(commands.Cog):
 
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
-        
         await self.logger.on_automation_event("Daily", "create_daily_quiz()")
         await self.create_daily_quiz()
         
