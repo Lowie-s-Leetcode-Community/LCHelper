@@ -329,19 +329,15 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       difficulty = None
       category = None
-
       if 'difficulty' in quiz_detail: difficulty = quiz_detail['difficulty']
       if 'category' in quiz_detail: category = quiz_detail['category']
       result = ctrlers.QuizController().read_many(session, difficulty, category)
-    
       if len(result) == 0:
         return []
       question = result[random.randint(0, len(result) - 1)]
-
       quiz.append(question)
       quiz.append(ctrlers.QuizController().read_quiz_answer(session, question.id))
     return quiz
-
 
   # Desc: update to DB and send a log message (reason)
   async def update_score(self, memberDiscordId: str, delta: int, reason: str):
@@ -370,11 +366,12 @@ class DatabaseAPILayer:
         api_utils.score_update_jstr(memberDiscordId, delta, reason))
     return result
 
-  async def update_daily_quiz_score(self, memberDiscordId: str, delta: int, reason: str):
+  async def update_daily_quiz_score(self, memberDiscordId: str, delta: int):
     result = {}
     with Session(self.engine) as session:
+      prev_date = get_previous_day()
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
-      prev_daily_obj = ctrlers.DailyObjectController().read_one(session, date=get_previous_day())
+      prev_daily_obj = ctrlers.DailyObjectController().read_one(session, prev_date)
       user_prev_daily_object_controller = ctrlers.UserDailyObjectController()
       user_prev_daily_object = user_prev_daily_object_controller.read_one(session, user.id, prev_daily_obj.id)
       if user_prev_daily_object == None:
@@ -384,8 +381,8 @@ class DatabaseAPILayer:
           session, user.id, prev_daily_obj.id, scoreEarnedDelta=delta
         )
       
-      if get_today().day == 1:
-        monthly_obj = ctrlers.UserMonthlyObjectController().update_one(
+      if prev_date < LLCMonth().first_day_of_month():
+        monthly_obj = ctrlers.UserMonthlyObjectController().updvate_one(
         session, user.id, LLCMonth(previous = True).first_day_of_month(), delta
       )
       else: 
@@ -394,7 +391,7 @@ class DatabaseAPILayer:
       )
       result = {"daily": user_prev_daily_object.as_dict(), "monthly": monthly_obj.as_dict()}
       await self.__commit(session, "Scoring",\
-        api_utils.score_update_jstr(memberDiscordId, delta, reason))
+        api_utils.score_update_jstr(memberDiscordId, delta, f"Correct answer for daily quiz on {prev_date.strftime('%d/%m/%Y')}"))
     return result
 
   async def update_gacha_score(self, memberDiscordId: str, delta: int):

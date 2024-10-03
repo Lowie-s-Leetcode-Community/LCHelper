@@ -16,7 +16,7 @@ from utils.logger import Logger
 from cogs.cmd_interface.quiz import createEmbed
 
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
-quiz_bonus = 1
+quiz_bonus = 2
 test_quiz_channel_id = 1258083345133207635
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
@@ -201,16 +201,14 @@ class DailyAutomation(commands.Cog):
         await channel.send(message, embeds=embeds)
     
     async def create_daily_quiz(self): 
-        quiz_detail = {}
+        quiz_detail = { 'difficulty' : random.choice(['Easy', 'Medium'])}
         quiz_result = self.client.db_api.read_quiz(quiz_detail)
-
         guild = await self.client.fetch_guild(self.client.config['serverId'])
         log_channel = await guild.fetch_channel(test_quiz_channel_id)
         quiz_message = await log_channel.send(embed = createEmbed(quiz_result[0], quiz_result[1]))
         answers = quiz_result[1]
         for i in range(len(answers)):
             await quiz_message.add_reaction(iconKey[i])
-        
         self.last_quiz = quiz_result
         self.last_quiz_message = quiz_message
         
@@ -231,13 +229,12 @@ class DailyAutomation(commands.Cog):
                 if user != self.client.user:
                     if user not in answered_members and reaction.emoji != correct_emoji:
                         answered_members.add(user)
-                    # Who answers the quiz correctly gets 1 point
+                    # Who answers the quiz correctly gets 2 point
                     elif user not in self.correct_users and reaction.emoji == correct_emoji: 
                         self.correct_users.add(user)
                         await self.client.db_api.update_daily_quiz_score(str(user.id), quiz_bonus, "Correct answer for the daily quiz.")
         answered_members = answered_members & self.correct_users
         self.correct_users = self.correct_users - answered_members
-
         await self.send_correct_users_list(log_channel)
 
     async def send_correct_users_list(self, channel):
