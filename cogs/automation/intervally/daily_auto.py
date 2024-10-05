@@ -236,7 +236,6 @@ class DailyAutomation(commands.Cog):
         self.correct_users = self.correct_users - answered_members
         # Who answers the quiz correctly gets 2 point
         for user in self.correct_users:
-            print(user.name)
             await self.client.db_api.update_daily_quiz_score(str(user.id), quiz_bonus)
         await self.send_correct_users_list(log_channel)
 
@@ -265,12 +264,10 @@ class DailyAutomation(commands.Cog):
         await self.logger.on_automation_event("Daily", "start-daily")
         await self.logger.on_automation_event("Daily", "create_new_daily_object()")
         daily_challenge_info = await self.create_new_daily_object()
-
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
         await self.logger.on_automation_event("Daily", "create_daily_quiz()")
         await self.create_daily_quiz()
-        
         await self.logger.on_automation_event("Daily", "contest_remind()")
         await self.contest_remind()
         await self.logger.on_automation_event("Daily", "remind_unverified()")
