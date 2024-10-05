@@ -371,7 +371,7 @@ class DatabaseAPILayer:
     with Session(self.engine) as session:
       prev_date = get_previous_day()
       user = ctrlers.UserController().read_one(session, discordId=memberDiscordId)
-      prev_daily_obj = ctrlers.DailyObjectController().read_one(session, prev_date)
+      prev_daily_obj = ctrlers.DailyObjectController().read_one(session, date = prev_date)
       user_prev_daily_object_controller = ctrlers.UserDailyObjectController()
       user_prev_daily_object = user_prev_daily_object_controller.read_one(session, user.id, prev_daily_obj.id)
       if user_prev_daily_object == None:
