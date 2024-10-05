@@ -4,7 +4,7 @@ import random
 import traceback
 
 import discord
-from discord import app_commands
+from discord import app_commands, Embed
 from discord.ext import commands, tasks
 
 from lib.embed.contest_embed import ContestEmbed
@@ -13,7 +13,11 @@ from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from utils.llc_datetime import get_today
 from utils.logger import Logger
+from cogs.cmd_interface.quiz import createEmbed
 
+iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
+quiz_bonus = 2
+test_quiz_channel_id = 1258083345133207635
 COG_START_TIMES = [
     datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
 ]
@@ -133,6 +137,9 @@ class DailyAutomation(commands.Cog):
         if os.getenv('START_UP_TASKS') == "True":
             self.daily.start()
         self.logger = Logger(client)
+        self.last_quiz = None
+        self.last_quiz_message = None
+        self.correct_users = set()
 
     async def cog_unload(self):
         self.daily.cancel()
@@ -192,14 +199,75 @@ class DailyAutomation(commands.Cog):
 
         message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: :ninja: There is a contest today!"
         await channel.send(message, embeds=embeds)
+    
+    async def create_daily_quiz(self): 
+        quiz_detail = { 'difficulty' : random.choice(['Easy', 'Medium'])}
+        quiz_result = self.client.db_api.read_quiz(quiz_detail)
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        log_channel = await guild.fetch_channel(test_quiz_channel_id)
+        quiz_message = await log_channel.send(embed = createEmbed(quiz_result[0], quiz_result[1]))
+        answers = quiz_result[1]
+        for i in range(len(answers)):
+            await quiz_message.add_reaction(iconKey[i])
+        self.last_quiz = quiz_result
+        self.last_quiz_message = quiz_message
+        
+    async def handle_prev_quiz_answers(self): 
+        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        log_channel = await guild.fetch_channel(test_quiz_channel_id)
+        self.correct_users.clear()
+        if (self.last_quiz == None):
+            await log_channel.send("There is no previous daily quiz.")
+            return
+        correct_answer = self.last_quiz[0].correctAnswerId - self.last_quiz[1][0].id
+        correct_emoji = iconKey[correct_answer]
+        self.last_quiz_message = await log_channel.fetch_message(self.last_quiz_message.id)
+
+        answered_members = set()
+        for reaction in self.last_quiz_message.reactions:
+            async for user in reaction.users():
+                if user == self.client.user: 
+                    continue
+                if user not in answered_members and reaction.emoji != correct_emoji:
+                    answered_members.add(user)
+                elif user not in self.correct_users and reaction.emoji == correct_emoji: 
+                    self.correct_users.add(user)
+        answered_members = answered_members & self.correct_users
+        self.correct_users = self.correct_users - answered_members
+        # Who answers the quiz correctly gets 2 point
+        for user in self.correct_users:
+            await self.client.db_api.update_daily_quiz_score(str(user.id), quiz_bonus)
+        await self.send_correct_users_list(log_channel)
+
+    async def send_correct_users_list(self, channel):
+        if not self.correct_users:
+            await channel.send("No one answered the previous daily quiz correctly.")
+            return
+        x = len(self.correct_users)
+        if x == 1: 
+            description = "There is only one member who answered the previous quiz correctly"
+        else:
+            description = f"There are {x} members who answered the previous daily quiz correctly"
+        embed = Embed(colour = discord.Colour.dark_teal(), description = description,
+                        title="🎉 Daily Quiz - Correct Answers 🎉")
+        i = 1
+        for user in self.correct_users:
+            embed.add_field(name = "", value = f"**{i}.** {user.mention}", inline = False)
+            i = i + 1
+        embed.set_footer(text="Keep up the great work!")
+        await channel.send(embed=embed)
 
     @tasks.loop(time=COG_START_TIMES)
     async def daily(self):
+        await self.logger.on_automation_event("Daily", "handle_prev_quiz_answers()")
+        await self.handle_prev_quiz_answers()
         await self.logger.on_automation_event("Daily", "start-daily")
         await self.logger.on_automation_event("Daily", "create_new_daily_object()")
         daily_challenge_info = await self.create_new_daily_object()
         await self.logger.on_automation_event("Daily", "create_daily_thread()")
         await self.create_daily_thread(daily_challenge_info)
+        await self.logger.on_automation_event("Daily", "create_daily_quiz()")
+        await self.create_daily_quiz()
         await self.logger.on_automation_event("Daily", "contest_remind()")
         await self.contest_remind()
         await self.logger.on_automation_event("Daily", "remind_unverified()")

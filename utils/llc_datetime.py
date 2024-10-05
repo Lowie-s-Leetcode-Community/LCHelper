@@ -12,6 +12,10 @@ def get_today():
   result = current_utc_time.date()
   return result
 
+def get_previous_day():
+  today = get_today()
+  return today - timedelta(days = 1)
+
 class LLCMonth:
   __day__ = None
   def __fdom__(self):
