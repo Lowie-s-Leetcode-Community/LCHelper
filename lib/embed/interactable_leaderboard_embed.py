@@ -32,10 +32,12 @@ class InteractableLeaderboardEmbed(LeaderboardEmbed):
         for idx in range(self.embed_limit * (self.page_number - 1) + 1, min(self.embed_limit * self.page_number, len(self.user_list)) + 1):
             user = self.user_list[idx - 1]
             response += self.format_display_string(user, idx)
-        response += "---\n"
+
         # interaction author's ranking
-        caller_ranking = self.get_index(expected_discord_username = str(self.interaction.user.id))
-        response += self.format_display_string(self.user_list[caller_ranking - 1], caller_ranking)
+        if self.interaction.user.id in [int(user['discordId']) for user in self.user_list]:
+            response += "---\n"
+            caller_ranking = self.get_index(expected_discord_username=str(self.interaction.user.id))
+            response += self.format_display_string(self.user_list[caller_ranking - 1], caller_ranking)
         self.set_footer(text = f"Hover on each user for their Discord username • Page {self.page_number}/{self.pages_count}")
         return response
     
