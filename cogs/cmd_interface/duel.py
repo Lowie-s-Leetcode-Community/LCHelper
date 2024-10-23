@@ -1,7 +1,7 @@
 import asyncio
 import random
 from enum import Enum
-from typing import Dict, Union
+from typing import Awaitable, Callable, Dict, List, Union
 
 import discord
 from discord import app_commands
@@ -17,7 +17,86 @@ class PlayerStatus(Enum):
     WON = 2
 
 
-class DuelButton(discord.ui.Button["DuelView"]):
+class DuelProblemButtonType:
+    SUBMIT = "Submit"
+    PROPOSE_DRAW = "Propose Draw"
+    SURRENDER = "Surrender"
+
+
+class DuelProblemButton(discord.ui.Button["DuelProblemView"]):
+    def __init__(
+        self,
+        label: str,
+        style: discord.ButtonStyle,
+        players: List[discord.Member],
+        is_disabled: bool = False,
+        emoji: Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
+    ):
+        super().__init__(style=style, label=label, disabled=is_disabled, emoji=emoji)
+        self.players = players
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user not in self.players:
+            await interaction.response.send_message(
+                "Only the players involved in this duel can interact with these buttons.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.view.handle_button_press(interaction, self.label)
+
+
+class DuelProblemView(discord.ui.View):
+    def __init__(
+        self,
+        players: List[discord.Member],
+        submit: Callable[[discord.Interaction], Awaitable[bool]],
+        propose_draw: Callable[[discord.Interaction], Awaitable[bool]],
+        surrender: Callable[[discord.Interaction], Awaitable[bool]],
+    ):
+        super().__init__(timeout=Duel.DUEL_DURATION)
+        self.submit_handler = submit
+        self.propose_draw_handler = propose_draw
+        self.surrender_handler = surrender
+
+        self.add_item(
+            DuelProblemButton(
+                label=DuelProblemButtonType.SUBMIT,
+                style=discord.ButtonStyle.green,
+                players=players,
+            )
+        ).add_item(
+            DuelProblemButton(
+                label=DuelProblemButtonType.PROPOSE_DRAW,
+                style=discord.ButtonStyle.blurple,
+                players=players,
+            )
+        ).add_item(
+            DuelProblemButton(
+                label=DuelProblemButtonType.SURRENDER,
+                style=discord.ButtonStyle.red,
+                players=players,
+            )
+        )
+
+    async def handle_button_press(
+        self, interaction: discord.Interaction, button_type: DuelProblemButtonType
+    ) -> None:
+        handler: Callable[[discord.Interaction], Awaitable[bool]] = None
+
+        if button_type == DuelProblemButtonType.SUBMIT:
+            handler = self.submit_handler
+        elif button_type == DuelProblemButtonType.PROPOSE_DRAW:
+            handler = self.propose_draw_handler
+        else:  # DuelProblemButtonType.SURRENDER:
+            handler = self.surrender_handler
+
+        if not await handler(interaction):
+            return
+        self.stop()
+
+
+class DuelRequestButton(discord.ui.Button["DuelRequestView"]):
     def __init__(
         self,
         label: str,
@@ -40,19 +119,18 @@ class DuelButton(discord.ui.Button["DuelView"]):
         await self.view.handle_choice(accept=(self.label == "Accept"))
 
 
-class DuelView(discord.ui.View):
-    VIEW_TIMEOUT = 120  # seconds
+class DuelRequestView(discord.ui.View):
+    REQUEST_TIMEOUT = 120  # seconds
 
     def __init__(self, opponent: discord.Member):
-        super().__init__(timeout=self.VIEW_TIMEOUT)
+        super().__init__(timeout=self.REQUEST_TIMEOUT)
         self.accepted = None
         self.add_item(
-            DuelButton(
+            DuelRequestButton(
                 label="Accept", style=discord.ButtonStyle.green, opponent=opponent
             )
-        )
-        self.add_item(
-            DuelButton(
+        ).add_item(
+            DuelRequestButton(
                 label="Decline", style=discord.ButtonStyle.red, opponent=opponent
             )
         )
@@ -82,9 +160,7 @@ class Duel(commands.Cog):
         self.userid_to_duelid: Dict[int, str] = {}
         self.duelid_to_timeout: Dict[str, asyncio.Task] = {}
 
-    duel_group = app_commands.Group(name="duel", description="Duel commands")
-
-    @duel_group.command(name="start", description="I challenge you to a duel!")
+    @app_commands.command(name="duel", description="I challenge you to a duel!")
     async def duel(self, interaction: discord.Interaction, opponent: discord.Member):
         if not await self.__check_verify(interaction, opponent):
             return
@@ -97,7 +173,7 @@ class Duel(commands.Cog):
         self.userid_to_duelid[interaction.user.id] = duel_id
         self.userid_to_duelid[opponent.id] = duel_id
 
-        view = DuelView(opponent)
+        view = DuelRequestView(opponent)
         await interaction.response.send_message(
             f"{opponent.mention}, you have been challenged to a duel by {interaction.user.mention}. Do you accept?",
             view=view,
@@ -113,10 +189,17 @@ class Duel(commands.Cog):
             self.duelid_to_problemid[duel_id] = int(problem["id"])
 
             embed = ProblemEmbed(problem)
+            view = DuelProblemView(
+                [interaction.user, opponent],
+                self.submit,
+                self.propose_draw,
+                self.surrender,
+            )
             await interaction.followup.send(
                 f"**Duel between {interaction.user.mention} and {opponent.mention} has started.**\n\n"
                 f"Solve this problem: **{problem['id']}. {problem['title']}**\n",
                 embed=embed,
+                view=view,
             )
             # Start the timer
             self.duelid_to_timeout[duel_id] = asyncio.create_task(
@@ -242,7 +325,7 @@ class Duel(commands.Cog):
         player_0, player_1 = self.__get_players(self.userid_to_duelid[player_id])
         return player_1 if player_id == player_0.id else player_0
 
-    async def __check_solution(self, interaction: discord.Interaction) -> PlayerStatus:
+    def __check_solution(self, interaction: discord.Interaction) -> PlayerStatus:
         """
         Check if the player has solved the problem. Also checks if the opponent has
         also solved the problem, in which case compare the submission time.
@@ -295,43 +378,44 @@ class Duel(commands.Cog):
             self.duelid_to_timeout[duel_id].cancel()
             del self.duelid_to_timeout[duel_id]
 
-    @duel_group.command(name="submit", description="Submit your solution!")
-    async def submit(self, interaction: discord.Interaction):
+    async def submit(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
-            return
+            return False
 
         opponent = self.__get_opponent(interaction.user.id)
-        player_status = await self.__check_solution(interaction)
+        player_status = self.__check_solution(interaction)
 
         if player_status == PlayerStatus.WON:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Sorry {opponent.mention}, your opponent has solved the problem first."
                 f"\nCongratulations {interaction.user.mention}, you have won the duel!"
             )
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
+            return True
         elif player_status == PlayerStatus.UNFINISHED:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Sorry {interaction.user.mention}, you have not solved the problem yet."
             )
+            return False
         else:  # PlayerStatus.LOST
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Sorry {interaction.user.mention}, your opponent has solved the problem "
                 f"first.\n{opponent.mention} wins the duel!"
             )
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
+            return True
 
-    @duel_group.command(name="propose_draw", description="Propose a draw.")
-    async def propose_draw(self, interaction: discord.Interaction):
+    async def propose_draw(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
-            return
+            return False
 
         duel_id = self.userid_to_duelid[interaction.user.id]
         player_0, player_1 = self.__get_players(duel_id)
 
         opponent = player_1 if interaction.user == player_0 else player_0
 
-        view = DuelView(opponent)
-        await interaction.response.send_message(
+        view = DuelRequestView(opponent)
+        await interaction.followup.send(
             f"{opponent.mention}, {interaction.user.mention} has proposed a draw. Do you accept?",
             view=view,
         )
@@ -339,32 +423,35 @@ class Duel(commands.Cog):
 
         if view.accepted is None:
             await interaction.followup.send("Draw request timed out.")
+            return False
         elif view.accepted:
             await interaction.followup.send(
                 f"The duel between {interaction.user.mention} and {opponent.mention} "
                 f"has ended in a draw!"
             )
             self.__reset_duel(duel_id)
+            return True
         else:
             await interaction.followup.send(
                 f"{opponent.mention} has declined the draw request. The duel continues!"
             )
+            return False
 
-    @duel_group.command(name="surrender", description="Surrender the duel.")
-    async def surrender(self, interaction: discord.Interaction):
+    async def surrender(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
-            return
+            return False
 
         duel_id = self.userid_to_duelid[interaction.user.id]
         player_0, player_1 = self.__get_players(duel_id)
 
         opponent = player_1 if interaction.user == player_0 else player_0
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"{interaction.user.mention} has surrendered. {opponent.mention} wins the duel!"
         )
 
         self.__reset_duel(duel_id)
+        return True
 
 
 async def setup(client):
