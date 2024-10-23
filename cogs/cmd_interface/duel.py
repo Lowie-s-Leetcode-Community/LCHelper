@@ -1,5 +1,6 @@
 import asyncio
 import random
+from enum import Enum
 from typing import Dict, Union
 
 import discord
@@ -8,6 +9,12 @@ from discord.ext import commands
 
 from lib.embed.problem import ProblemEmbed
 from utils.lc_utils import LC_utils
+
+
+class PlayerStatus(Enum):
+    UNFINISHED = 0
+    LOST = 1
+    WON = 2
 
 
 class DuelButton(discord.ui.Button["DuelView"]):
@@ -136,9 +143,7 @@ class Duel(commands.Cog):
                 if opponent.id in self.userid_to_duelid
                 else self.userid_to_duelid[interaction.user.id]
             )
-            player_0, player_1 = map(
-                lambda x: self.client.get_user(int(x)), duel_id.split()
-            )
+            player_0, player_1 = self.__get_players(duel_id)
             problem_id = self.duelid_to_problemid[duel_id]
 
             if not problem_id:  # Request state
@@ -167,7 +172,18 @@ class Duel(commands.Cog):
         """
         await asyncio.sleep(self.DUEL_DURATION)
         if duel_id in self.duelid_to_problemid:
-            await interaction.followup.send("The duel has ended due to timeout.")
+            player_0, player_1 = self.__get_players(duel_id)
+            announce_msg = f"The duel between {player_0.mention} and {player_1.mention} has ended due to timeout."
+            player_0_status = self.__check_solution(interaction)
+
+            if player_0_status == PlayerStatus.UNFINISHED:
+                announce_msg += "\nThe duel ended in a draw!"
+            elif player_0_status == PlayerStatus.WON:
+                announce_msg += f"\n{player_0.mention} wins the duel!"
+            else:
+                announce_msg += f"\n{player_1.mention} wins the duel!"
+
+            await interaction.followup.send(announce_msg)
             self.__reset_duel(duel_id)
 
     async def __is_active_player(self, interaction: discord.Interaction):
@@ -216,26 +232,53 @@ class Duel(commands.Cog):
 
         return True
 
-    async def __check_solution(self, interaction: discord.Interaction):
+    def __get_players(self, duel_id: str) -> tuple[discord.Member, discord.Member]:
+        player_0, player_1 = map(
+            lambda x: self.client.get_user(int(x)), duel_id.split()
+        )
+        return player_0, player_1
+
+    def __get_opponent(self, player_id: int) -> discord.Member:
+        player_0, player_1 = self.__get_players(self.userid_to_duelid[player_id])
+        return player_1 if player_id == player_0.id else player_0
+
+    async def __check_solution(self, interaction: discord.Interaction) -> PlayerStatus:
         """
-        Check if the player has solved the problem.
+        Check if the player has solved the problem. Also checks if the opponent has
+        also solved the problem, in which case compare the submission time.
         """
         # Get recent AC submissions of the player
-        result = self.client.db_api.read_profile(
+        duel_id = self.userid_to_duelid[interaction.user.id]
+        problem = self.problemid_to_problem[self.duelid_to_problemid[duel_id]]
+
+        player = self.client.db_api.read_profile(
             memberDiscordId=str(interaction.user.id)
         )
-        crawl_results = LC_utils.get_recent_ac(result["leetcodeUsername"], limit=1)
+        opponent = self.client.db_api.read_profile(
+            memberDiscordId=str(self.__get_opponent(interaction.user.id).id)
+        )
 
-        if crawl_results is None or len(crawl_results) == 0:
-            return False
+        player_recent_ac = LC_utils.get_recent_ac(player["leetcodeUsername"], limit=1)
+        opponent_recent_ac = LC_utils.get_recent_ac(
+            opponent["leetcodeUsername"], limit=1
+        )
 
-        problem = self.problemid_to_problem[
-            self.duelid_to_problemid[self.userid_to_duelid[interaction.user.id]]
-        ]
-        if crawl_results[0]["title"] == problem["title"]:
-            return True
+        # Opponent has not solved the problem
+        if not opponent_recent_ac or opponent_recent_ac[0]["title"] != problem["title"]:
+            if not player_recent_ac or player_recent_ac[0]["title"] != problem["title"]:
+                return PlayerStatus.UNFINISHED
+            return PlayerStatus.WON
 
-        return False
+        # Opponent has solved the problem
+        if not player_recent_ac or player_recent_ac[0]["title"] != problem["title"]:
+            return PlayerStatus.LOST
+
+        if int(opponent_recent_ac[0]["timestamp"]) < int(
+            player_recent_ac[0]["timestamp"]
+        ):
+            return PlayerStatus.LOST
+
+        return PlayerStatus.WON
 
     def __reset_duel(self, duel_id: str):
         """
@@ -257,15 +300,25 @@ class Duel(commands.Cog):
         if not await self.__is_active_player(interaction):
             return
 
-        if await self.__check_solution(interaction):
+        opponent = self.__get_opponent(interaction.user.id)
+        player_status = await self.__check_solution(interaction)
+
+        if player_status == PlayerStatus.WON:
             await interaction.response.send_message(
-                f"Congratulations {interaction.user.mention}, you have won the duel!"
+                f"Sorry {opponent.mention}, your opponent has solved the problem first."
+                f"\nCongratulations {interaction.user.mention}, you have won the duel!"
             )
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
-        else:
+        elif player_status == PlayerStatus.UNFINISHED:
             await interaction.response.send_message(
                 f"Sorry {interaction.user.mention}, you have not solved the problem yet."
             )
+        else:  # PlayerStatus.LOST
+            await interaction.response.send_message(
+                f"Sorry {interaction.user.mention}, your opponent has solved the problem "
+                f"first.\n{opponent.mention} wins the duel!"
+            )
+            self.__reset_duel(self.userid_to_duelid[interaction.user.id])
 
     @duel_group.command(name="propose_draw", description="Propose a draw.")
     async def propose_draw(self, interaction: discord.Interaction):
@@ -273,9 +326,7 @@ class Duel(commands.Cog):
             return
 
         duel_id = self.userid_to_duelid[interaction.user.id]
-        player_0, player_1 = map(
-            lambda x: self.client.get_user(int(x)), duel_id.split()
-        )
+        player_0, player_1 = self.__get_players(duel_id)
 
         opponent = player_1 if interaction.user == player_0 else player_0
 
@@ -305,9 +356,7 @@ class Duel(commands.Cog):
             return
 
         duel_id = self.userid_to_duelid[interaction.user.id]
-        player_0, player_1 = map(
-            lambda x: self.client.get_user(int(x)), duel_id.split()
-        )
+        player_0, player_1 = self.__get_players(duel_id)
 
         opponent = player_1 if interaction.user == player_0 else player_0
 
