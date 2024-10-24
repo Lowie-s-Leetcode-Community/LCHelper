@@ -9,6 +9,7 @@ from discord.ext import commands
 
 from lib.embed.problem import ProblemEmbed
 from utils.lc_utils import LC_utils
+from utils.roles import Roles
 
 
 class PlayerStatus(Enum):
@@ -140,6 +141,73 @@ class DuelRequestView(discord.ui.View):
         self.stop()
 
 
+class DuelAssignButton(discord.ui.Button["DuelAssignView"]):
+    def __init__(
+        self,
+        label: str,
+        style: discord.ButtonStyle,
+        players: List[discord.Member],
+        is_disabled: bool = False,
+        emoji: Union[str, discord.Emoji, discord.PartialEmoji, None] = None,
+    ):
+        super().__init__(style=style, label=label, disabled=is_disabled, emoji=emoji)
+        self.players = players
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user not in self.players:
+            await interaction.response.send_message(
+                "Only the players assigned to this duel can interact with these buttons.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        await self.view.handle_choice(
+            interaction=interaction, accept=(self.label == "Accept")
+        )
+
+
+class DuelAssignView(discord.ui.View):
+    ASSIGN_TIMEOUT = 120  # seconds
+
+    def __init__(self, players: List[discord.Member]):
+        super().__init__(timeout=self.ASSIGN_TIMEOUT)
+        self.players = players
+        self.accepted: List[bool | None] = [None, None]
+        self.add_item(
+            DuelAssignButton(
+                label="Accept", style=discord.ButtonStyle.green, players=players
+            )
+        ).add_item(
+            DuelAssignButton(
+                label="Decline", style=discord.ButtonStyle.red, players=players
+            )
+        )
+
+    async def handle_choice(self, interaction: discord.Interaction, accept: bool):
+        player_index = self.players.index(interaction.user)
+
+        if self.accepted[player_index]:
+            await interaction.followup.send(
+                "You have already accepted to the duel assignment.", ephemeral=True
+            )
+            return
+
+        self.accepted[player_index] = accept
+
+        if accept:
+            if all(self.accepted):
+                self.stop()
+                return
+            await interaction.followup.send(
+                f"{interaction.user.mention} have accepted the duel assignment. "
+                f"Waiting for the other player to accept."
+            )
+        else:  # not accept
+            other_index = 1 - player_index
+            self.accepted[other_index] = True
+            self.stop()
+
+
 class Duel(commands.Cog):
     DUEL_DURATION = 600  # seconds
 
@@ -162,16 +230,13 @@ class Duel(commands.Cog):
 
     @app_commands.command(name="duel", description="I challenge you to a duel!")
     async def duel(self, interaction: discord.Interaction, opponent: discord.Member):
-        if not await self.__check_verify(interaction, opponent):
+        if not await self.__check_verify(interaction, interaction.user, opponent):
             return
 
-        if await self.__check_existing_duel(interaction, opponent):
+        if await self.__check_existing_duel(interaction, interaction.user, opponent):
             return
 
-        duel_id = f"{interaction.user.id} {opponent.id}"
-        self.duelid_to_problemid[duel_id] = None
-        self.userid_to_duelid[interaction.user.id] = duel_id
-        self.userid_to_duelid[opponent.id] = duel_id
+        duel_id = self.__initialize_duel(interaction.user, opponent)
 
         view = DuelRequestView(opponent)
         await interaction.response.send_message(
@@ -184,63 +249,122 @@ class Duel(commands.Cog):
             await interaction.followup.send("Duel request timed out.")
             self.__reset_duel(duel_id)
         elif view.accepted:
-            problem = random.choice(self.problem_list)
-            self.problemid_to_problem[int(problem["id"])] = problem
-            self.duelid_to_problemid[duel_id] = int(problem["id"])
-
-            embed = ProblemEmbed(problem)
-            view = DuelProblemView(
-                [interaction.user, opponent],
-                self.submit,
-                self.propose_draw,
-                self.surrender,
-            )
-            await interaction.followup.send(
-                f"**Duel between {interaction.user.mention} and {opponent.mention} has started.**\n\n"
-                f"Solve this problem: **{problem['id']}. {problem['title']}**\n",
-                embed=embed,
-                view=view,
-            )
-            # Start the timer
-            self.duelid_to_timeout[duel_id] = asyncio.create_task(
-                self.__duel_timeout_coro(interaction=interaction, duel_id=duel_id)
-            )
+            await self.__activate_duel(interaction, interaction.user, opponent, duel_id)
         else:
             await interaction.followup.send(
                 f"{opponent.mention} has declined the duel request."
             )
             self.__reset_duel(duel_id)
 
+    @app_commands.command(
+        name="duel_assign", description="Assign a duel between two users."
+    )
+    @commands.has_any_role(Roles.LLCLASS_TA)
+    async def duel_assign(
+        self,
+        interaction: discord.Interaction,
+        player_0: discord.Member,
+        player_1: discord.Member,
+    ):
+        if not await self.__check_verify(interaction, player_0, player_1):
+            return
+
+        if await self.__check_existing_duel(interaction, player_0, player_1):
+            return
+
+        duel_id = self.__initialize_duel(player_0, player_1)
+
+        view = DuelAssignView([player_0, player_1])
+        await interaction.response.send_message(
+            f"{player_0.mention} {player_1.mention}, you have been assigned to duel"
+            f" each other. Do you accept?"
+            f"\n\nFor the duel to start, **both players must accept**",
+            view=view,
+        )
+        await view.wait()
+
+        if any(accepted is None for accepted in view.accepted):
+            await interaction.followup.send("Duel assignment timed out.")
+            self.__reset_duel(duel_id)
+        elif all(view.accepted):
+            await self.__activate_duel(interaction, player_0, player_1, duel_id)
+        else:  # One of the players declined
+            for i in range(2):
+                if view.accepted[i] is False:
+                    await interaction.followup.send(
+                        f"{view.players[i].mention} has declined the duel assignment."
+                    )
+                    break
+            self.__reset_duel(duel_id)
+
+    def __initialize_duel(
+        self, player_0: discord.Member, player_1: discord.Member
+    ) -> str:
+        duel_id = f"{player_0.id} {player_1.id}"
+        self.duelid_to_problemid[duel_id] = None
+        self.userid_to_duelid[player_0.id] = duel_id
+        self.userid_to_duelid[player_1.id] = duel_id
+        return duel_id
+
+    async def __activate_duel(
+        self,
+        interaction: discord.Interaction,
+        player_0: discord.Member,
+        player_1: discord.Member,
+        duel_id: str,
+    ) -> None:
+        problem = random.choice(self.problem_list)
+        self.problemid_to_problem[int(problem["id"])] = problem
+        self.duelid_to_problemid[duel_id] = int(problem["id"])
+
+        embed = ProblemEmbed(problem)
+        view = DuelProblemView(
+            [player_0, player_1],
+            self.submit,
+            self.propose_draw,
+            self.surrender,
+        )
+        await interaction.followup.send(
+            f"**Duel between {player_0.mention} and {player_1.mention} has started.**\n\n"
+            f"Solve this problem: **{problem['id']}. {problem['title']}**\n",
+            embed=embed,
+            view=view,
+        )
+        # Start the timer
+        self.duelid_to_timeout[duel_id] = asyncio.create_task(
+            self.__duel_timeout_coro(interaction=interaction, duel_id=duel_id)
+        )
+
     async def __check_existing_duel(
-        self, interaction: discord.Interaction, opponent: discord.Member
+        self,
+        interaction: discord.Interaction,
+        player_0: discord.Member,
+        player_1: discord.Member,
     ) -> bool:
         """
         Check if either the challenger or the opponent is already in a duel (Request or Active state).
         """
-        if (
-            interaction.user.id in self.userid_to_duelid
-            or opponent.id in self.userid_to_duelid
-        ):
+        if player_0.id in self.userid_to_duelid or player_1.id in self.userid_to_duelid:
             duel_id = (
-                self.userid_to_duelid[opponent.id]
-                if opponent.id in self.userid_to_duelid
-                else self.userid_to_duelid[interaction.user.id]
+                self.userid_to_duelid[player_1.id]
+                if player_1.id in self.userid_to_duelid
+                else self.userid_to_duelid[player_0.id]
             )
-            player_0, player_1 = self.__get_players(duel_id)
+            duel_player_0, duel_player_1 = self.__get_players(duel_id)
             problem_id = self.duelid_to_problemid[duel_id]
 
             if not problem_id:  # Request state
                 await interaction.response.send_message(
-                    f"A duel request between {player_0.mention} and {player_1.mention} "
+                    f"A duel request between {duel_player_0.mention} and {duel_player_1.mention} "
                     f"is already in progress. Try again later."
                 )
             else:  # Active state
                 current_problem = self.problemid_to_problem[problem_id]
                 embed = ProblemEmbed(current_problem)
                 await interaction.response.send_message(
-                    "**A duel between the following players is already in progress.**\n\n"
+                    f"**A duel between the following players is already in progress.**\n\n"
                     f"**Current Duel Details:**\n"
-                    f"**Players Involved**: {player_0.mention} vs {player_1.mention}\n"
+                    f"**Players Involved**: {duel_player_0.mention} vs {duel_player_1.mention}\n"
                     f"**Problem**: {current_problem['id']}. {current_problem['title']}\n",
                     embed=embed,
                 )
@@ -290,27 +414,28 @@ class Duel(commands.Cog):
         return True
 
     async def __check_verify(
-        self, interaction: discord.Interaction, opponent: discord.Member
+        self,
+        interaction: discord.Interaction,
+        player_0: discord.Member,
+        player_1: discord.Member,
     ):
         """
         Check if the challenger and the opponent are Verified members.
         """
-        if not self.client.db_api.read_profile(
-            memberDiscordId=str(interaction.user.id)
-        ):
+        if not self.client.db_api.read_profile(memberDiscordId=str(player_0.id)):
             await interaction.response.send_message(
-                "Only verified member can duel. Type `/verify` to (re)verify yourself immediately!"
+                f"The player {player_0.mention} is not verified and cannot participate in the duel."
             )
             return False
 
-        if not self.client.db_api.read_profile(memberDiscordId=str(opponent.id)):
+        if not self.client.db_api.read_profile(memberDiscordId=str(player_1.id)):
             await interaction.response.send_message(
-                f"The opponent {opponent.mention} is not verified and cannot participate in the duel."
+                f"The player {player_1.mention} is not verified and cannot participate in the duel."
             )
             return False
 
-        if interaction.user == opponent:
-            await interaction.response.send_message("You cannot duel yourself.")
+        if player_0 == player_1:
+            await interaction.response.send_message("A member cannot duel themselves.")
             return False
 
         return True
