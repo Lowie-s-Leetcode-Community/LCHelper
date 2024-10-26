@@ -211,14 +211,76 @@ class DuelAssignView(discord.ui.View):
 
 class Duel(commands.Cog):
     DUEL_DURATION = 600  # seconds
+    ALLOWED_TOPICS = [
+        "Array",
+        "Backtracking",
+        "Binary Search",
+        "Binary Tree",
+        "Breadth-First Search",
+        "Counting",
+        "Depth-First Search",
+        "Dynamic Programming",
+        "Graph",
+        "Greedy",
+        "Hash Table",
+        "Heap (Priority Queue)",
+        "Linked List",
+        "Math",
+        "Matrix",
+        "Prefix Sum",
+        "Queue",
+        "Recursion",
+        "Simulation",
+        "Sliding Window",
+        "Sorting",
+        "Stack",
+        "String",
+        "Tree",
+        "Two Pointers",
+    ]
+    TOPICS_BLACKLIST = [
+        "Binary Indexed Tree",
+        "Binary Search Tree",
+        "Bitmask",
+        "Brainteaser",
+        "Combinatorics",
+        "Concurrency",
+        "Data Stream",
+        "Database",
+        "Design",
+        "Divide and Conquer",
+        "Enumeration",
+        "Game Theory",
+        "Hash Function",
+        "Interactive",
+        "Iterator",
+        "Line Sweep",
+        "Minimum Spanning Tree",
+        "Monotonic Queue",
+        "Monotonic Stack",
+        "Number Theory",
+        "Ordered Set",
+        "Probability and Statistics",
+        "Quickselect",
+        "Randomized",
+        "Reservoir Sampling",
+        "Rolling Hash",
+        "Segment Tree",
+        "Shell",
+        "Topological Sort",
+        "Strongly Connected Component",
+    ]
 
     def __init__(self, client):
         self.client = client
 
         self.problem_list = [
             problem
-            for problem in self.client.db_api.read_problems_all()
-            if problem["difficulty"] in ["Easy", "Medium"] and not problem["isPremium"]
+            for problem in self.client.db_api.read_problems_all_with_topics()
+            if problem["difficulty"] in ["Easy", "Medium"]
+            and not problem["isPremium"]
+            and any(topic in self.ALLOWED_TOPICS for topic in problem["topics"])
+            and all(topic not in self.TOPICS_BLACKLIST for topic in problem["topics"])
         ]
 
         # Duel ID syntax: f"{player_0.id} {player_1.id}"
@@ -240,7 +302,21 @@ class Duel(commands.Cog):
     @duel_group.command(
         name="request", description="Challenge another verified member to a duel."
     )
-    async def duel(self, interaction: discord.Interaction, opponent: discord.Member):
+    @app_commands.describe(
+        difficulty="Choose a difficulty for the problem (default is both Easy and Medium)"
+    )
+    @app_commands.choices(
+        difficulty=[
+            app_commands.Choice(name="Easy", value="Easy"),
+            app_commands.Choice(name="Medium", value="Medium"),
+        ]
+    )
+    async def duel(
+        self,
+        interaction: discord.Interaction,
+        opponent: discord.Member,
+        difficulty: str | None = None,
+    ):
         if not await self.__check_verify(interaction, interaction.user, opponent):
             return
 
@@ -251,7 +327,10 @@ class Duel(commands.Cog):
 
         view = DuelRequestView(opponent)
         await interaction.response.send_message(
-            f"{opponent.mention}, you have been challenged to a duel by {interaction.user.mention}. Do you accept?",
+            f"{opponent.mention}, you have been challenged to a duel by {interaction.user.mention}. Do you accept?"
+            + (
+                "" if difficulty is None else f"\n\nChosen difficulty: **{difficulty}**"
+            ),
             view=view,
         )
         await view.wait()
@@ -260,7 +339,9 @@ class Duel(commands.Cog):
             await interaction.followup.send("Duel request timed out.")
             self.__reset_duel(duel_id)
         elif view.accepted:
-            await self.__activate_duel(interaction, interaction.user, opponent, duel_id)
+            await self.__activate_duel(
+                interaction, interaction.user, opponent, difficulty, duel_id
+            )
         else:
             await interaction.followup.send(
                 f"{opponent.mention} has declined the duel request."
@@ -271,11 +352,21 @@ class Duel(commands.Cog):
         name="assign", description="Assign a duel between two verified members."
     )
     @commands.has_any_role(Roles.LLCLASS_TA)
+    @app_commands.describe(
+        difficulty="Choose a difficulty for the problem (default is both Easy and Medium)"
+    )
+    @app_commands.choices(
+        difficulty=[
+            app_commands.Choice(name="Easy", value="Easy"),
+            app_commands.Choice(name="Medium", value="Medium"),
+        ]
+    )
     async def duel_assign(
         self,
         interaction: discord.Interaction,
         player_0: discord.Member,
         player_1: discord.Member,
+        difficulty: str | None = None,
     ):
         if not await self.__check_verify(interaction, player_0, player_1):
             return
@@ -289,7 +380,10 @@ class Duel(commands.Cog):
         await interaction.response.send_message(
             f"{player_0.mention} {player_1.mention}, you have been assigned to duel"
             f" each other. Do you accept?"
-            f"\n\nFor the duel to start, **both players must accept**",
+            + (
+                "" if difficulty is None else f"\n\n**Chosen difficulty**: {difficulty}"
+            ),
+            +"\n\nFor the duel to start, **both players must accept**",
             view=view,
         )
         await view.wait()
@@ -298,7 +392,9 @@ class Duel(commands.Cog):
             await interaction.followup.send("Duel assignment timed out.")
             self.__reset_duel(duel_id)
         elif all(view.accepted):
-            await self.__activate_duel(interaction, player_0, player_1, duel_id)
+            await self.__activate_duel(
+                interaction, player_0, player_1, difficulty, duel_id
+            )
         else:  # One of the players declined
             for i in range(2):
                 if view.accepted[i] is False:
@@ -322,9 +418,15 @@ class Duel(commands.Cog):
         interaction: discord.Interaction,
         player_0: discord.Member,
         player_1: discord.Member,
+        difficulty: str | None,
         duel_id: str,
     ) -> None:
         problem = random.choice(self.problem_list)
+
+        if difficulty:
+            while problem["difficulty"] != difficulty:
+                problem = random.choice(self.problem_list)
+
         self.problemid_to_problem[int(problem["id"])] = problem
         self.duelid_to_problemid[duel_id] = int(problem["id"])
         self.duelid_to_start_time[duel_id] = int(time.time())
