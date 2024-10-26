@@ -229,6 +229,9 @@ class Duel(commands.Cog):
         self.userid_to_duelid: Dict[int, str] = {}
         self.duelid_to_timeout: Dict[str, asyncio.Task] = {}
 
+        # Maps duel_id to player_id that proposed the draw
+        self.duels_proposing_draw: Dict[str, int] = {}
+
         # start_time is a timestamp when the duel was activated
         self.duelid_to_start_time: Dict[str, int] = {}
 
@@ -592,6 +595,19 @@ class Duel(commands.Cog):
 
         duel_id = self.userid_to_duelid[interaction.user.id]
         player_0, player_1 = self.__get_players(duel_id)
+
+        if duel_id in self.duels_proposing_draw:
+            if self.duels_proposing_draw[duel_id] == interaction.user.id:
+                await interaction.followup.send(
+                    "You have already proposed a draw. Please wait for your opponent to respond.",
+                    ephemeral=True,
+                )
+            else:
+                await interaction.followup.send(
+                    "Your opponent has already proposed a draw. Please respond to their request.",
+                    ephemeral=True,
+                )
+            return False
 
         opponent = player_1 if interaction.user == player_0 else player_0
 
