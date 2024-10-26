@@ -1,5 +1,6 @@
 import asyncio
 import random
+import time
 from enum import Enum
 from typing import Awaitable, Callable, Dict, List, Union
 
@@ -228,6 +229,9 @@ class Duel(commands.Cog):
         self.userid_to_duelid: Dict[int, str] = {}
         self.duelid_to_timeout: Dict[str, asyncio.Task] = {}
 
+        # start_time is a timestamp when the duel was activated
+        self.duelid_to_start_time: Dict[str, int] = {}
+
     @app_commands.command(name="duel", description="I challenge you to a duel!")
     async def duel(self, interaction: discord.Interaction, opponent: discord.Member):
         if not await self.__check_verify(interaction, interaction.user, opponent):
@@ -316,6 +320,7 @@ class Duel(commands.Cog):
         problem = random.choice(self.problem_list)
         self.problemid_to_problem[int(problem["id"])] = problem
         self.duelid_to_problemid[duel_id] = int(problem["id"])
+        self.duelid_to_start_time[duel_id] = int(time.time())
 
         embed = ProblemEmbed(problem)
         view = DuelProblemView(
@@ -326,6 +331,7 @@ class Duel(commands.Cog):
         )
         await interaction.followup.send(
             f"**Duel between {player_0.mention} and {player_1.mention} has started.**\n\n"
+            f"**Duel ends <t:{int(time.time() + self.DUEL_DURATION)}:R>**\n\n"
             f"Solve this problem: **{problem['id']}. {problem['title']}**\n",
             embed=embed,
             view=view,
@@ -386,9 +392,15 @@ class Duel(commands.Cog):
             if player_0_status == PlayerStatus.UNFINISHED:
                 announce_msg += "\nThe duel ended in a draw!"
             elif player_0_status == PlayerStatus.WON:
-                announce_msg += f"\n{player_0.mention} wins the duel!"
+                announce_msg += (
+                    f"\n{player_0.mention} wins the duel!"
+                    + self.__get_submit_stats(duel_id)
+                )
             else:
-                announce_msg += f"\n{player_1.mention} wins the duel!"
+                announce_msg += (
+                    f"\n{player_1.mention} wins the duel!"
+                    + self.__get_submit_stats(duel_id)
+                )
 
             await interaction.followup.send(announce_msg)
             self.__reset_duel(duel_id)
@@ -472,13 +484,13 @@ class Duel(commands.Cog):
         )
 
         # Opponent has not solved the problem
-        if not opponent_recent_ac or opponent_recent_ac[0]["title"] != problem["title"]:
-            if not player_recent_ac or player_recent_ac[0]["title"] != problem["title"]:
+        if not self.__has_solved(problem, opponent_recent_ac, duel_id):
+            if not self.__has_solved(problem, player_recent_ac, duel_id):
                 return PlayerStatus.UNFINISHED
             return PlayerStatus.WON
 
         # Opponent has solved the problem
-        if not player_recent_ac or player_recent_ac[0]["title"] != problem["title"]:
+        if not self.__has_solved(problem, player_recent_ac, duel_id):
             return PlayerStatus.LOST
 
         if int(opponent_recent_ac[0]["timestamp"]) < int(
@@ -487,6 +499,14 @@ class Duel(commands.Cog):
             return PlayerStatus.LOST
 
         return PlayerStatus.WON
+
+    def __has_solved(self, problem: dict, player_recent_ac: dict, duel_id: str) -> bool:
+        return (
+            player_recent_ac
+            and player_recent_ac[0]["title"] == problem["title"]
+            and int(player_recent_ac[0]["timestamp"])
+            > self.duelid_to_start_time[duel_id]
+        )
 
     def __reset_duel(self, duel_id: str):
         """
@@ -497,11 +517,45 @@ class Duel(commands.Cog):
         del self.userid_to_duelid[player_0_id]
         del self.userid_to_duelid[player_1_id]
         del self.duelid_to_problemid[duel_id]
+        del self.duelid_to_start_time[duel_id]
 
         # Duel can either be in Request or Active state
         if duel_id in self.duelid_to_timeout:
             self.duelid_to_timeout[duel_id].cancel()
             del self.duelid_to_timeout[duel_id]
+
+    def __get_submit_stats(self, duel_id: str) -> str:
+        problem = self.problemid_to_problem[self.duelid_to_problemid[duel_id]]
+        player_0, player_1 = self.__get_players(duel_id)
+
+        player_0_profile = self.client.db_api.read_profile(
+            memberDiscordId=str(player_0.id)
+        )
+        player_1_profile = self.client.db_api.read_profile(
+            memberDiscordId=str(player_1.id)
+        )
+
+        player_0_recent_ac = LC_utils.get_recent_ac(
+            player_0_profile["leetcodeUsername"], limit=1
+        )
+        player_1_recent_ac = LC_utils.get_recent_ac(
+            player_1_profile["leetcodeUsername"], limit=1
+        )
+
+        return (
+            "\n\n**Statistics:**\n"
+            + (
+                f"{player_0.mention} has not submitted a solution yet."
+                if not self.__has_solved(problem, player_0_recent_ac, duel_id)
+                else f"{player_0.mention} solved the problem in {int(player_0_recent_ac[0]['timestamp']) - self.duelid_to_start_time[duel_id]} seconds. **[LeetCode Submission](https://leetcode.com/submissions/detail/{player_0_recent_ac[0]['id']})**"
+            )
+            + "\n"
+            + (
+                f"{player_1.mention} has not submitted a solution yet."
+                if not self.__has_solved(problem, player_1_recent_ac, duel_id)
+                else f"{player_1.mention} solved the problem in {int(player_1_recent_ac[0]['timestamp']) - self.duelid_to_start_time[duel_id]} seconds. **[LeetCode Submission](https://leetcode.com/submissions/detail/{player_1_recent_ac[0]['id']})**"
+            )
+        )
 
     async def submit(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
@@ -512,8 +566,9 @@ class Duel(commands.Cog):
 
         if player_status == PlayerStatus.WON:
             await interaction.followup.send(
-                f"Sorry {opponent.mention}, your opponent has solved the problem first."
-                f"\nCongratulations {interaction.user.mention}, you have won the duel!"
+                f"Sorry {opponent.mention}, your opponent has solved the problem first.\n"
+                f":confetti_ball: Congratulations {interaction.user.mention}, you have won the duel! :confetti_ball:"
+                + self.__get_submit_stats(self.userid_to_duelid[interaction.user.id])
             )
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
             return True
@@ -524,8 +579,9 @@ class Duel(commands.Cog):
             return False
         else:  # PlayerStatus.LOST
             await interaction.followup.send(
-                f"Sorry {interaction.user.mention}, your opponent has solved the problem "
-                f"first.\n{opponent.mention} wins the duel!"
+                f"Sorry {interaction.user.mention}, your opponent has solved the problem first.\n"
+                f":confetti_ball: {opponent.mention} wins the duel! :confetti_ball:"
+                + self.__get_submit_stats(self.userid_to_duelid[interaction.user.id])
             )
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
             return True
