@@ -235,7 +235,11 @@ class Duel(commands.Cog):
         # start_time is a timestamp when the duel was activated
         self.duelid_to_start_time: Dict[str, int] = {}
 
-    @app_commands.command(name="duel", description="I challenge you to a duel!")
+    duel_group = app_commands.Group(name="duel", description="Commands for dueling.")
+
+    @duel_group.command(
+        name="request", description="Challenge another verified member to a duel."
+    )
     async def duel(self, interaction: discord.Interaction, opponent: discord.Member):
         if not await self.__check_verify(interaction, interaction.user, opponent):
             return
@@ -263,8 +267,8 @@ class Duel(commands.Cog):
             )
             self.__reset_duel(duel_id)
 
-    @app_commands.command(
-        name="duel_assign", description="Assign a duel between two users."
+    @duel_group.command(
+        name="assign", description="Assign a duel between two verified members."
     )
     @commands.has_any_role(Roles.LLCLASS_TA)
     async def duel_assign(
@@ -560,6 +564,10 @@ class Duel(commands.Cog):
             )
         )
 
+    @duel_group.command(
+        name="submit",
+        description="Submit to your current duel after you have submitted on LeetCode.",
+    )
     async def submit(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
             return False
@@ -589,6 +597,9 @@ class Duel(commands.Cog):
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
             return True
 
+    @duel_group.command(
+        name="propose_draw", description="Propose a draw to your opponent in the duel."
+    )
     async def propose_draw(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
             return False
@@ -634,6 +645,9 @@ class Duel(commands.Cog):
             )
             return False
 
+    @duel_group.command(
+        name="surrender", description="Surrender from your current duel."
+    )
     async def surrender(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
             return False
