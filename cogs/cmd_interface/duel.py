@@ -380,10 +380,8 @@ class Duel(commands.Cog):
         await interaction.response.send_message(
             f"{player_0.mention} {player_1.mention}, you have been assigned to duel"
             f" each other. Do you accept?"
-            + (
-                "" if difficulty is None else f"\n\n**Chosen difficulty**: {difficulty}"
-            ),
-            +"\n\nFor the duel to start, **both players must accept**",
+            + ("" if difficulty is None else f"\n\nChosen difficulty: **{difficulty}**")
+            + "\n\nFor the duel to start, **both players must accept**",
             view=view,
         )
         await view.wait()
@@ -626,12 +624,12 @@ class Duel(commands.Cog):
         del self.userid_to_duelid[player_0_id]
         del self.userid_to_duelid[player_1_id]
         del self.duelid_to_problemid[duel_id]
-        del self.duelid_to_start_time[duel_id]
 
         # Duel can either be in Request or Active state
         if duel_id in self.duelid_to_timeout:
             self.duelid_to_timeout[duel_id].cancel()
             del self.duelid_to_timeout[duel_id]
+            del self.duelid_to_start_time[duel_id]
 
     def __get_submit_stats(self, duel_id: str) -> str:
         problem = self.problemid_to_problem[self.duelid_to_problemid[duel_id]]
@@ -666,19 +664,20 @@ class Duel(commands.Cog):
             )
         )
 
-    @duel_group.command(
-        name="submit",
-        description="Submit to your current duel after you have submitted on LeetCode.",
-    )
     async def submit(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
             return False
 
         opponent = self.__get_opponent(interaction.user.id)
         player_status = self.__check_solution(interaction)
+        interaction_send: Callable[[str], Awaitable[None]] = (
+            interaction.response.send_message
+            if interaction.type == discord.InteractionType.application_command
+            else interaction.followup.send
+        )
 
         if player_status == PlayerStatus.WON:
-            await interaction.followup.send(
+            await interaction_send(
                 f"Sorry {opponent.mention}, your opponent has solved the problem first.\n"
                 f":confetti_ball: Congratulations {interaction.user.mention}, you have won the duel! :confetti_ball:"
                 + self.__get_submit_stats(self.userid_to_duelid[interaction.user.id])
@@ -686,12 +685,12 @@ class Duel(commands.Cog):
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
             return True
         elif player_status == PlayerStatus.UNFINISHED:
-            await interaction.followup.send(
+            await interaction_send(
                 f"Sorry {interaction.user.mention}, you have not solved the problem yet."
             )
             return False
         else:  # PlayerStatus.LOST
-            await interaction.followup.send(
+            await interaction_send(
                 f"Sorry {interaction.user.mention}, your opponent has solved the problem first.\n"
                 f":confetti_ball: {opponent.mention} wins the duel! :confetti_ball:"
                 + self.__get_submit_stats(self.userid_to_duelid[interaction.user.id])
@@ -699,24 +698,26 @@ class Duel(commands.Cog):
             self.__reset_duel(self.userid_to_duelid[interaction.user.id])
             return True
 
-    @duel_group.command(
-        name="propose_draw", description="Propose a draw to your opponent in the duel."
-    )
     async def propose_draw(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
             return False
 
         duel_id = self.userid_to_duelid[interaction.user.id]
         player_0, player_1 = self.__get_players(duel_id)
+        interaction_send: Callable[[str], Awaitable[None]] = (
+            interaction.response.send_message
+            if interaction.type == discord.InteractionType.application_command
+            else interaction.followup.send
+        )
 
         if duel_id in self.duels_proposing_draw:
             if self.duels_proposing_draw[duel_id] == interaction.user.id:
-                await interaction.followup.send(
+                await interaction_send(
                     "You have already proposed a draw. Please wait for your opponent to respond.",
                     ephemeral=True,
                 )
             else:
-                await interaction.followup.send(
+                await interaction_send(
                     "Your opponent has already proposed a draw. Please respond to their request.",
                     ephemeral=True,
                 )
@@ -725,7 +726,7 @@ class Duel(commands.Cog):
         opponent = player_1 if interaction.user == player_0 else player_0
 
         view = DuelRequestView(opponent)
-        await interaction.followup.send(
+        await interaction_send(
             f"{opponent.mention}, {interaction.user.mention} has proposed a draw. Do you accept?",
             view=view,
         )
@@ -747,24 +748,45 @@ class Duel(commands.Cog):
             )
             return False
 
-    @duel_group.command(
-        name="surrender", description="Surrender from your current duel."
-    )
     async def surrender(self, interaction: discord.Interaction) -> bool:
         if not await self.__is_active_player(interaction):
             return False
 
         duel_id = self.userid_to_duelid[interaction.user.id]
         player_0, player_1 = self.__get_players(duel_id)
+        interaction_send: Callable[[str], Awaitable[None]] = (
+            interaction.response.send_message
+            if interaction.type == discord.InteractionType.application_command
+            else interaction.followup.send
+        )
 
         opponent = player_1 if interaction.user == player_0 else player_0
 
-        await interaction.followup.send(
+        await interaction_send(
             f"{interaction.user.mention} has surrendered. {opponent.mention} wins the duel!"
         )
 
         self.__reset_duel(duel_id)
         return True
+
+    @duel_group.command(
+        name="submit",
+        description="Submit to your current duel after you have submitted on LeetCode.",
+    )
+    async def duel_submit(self, interaction: discord.Interaction):
+        await self.submit(interaction)
+
+    @duel_group.command(
+        name="propose_draw", description="Propose a draw to your opponent in the duel."
+    )
+    async def duel_propose_draw(self, interaction: discord.Interaction):
+        await self.propose_draw(interaction)
+
+    @duel_group.command(
+        name="surrender", description="Surrender from your current duel."
+    )
+    async def duel_surrender(self, interaction: discord.Interaction):
+        await self.surrender(interaction)
 
 
 async def setup(client):
