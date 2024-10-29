@@ -741,6 +741,7 @@ class Duel(commands.Cog):
                 )
             return False
 
+        self.duels_proposing_draw[duel_id] = interaction.user.id
         opponent = player_1 if interaction.user == player_0 else player_0
 
         view = DuelRequestView(opponent)
@@ -749,6 +750,7 @@ class Duel(commands.Cog):
             view=view,
         )
         await view.wait()
+        del self.duels_proposing_draw[duel_id]
 
         if view.accepted is None:
             await interaction.followup.send("Draw request timed out.")
