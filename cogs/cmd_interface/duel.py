@@ -19,6 +19,11 @@ class PlayerStatus(Enum):
     WON = 2
 
 
+class DuelDuration:  # seconds
+    EASY = 600
+    MEDIUM = 1200
+
+
 class DuelProblemButtonType:
     SUBMIT = "Submit"
     PROPOSE_DRAW = "Propose Draw"
@@ -55,8 +60,9 @@ class DuelProblemView(discord.ui.View):
         submit: Callable[[discord.Interaction], Awaitable[bool]],
         propose_draw: Callable[[discord.Interaction], Awaitable[bool]],
         surrender: Callable[[discord.Interaction], Awaitable[bool]],
+        duel_duration: int = DuelDuration.EASY,
     ):
-        super().__init__(timeout=Duel.DUEL_DURATION)
+        super().__init__(timeout=duel_duration)
         self.submit_handler = submit
         self.propose_draw_handler = propose_draw
         self.surrender_handler = surrender
@@ -210,7 +216,6 @@ class DuelAssignView(discord.ui.View):
 
 
 class Duel(commands.Cog):
-    DUEL_DURATION = 600  # seconds
     ALLOWED_TOPICS = [
         "Array",
         "Backtracking",
@@ -428,6 +433,11 @@ class Duel(commands.Cog):
         self.problemid_to_problem[int(problem["id"])] = problem
         self.duelid_to_problemid[duel_id] = int(problem["id"])
         self.duelid_to_start_time[duel_id] = int(time.time())
+        duel_duration = (
+            DuelDuration.EASY
+            if problem["difficulty"] == "Easy"
+            else DuelDuration.MEDIUM
+        )
 
         embed = ProblemEmbed(problem)
         view = DuelProblemView(
@@ -435,17 +445,20 @@ class Duel(commands.Cog):
             self.submit,
             self.propose_draw,
             self.surrender,
+            duel_duration=duel_duration,
         )
         await interaction.followup.send(
             f"**Duel between {player_0.mention} and {player_1.mention} has started.**\n\n"
-            f"**Duel ends <t:{int(time.time() + self.DUEL_DURATION)}:R>**\n\n"
+            f"**Duel ends <t:{int(time.time() + duel_duration)}:R>**\n\n"
             f"Solve this problem: **{problem['id']}. {problem['title']}**\n",
             embed=embed,
             view=view,
         )
         # Start the timer
         self.duelid_to_timeout[duel_id] = asyncio.create_task(
-            self.__duel_timeout_coro(interaction=interaction, duel_id=duel_id)
+            self.__duel_timeout_coro(
+                interaction=interaction, duel_id=duel_id, duel_duration=duel_duration
+            )
         )
 
     async def __check_existing_duel(
@@ -486,11 +499,16 @@ class Duel(commands.Cog):
 
         return False
 
-    async def __duel_timeout_coro(self, interaction: discord.Interaction, duel_id: str):
+    async def __duel_timeout_coro(
+        self,
+        interaction: discord.Interaction,
+        duel_id: str,
+        duel_duration: int = DuelDuration.EASY,
+    ):
         """
         Coroutine to handle the timeout of an Active duel.
         """
-        await asyncio.sleep(self.DUEL_DURATION)
+        await asyncio.sleep(duel_duration)
         if duel_id in self.duelid_to_problemid:
             player_0, player_1 = self.__get_players(duel_id)
             announce_msg = f"The duel between {player_0.mention} and {player_1.mention} has ended due to timeout."
