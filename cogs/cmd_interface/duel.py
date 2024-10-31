@@ -87,6 +87,11 @@ class DuelProblemView(discord.ui.View):
             )
         )
 
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            child.disabled = True
+        self.stop()
+
     async def handle_button_press(
         self, interaction: discord.Interaction, button_type: DuelProblemButtonType
     ) -> None:
@@ -101,6 +106,13 @@ class DuelProblemView(discord.ui.View):
 
         if not await handler(interaction):
             return
+        await self._disable(interaction)
+
+    async def _disable(self, interaction: discord.Interaction):
+        """Disable all buttons and stop the view."""
+        for child in self.children:
+            child.disabled = True
+        await interaction.edit_original_response(view=self)
         self.stop()
 
 
@@ -124,7 +136,9 @@ class DuelRequestButton(discord.ui.Button["DuelRequestView"]):
             )
             return
         await interaction.response.defer(ephemeral=True)
-        await self.view.handle_choice(accept=(self.label == "Accept"))
+        await self.view.handle_choice(
+            accept=(self.label == "Accept"), interaction=interaction
+        )
 
 
 class DuelRequestView(discord.ui.View):
@@ -143,8 +157,20 @@ class DuelRequestView(discord.ui.View):
             )
         )
 
-    async def handle_choice(self, accept: bool):
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            child.disabled = True
+        self.stop()
+
+    async def handle_choice(self, accept: bool, interaction: discord.Interaction):
         self.accepted = accept
+        await self._disable(interaction)
+
+    async def _disable(self, interaction: discord.Interaction):
+        """Disable all buttons and stop the view."""
+        for child in self.children:
+            child.disabled = True
+        await interaction.edit_original_response(view=self)
         self.stop()
 
 
@@ -190,6 +216,11 @@ class DuelAssignView(discord.ui.View):
             )
         )
 
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            child.disabled = True
+        self.stop()
+
     async def handle_choice(self, interaction: discord.Interaction, accept: bool):
         player_index = self.players.index(interaction.user)
 
@@ -203,7 +234,7 @@ class DuelAssignView(discord.ui.View):
 
         if accept:
             if all(self.accepted):
-                self.stop()
+                await self._disable(interaction)
                 return
             await interaction.followup.send(
                 f"{interaction.user.mention} have accepted the duel assignment. "
@@ -212,7 +243,14 @@ class DuelAssignView(discord.ui.View):
         else:  # not accept
             other_index = 1 - player_index
             self.accepted[other_index] = True
-            self.stop()
+            await self._disable(interaction)
+
+    async def _disable(self, interaction: discord.Interaction):
+        """Disable all buttons and stop the view."""
+        for child in self.children:
+            child.disabled = True
+        await interaction.edit_original_response(view=self)
+        self.stop()
 
 
 class Duel(commands.Cog):
@@ -341,6 +379,7 @@ class Duel(commands.Cog):
         await view.wait()
 
         if view.accepted is None:
+            await (await interaction.original_response()).edit(view=view)
             await interaction.followup.send("Duel request timed out.")
             self.__reset_duel(duel_id)
         elif view.accepted:
@@ -392,6 +431,7 @@ class Duel(commands.Cog):
         await view.wait()
 
         if any(accepted is None for accepted in view.accepted):
+            await (await interaction.original_response()).edit(view=view)
             await interaction.followup.send("Duel assignment timed out.")
             self.__reset_duel(duel_id)
         elif all(view.accepted):
@@ -457,7 +497,10 @@ class Duel(commands.Cog):
         # Start the timer
         self.duelid_to_timeout[duel_id] = asyncio.create_task(
             self.__duel_timeout_coro(
-                interaction=interaction, duel_id=duel_id, duel_duration=duel_duration
+                interaction=interaction,
+                duel_id=duel_id,
+                duel_duration=duel_duration,
+                view=view,
             )
         )
 
@@ -502,6 +545,7 @@ class Duel(commands.Cog):
     async def __duel_timeout_coro(
         self,
         interaction: discord.Interaction,
+        view: DuelProblemView,
         duel_id: str,
         duel_duration: int = DuelDuration.EASY,
     ):
@@ -527,6 +571,7 @@ class Duel(commands.Cog):
                     + self.__get_submit_stats(duel_id)
                 )
 
+            await interaction.followup.edit_message(view=view)
             await interaction.followup.send(announce_msg)
             self.__reset_duel(duel_id)
 
@@ -722,7 +767,7 @@ class Duel(commands.Cog):
 
         duel_id = self.userid_to_duelid[interaction.user.id]
         player_0, player_1 = self.__get_players(duel_id)
-        interaction_send: Callable[[str], Awaitable[None]] = (
+        interaction_send: Callable[[str], Awaitable[None | discord.WebhookMessage]] = (
             interaction.response.send_message
             if interaction.type == discord.InteractionType.application_command
             else interaction.followup.send
@@ -745,7 +790,7 @@ class Duel(commands.Cog):
         opponent = player_1 if interaction.user == player_0 else player_0
 
         view = DuelRequestView(opponent)
-        await interaction_send(
+        propose_message = await interaction_send(
             f"{opponent.mention}, {interaction.user.mention} has proposed a draw. Do you accept?",
             view=view,
         )
@@ -753,6 +798,10 @@ class Duel(commands.Cog):
         del self.duels_proposing_draw[duel_id]
 
         if view.accepted is None:
+            if propose_message:
+                await propose_message.edit(view=view)
+            else:
+                await (await interaction.original_response()).edit(view=view)
             await interaction.followup.send("Draw request timed out.")
             return False
         elif view.accepted:
