@@ -512,7 +512,7 @@ class Duel(commands.Cog):
         if duel_id in self.duelid_to_problemid:
             player_0, player_1 = self.__get_players(duel_id)
             announce_msg = f"The duel between {player_0.mention} and {player_1.mention} has ended due to timeout."
-            player_0_status = self.__check_solution(interaction)
+            player_0_status = self.__check_solution(player_0.id)
 
             if player_0_status == PlayerStatus.UNFINISHED:
                 announce_msg += "\nThe duel ended in a draw!"
@@ -587,20 +587,18 @@ class Duel(commands.Cog):
         player_0, player_1 = self.__get_players(self.userid_to_duelid[player_id])
         return player_1 if player_id == player_0.id else player_0
 
-    def __check_solution(self, interaction: discord.Interaction) -> PlayerStatus:
+    def __check_solution(self, player_id: int) -> PlayerStatus:
         """
         Check if the player has solved the problem. Also checks if the opponent has
         also solved the problem, in which case compare the submission time.
         """
         # Get recent AC submissions of the player
-        duel_id = self.userid_to_duelid[interaction.user.id]
+        duel_id = self.userid_to_duelid[player_id]
         problem = self.problemid_to_problem[self.duelid_to_problemid[duel_id]]
 
-        player = self.client.db_api.read_profile(
-            memberDiscordId=str(interaction.user.id)
-        )
+        player = self.client.db_api.read_profile(memberDiscordId=str(player_id))
         opponent = self.client.db_api.read_profile(
-            memberDiscordId=str(self.__get_opponent(interaction.user.id).id)
+            memberDiscordId=str(self.__get_opponent(player_id).id)
         )
 
         player_recent_ac = LC_utils.get_recent_ac(player["leetcodeUsername"], limit=1)
@@ -687,7 +685,7 @@ class Duel(commands.Cog):
             return False
 
         opponent = self.__get_opponent(interaction.user.id)
-        player_status = self.__check_solution(interaction)
+        player_status = self.__check_solution(interaction.user.id)
         interaction_send: Callable[[str], Awaitable[None]] = (
             interaction.response.send_message
             if interaction.type == discord.InteractionType.application_command
