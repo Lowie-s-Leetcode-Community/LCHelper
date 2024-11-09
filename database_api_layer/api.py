@@ -537,7 +537,21 @@ class DatabaseAPILayer:
       problem_controller = ctrlers.ProblemController()
       result = list(map(lambda x: x.as_dict(), problem_controller.read_many(session=session)))
     return result
-  
+
+  def read_problems_all_with_topics(self):
+    # PERF: This is currently noticeably slower than read_problems_all
+    result = []
+    with Session(self.engine) as session:
+      problem_controller = ctrlers.ProblemController()
+      problems = problem_controller.read_many(session=session)
+
+      for problem in problems:
+        prob = problem.as_dict()
+        prob["topics"] = list(map(lambda topic: topic.topicName, problem.topics))
+        result.append(prob)
+
+    return result
+
   def read_problem_from_slug(self, titleSlug):
     with Session(self.engine) as session:
       problem_controller = ctrlers.ProblemController()
