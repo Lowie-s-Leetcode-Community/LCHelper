@@ -1,6 +1,7 @@
-from datetime import datetime
-import requests
 import json
+from datetime import datetime
+
+import requests
 
 QUERY_DAILY_CHALLENGE = """
 query questionOfToday {
@@ -223,6 +224,10 @@ class LC_utils:
     def crawl_problem_list():
         payload = {"query": QUERY_QUESTION_LIST, "variables": {'categorySlug': "", 'skip': 0, 'limit': 3600, 'filters': {}}}
         response = requests.post(API_URL, json = payload)
+
+        if not response.ok or not response.content:
+            return []
+
         tmp = json.loads(response.content)
         return tmp['data']['problemsetQuestionList']['questions']
 
