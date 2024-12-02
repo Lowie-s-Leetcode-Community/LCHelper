@@ -20,7 +20,7 @@ class control(commands.Cog):
                         try:
                             path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
                             await self.client.unload_extension(path)
-                        except: 
+                        except Exception: 
                             continue
                         
             for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
@@ -41,7 +41,7 @@ class control(commands.Cog):
                         path = f"{dirpath[2:]}\{filename[:-3]}".replace('\\', '.').replace('/', '.')
                         try:
                             await self.client.unload_extension(path)
-                        except:
+                        except Exception:
                             continue
             
             for (dirpath, dirnames, filenames) in os.walk(r"./cogs"):
