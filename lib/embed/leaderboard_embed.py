@@ -1,4 +1,5 @@
 import discord
+
 from utils.asset import Assets
 
 color_list = [Assets.easy, Assets.medium, Assets.hard]
@@ -23,6 +24,8 @@ class LeaderboardEmbed(discord.Embed):
     def get_role_emojies(self, user):
         res = ""
         member = discord.utils.find(lambda m: str(m.id) == user['discordId'], self.guild.members)
+        if member is None:
+            return res
         for role, emoji in Assets.role_emojies.items():
             m_role = member.get_role(int(role))
             if m_role == None:

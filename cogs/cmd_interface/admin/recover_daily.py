@@ -18,7 +18,7 @@ class RecoverDaily(commands.Cog):
       await interaction.response.defer(thinking = True)
       try:
         day = datetime.strptime(day, "%Y-%m-%d").date()
-      except:
+      except Exception:
         await interaction.followup.send(f"{Assets.red_tick} **Date format error**")
         return
       else:

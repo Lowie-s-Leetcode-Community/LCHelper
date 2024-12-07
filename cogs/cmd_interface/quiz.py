@@ -25,8 +25,8 @@ def createEmbed(_question: None, _answer: None, choice: int = -1):
         icon_url="https://assets.leetcode.com/users/leetcode/avatar_1568224780.png"
     )
     embed.add_field(
-        name=question.question,
-        value="",
+        name="",
+        value=question.question,
         inline=False
     )
 

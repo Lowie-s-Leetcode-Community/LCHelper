@@ -31,7 +31,7 @@ def create_embed(
         name="Quiz:",
         icon_url="https://assets.leetcode.com/users/leetcode/avatar_1568224780.png",
     )
-    embed.add_field(name=question.question, value="", inline=False)
+    embed.add_field(name="", value=question.question, inline=False)
 
     embed.add_field(
         name="Score", value=f"{SCORE_FOR_DIFFICULTY[question.difficulty]}", inline=True
