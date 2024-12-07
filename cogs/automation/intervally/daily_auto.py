@@ -219,8 +219,10 @@ class DailyAutomation(commands.Cog):
         if (self.last_quiz == None):
             await log_channel.send("There is no previous daily quiz.")
             return
+        
         correct_answer = self.last_quiz[0].correctAnswerId - self.last_quiz[1][0].id
         correct_emoji = iconKey[correct_answer]
+        explanation = f"{correct_emoji} {self.last_quiz[1][correct_answer].answer}\n**Explanation:** {self.last_quiz[0].answerExplanation}"
         self.last_quiz_message = await log_channel.fetch_message(self.last_quiz_message.id)
 
         answered_members = set()
@@ -234,26 +236,28 @@ class DailyAutomation(commands.Cog):
                     self.correct_users.add(user)
         answered_members = answered_members & self.correct_users
         self.correct_users = self.correct_users - answered_members
-        # Who answers the quiz correctly gets 2 point
+        # Who answers the quiz correctly gets quiz_bonus point
         for user in self.correct_users:
             await self.client.db_api.update_daily_quiz_score(str(user.id), quiz_bonus)
-        await self.send_correct_users_list(log_channel)
+        await self.send_correct_users_list(log_channel, explanation)
 
-    async def send_correct_users_list(self, channel):
+    async def send_correct_users_list(self, channel, explanation):
+        embed = discord.Embed(colour=discord.Colour.dark_teal(), title="🎉 Daily Quiz - Correct Answers 🎉")
+        embed.add_field(name="Correct Answer", value=explanation, inline=False)
         if not self.correct_users:
-            await channel.send("No one answered the previous daily quiz correctly.")
-            return
-        x = len(self.correct_users)
-        if x == 1: 
-            description = "There is only one member who answered the previous quiz correctly"
+            embed.description = "No one answered the previous daily quiz correctly!"
         else:
-            description = f"There are {x} members who answered the previous daily quiz correctly"
-        embed = Embed(colour = discord.Colour.dark_teal(), description = description,
-                        title="🎉 Daily Quiz - Correct Answers 🎉")
-        i = 1
-        for user in self.correct_users:
-            embed.add_field(name = "", value = f"**{i}.** {user.mention}", inline = False)
-            i = i + 1
+            x = len(self.correct_users)
+            if x == 1: 
+                embed.description = "There is only one member who answered the previous quiz correctly"
+            else:
+                embed.description = f"There are {x} members who answered the previous daily quiz correctly"
+            # only display user names if the number is less than or equal to 10
+            if x < 11:
+                i = 1
+                for user in self.correct_users:
+                    embed.add_field(name="", value=f"**{i}.** {user.mention}", inline=False)
+                    i += 1
         embed.set_footer(text="Keep up the great work!")
         await channel.send(embed=embed)
 
