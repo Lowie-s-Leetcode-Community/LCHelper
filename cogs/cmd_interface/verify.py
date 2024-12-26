@@ -48,7 +48,7 @@ class ConfirmView(discord.ui.View):
             print(verified_role_id, unverified_role_id, verified_role, unverified_role)
             try:
                 await self.client.db_api.create_user(user_obj)
-            except:
+            except Exception:
                 await interaction.followup.send(content = f"{Assets.red_tick} **{ACCOUNT_USED_MSG}**")
             else: 
                 await member.add_roles(verified_role)

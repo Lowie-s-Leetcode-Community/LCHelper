@@ -12,7 +12,7 @@ class ProblemEmbed(discord.Embed):
     info = None
     try:
       info = LC_utils.get_problem_info(problem['titleSlug'])
-    except:
+    except Exception:
       print(f"Can't get information for problem {problem['titleSlug']}")
 
     self.add_field(

@@ -4,16 +4,16 @@ import random
 import traceback
 
 import discord
-from discord import app_commands, Embed
+from discord import Embed, app_commands
 from discord.ext import commands, tasks
 
+from cogs.cmd_interface.quiz import createEmbed
 from lib.embed.contest_embed import ContestEmbed
 from lib.embed.problem import ProblemEmbed
 from utils.asset import Assets
 from utils.lc_utils import LC_utils
 from utils.llc_datetime import get_today
 from utils.logger import Logger
-from cogs.cmd_interface.quiz import createEmbed
 
 iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
 quiz_bonus = 2
@@ -83,7 +83,7 @@ class DailyReminder(commands.Cog):
                     f"Please review the work or step in if necessary, ASAP. Thank you!"
                 )
             else:
-                result = await self.client.db_api.read_profile(memberDiscordId=str(self.assignee_id))
+                result = self.client.db_api.read_profile(memberDiscordId=str(self.assignee_id))
                 assignee = await self.client.fetch_user(result['discordId'])
 
                 await expert_channel.send(

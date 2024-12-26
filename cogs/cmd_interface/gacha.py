@@ -89,7 +89,7 @@ class Gacha(commands.Cog):
       embed = None
       try:
         result = await self.client.db_api.update_gacha_score(str(interaction.user.id), roll['score'])
-      except:
+      except Exception:
         embed = discord.Embed(
           description="Có vẻ chúng mình đã gặp chút sự cố khi xử lý truy vấn của bạn. Hãy thử lại sau nhé!",
           color=Assets.hard,
