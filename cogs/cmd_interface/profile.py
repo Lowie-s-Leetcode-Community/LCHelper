@@ -23,10 +23,11 @@ class Profile(commands.Cog):
         username: str = None,
     ):
         await interaction.response.defer(thinking=True)
+
         if member is None and username is None:
             discord_id = interaction.user.id
             embed = await self._find_profile_by_member(
-                self, member=member, discord_id=discord_id
+                member=member, discord_id=discord_id
             )
             await interaction.followup.send(embed=embed)
             return
@@ -34,7 +35,7 @@ class Profile(commands.Cog):
         if member is not None:
             discord_id = member.id
             embed = await self._find_profile_by_member(
-                self, member=member, discord_id=discord_id
+                member=member, discord_id=discord_id
             )
             await interaction.followup.send(embed=embed)
             return
@@ -42,7 +43,7 @@ class Profile(commands.Cog):
         if username is not None:
             discord_id = interaction.user.id
             embed = await Profile._find_profile_by_username(
-                self, username=username, discord_id=discord_id
+                username=username, discord_id=discord_id
             )
             await interaction.followup.send(embed=embed)
             return
