@@ -15,14 +15,14 @@ class Assets:
     blob_victory = "<:blob_victory:1086119727719534642>"
     hourglass = ":hourglass:"
     military_medal = ":military_medal:"
-    easy = 0x00b8a3
-    medium = 0xffc01e
-    hard = 0xef4743
+    easy = 0x00B8A3
+    medium = 0xFFC01E
+    hard = 0xEF4743
 
     role_emojies = {
-        "1280167940775481365": student, # llclass
-        "1085444843691577404": leader, # leader
-        "1148541475353788477": blob_victory, # lotm
-        "1087746207511757002": cat_typing, # bot team
-        "1085445066484621362": military_medal, # core team
+        "1280167940775481365": student,  # llclass
+        "1085444843691577404": leader,  # leader
+        "1148541475353788477": blob_victory,  # lotm
+        "1087746207511757002": cat_typing,  # bot team
+        "1085445066484621362": military_medal,  # core team
     }

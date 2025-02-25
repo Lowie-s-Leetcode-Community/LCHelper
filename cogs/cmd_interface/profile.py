@@ -12,6 +12,7 @@ class Profile(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    # will add feature to get from username next!
     @app_commands.command(name="profile", description="Returns a Leetcode profile")
     @app_commands.describe(
         member="Specify a member. Left empty if you want to check yours"
@@ -23,7 +24,6 @@ class Profile(commands.Cog):
         username: str = None,
     ):
         await interaction.response.defer(thinking=True)
-
         if member is None and username is None:
             discord_id = interaction.user.id
             embed = await self._find_profile_by_member(
@@ -67,7 +67,7 @@ class Profile(commands.Cog):
             )
         # Will wait for leetcode layer to add more info
         # missing: streak
-        if result != None:
+        if result is not None:
             # Get Discord user by ID
             discord_user = await self.client.fetch_user(result["discordId"])
             embed.set_thumbnail(url=discord_user.display_avatar)

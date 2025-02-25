@@ -18,8 +18,8 @@ Automation: [Notion page](https://lowie-writes.notion.site/Known-LCHelper-Automa
 
 Clone the repo using GUI or command line:
 
-- If you have ssh set up: `git clone git@github.com:Lowie-s-Leetcode-Community/LCHelper.git`
-- If you don't: `git clone https://github.com/Lowie-s-Leetcode-Community/LCHelper.git`
+-   If you have ssh set up: `git clone git@github.com:Lowie-s-Leetcode-Community/LCHelper.git`
+-   If you don't: `git clone https://github.com/Lowie-s-Leetcode-Community/LCHelper.git`
 
 ### 2. Library
 
@@ -44,12 +44,12 @@ Go to [discord.com/developers](https://discord.com/developers/docs/intro) to cre
 
 ![Discord developer-home](resrc/discord-dev-home.png)
 
-- Create a new application
+-   Create a new application
 
 ![Discord app info](resrc/discord-app-info.png)
 
-- In the OAuth2 part, save the `Client secret` somewhere for the section below.
-- In the Bot part, save the `Token` to use in the section below.
+-   In the OAuth2 part, save the `Client secret` somewhere for the section below.
+-   In the Bot part, save the `Token` to use in the section below.
 
 Note that both of these will only show up 1 time, if you want to get it again, it will generate a new one.
 
@@ -61,11 +61,11 @@ Copy `.env.template` file to `.env` file and edit:
 
 ![alt text](resrc/bot-token.png)
 
-- `BOT_TOKEN`: the **Token** you get from discord.com/developer in the above section.
-- `CLIENT_SECRET`: the **Client secret** of the bot from discord.com/developer in the above section.
-- `POSTGRESQL_CRED`: change 12345678 to your postgres password, lc_db to the schema's name.
-- `POSTGRESQL_SCHEMA`: schema's name.
-- `BOT_PREFIX`: depends on you.
+-   `BOT_TOKEN`: the **Token** you get from discord.com/developer in the above section.
+-   `CLIENT_SECRET`: the **Client secret** of the bot from discord.com/developer in the above section.
+-   `POSTGRESQL_CRED`: change 12345678 to your postgres password, lc_db to the schema's name.
+-   `POSTGRESQL_SCHEMA`: schema's name.
+-   `BOT_PREFIX`: depends on you.
 
 Leave the rest as it is.
 
@@ -103,7 +103,7 @@ Replace `<your-client-id>` with your bot's client ID.
 
 ### 7. Run the bot
 
-- To simply start LCHelper, just run:
+-   To simply start LCHelper, just run:
 
 ```sh
 python bot.py
@@ -125,17 +125,17 @@ Replace `<bot-prefix>` with your prefix of choice.
 
 ## Notes
 
-- Please come up with your own `BOT_PREFIX` in case of many devs working at the same time.
-- Please use `/set_logging` to the dedicated channel for bot-dev logging. The default channel is public.
+-   Please come up with your own `BOT_PREFIX` in case of many devs working at the same time.
+-   Please use `/set_logging` to the dedicated channel for bot-dev logging. The default channel is public.
 
 ## Documentations
 
-- To learn more about discord.py: [discordpy.readthedocs](https://discordpy.readthedocs.io/en/latest/index.html#manuals)
-- To learn more about sql in python: [sqlalchemy](https://www.sqlalchemy.org/)
-- The command does use both normal commands (prefix) and slash commands. Make sure you are familiar with command tree, slash commands and interaction:
-  - [Bot commands tree and syncing guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
-  - [Bot interaction guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
-- Just-in-case guidelines: [python guide](https://www.w3schools.com/python/)
+-   To learn more about discord.py: [discordpy.readthedocs](https://discordpy.readthedocs.io/en/latest/index.html#manuals)
+-   To learn more about sql in python: [sqlalchemy](https://www.sqlalchemy.org/)
+-   The command does use both normal commands (prefix) and slash commands. Make sure you are familiar with command tree, slash commands and interaction:
+    -   [Bot commands tree and syncing guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
+    -   [Bot interaction guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
+-   Just-in-case guidelines: [python guide](https://www.w3schools.com/python/)
 
 ## License
 

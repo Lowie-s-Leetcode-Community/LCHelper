@@ -1,8 +1,9 @@
-import discord
-from discord import app_commands
-from discord.ext import commands
-from utils.asset import Assets
 import asyncio
+
+import discord
+from discord.ext import commands
+
+from utils.asset import Assets
 
 STARTING_STORY_MSG = """
 Câu chuyện bắt nguồn từ một buổi Seminar được tổ chức dành cho các anh em ở UET K66-CN8, nơi mà anh già Lowie chia sẻ với các anh em trong khóa về 2 năm bán mình cho tư bản của anh ta.
@@ -91,16 +92,19 @@ HOW_TO_VERIFY_MSG_5 = """
 Quay trở lại LeetCode, vào `Edit Profile`. Duới mục **Summary**, vào edit và paste cái mã 5 chữ đó vào rồi ấn `Save`.
 """
 HOW_TO_VERIFY_MSG_6 = """
-Quay trở lại Discord, bấm nút `Verify Me!` trên dòng tin nhắn của con bot. 
+Quay trở lại Discord, bấm nút `Verify Me!` trên dòng tin nhắn của con bot.
 
 Nếu bạn làm các bước trên chính xác, thì bot sẽ báo thành công và bạn sẽ được nhận role <@&1087761988068855890>, chính thức xác nhận bạn là thành viên Cộng đồng 🎉🎉🎉.
 """
+
 
 class Guidelines(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(name = "guidelines-init", description = "Sends initial embeds for info channels")
+    @commands.command(
+        name="guidelines-init", description="Sends initial embeds for info channels"
+    )
     @commands.has_any_role(1087746207511757002)
     async def _gl_init(self, ctx):
         channel = await ctx.guild.fetch_channel(1139158245391474800)
@@ -108,125 +112,118 @@ class Guidelines(commands.Cog):
         # Embeds in #giới-thiệu-Cộng đồng
 
         embed1 = discord.Embed(
-            title = "📖 Câu chuyện khởi nguồn",
-            description = STARTING_STORY_MSG,
-            color = discord.Color.red()
+            title="📖 Câu chuyện khởi nguồn",
+            description=STARTING_STORY_MSG,
+            color=discord.Color.red(),
         )
-        embed1.set_thumbnail(
-            url = ctx.guild.icon.url
-        )
-        await channel.purge(limit = 10)
-        msg1 = await channel.send(embed = embed1)
+        embed1.set_thumbnail(url=ctx.guild.icon.url)
+        await channel.purge(limit=10)
+        msg1 = await channel.send(embed=embed1)
 
         embed2 = discord.Embed(
-            title = "😇 Sứ mệnh của Cộng đồng",
-            description = Community_MISSION_MSG,
-            color = discord.Color.blue()
+            title="😇 Sứ mệnh của Cộng đồng",
+            description=Community_MISSION_MSG,
+            color=discord.Color.blue(),
         )
-        msg2 = await channel.send(embed = embed2)
+        msg2 = await channel.send(embed=embed2)
 
         embed3 = discord.Embed(
-            title = "🏃 Các hoạt động trong Cộng đồng",
-            description = Community_ACTIVITIES_MSG,
-            color = discord.Color.gold()
+            title="🏃 Các hoạt động trong Cộng đồng",
+            description=Community_ACTIVITIES_MSG,
+            color=discord.Color.gold(),
         )
-        msg3 = await channel.send(embed = embed3)
+        msg3 = await channel.send(embed=embed3)
 
         embed4 = discord.Embed(
-            title = "Đội ngũ 🌟 CORE TEAM 🌟",
-            description = "",
-            color = discord.Color.green()
+            title="Đội ngũ 🌟 CORE TEAM 🌟", description="", color=discord.Color.green()
         )
         embed4.set_image(
-            url = "https://lh3.googleusercontent.com/u/0/drive-viewer/AITFw-x30PDepeeoRJF6Vhdk0Magq_4rWKcJbRA6ZRKcNugenvmzAFHC8W0fB77aY-1vemIznfn5WH7HMEQ3YEwSCfcM7O9I=w1920-h923"
+            url="https://lh3.googleusercontent.com/u/0/drive-viewer/AITFw-x30PDepeeoRJF6Vhdk0Magq_4rWKcJbRA6ZRKcNugenvmzAFHC8W0fB77aY-1vemIznfn5WH7HMEQ3YEwSCfcM7O9I=w1920-h923"
         )
-        msg4 = await channel.send(embed = embed4)
-        
+        msg4 = await channel.send(embed=embed4)
+
         embed5 = discord.Embed(
-            title = "Ban Quản Trị (a.k.a. The Presidents)",
-            color = discord.Color.green()
+            title="Ban Quản Trị (a.k.a. The Presidents)", color=discord.Color.green()
         )
         embed5.add_field(
-            name = f"Chủ tịch - Tô Tuấn Dũng - CN8-K66",
-            value = Community_CORE_TEAM_MSG_1,
-            inline = False
+            name="Chủ tịch - Tô Tuấn Dũng - CN8-K66",
+            value=Community_CORE_TEAM_MSG_1,
+            inline=False,
         )
         embed5.add_field(
-            name = f"Phó chủ tịch - Lê Vũ Minh - CN8-K66",
-            value = Community_CORE_TEAM_MSG_2,
-            inline = False
+            name="Phó chủ tịch - Lê Vũ Minh - CN8-K66",
+            value=Community_CORE_TEAM_MSG_2,
+            inline=False,
         )
         embed5.add_field(
-            name = f"Phó chủ tịch - Trần Nam Dân - CN8-K66",
-            value = Community_CORE_TEAM_MSG_3,
-            inline = False
+            name="Phó chủ tịch - Trần Nam Dân - CN8-K66",
+            value=Community_CORE_TEAM_MSG_3,
+            inline=False,
         )
-        msg5 = await channel.send(embed = embed5)
-        
+        msg5 = await channel.send(embed=embed5)
+
         await asyncio.sleep(3)
 
         embed6 = discord.Embed(
-            title = "Ban Chuyên Môn (a.k.a. Community Experts)",
-            description = Community_CORE_TEAM_MSG_4,
-            color = discord.Color.green()
+            title="Ban Chuyên Môn (a.k.a. Community Experts)",
+            description=Community_CORE_TEAM_MSG_4,
+            color=discord.Color.green(),
         )
         embed6.add_field(
-            name = f"Trưởng ban",
-            value = "Vũ Quý Đạt - <@888055463059537983> - CN8-K66",
-            inline = False
+            name="Trưởng ban",
+            value="Vũ Quý Đạt - <@888055463059537983> - CN8-K66",
+            inline=False,
         )
         embed6.add_field(
-            name = f"Phó ban",
-            value = "Tạ Xuân Duy - <@418256822902718465> - CN8-K67",
-            inline = False
+            name="Phó ban",
+            value="Tạ Xuân Duy - <@418256822902718465> - CN8-K67",
+            inline=False,
         )
         embed6.add_field(
-            name = f"Thành viên",
-            value = f"- Lê Đức Anh - <@691975240414265385> - CN8-K68\n- Nguyễn Đức Huy - <@756870314344054835> - CN8-K68",
-            inline = False
+            name="Thành viên",
+            value="- Lê Đức Anh - <@691975240414265385> - CN8-K68\n- Nguyễn Đức Huy - <@756870314344054835> - CN8-K68",
+            inline=False,
         )
-        msg6 = await channel.send(embed = embed6)
+        msg6 = await channel.send(embed=embed6)
 
         embed7 = discord.Embed(
-            title = "Ban Truyền Thông (a.k.a. PR & Media)",
-            description = Community_CORE_TEAM_MSG_5,
-            color = discord.Color.green()
+            title="Ban Truyền Thông (a.k.a. PR & Media)",
+            description=Community_CORE_TEAM_MSG_5,
+            color=discord.Color.green(),
         )
         embed7.add_field(
-            name = f"Trưởng ban",
-            value = "Nguyễn Duy Chiến - <@633872635411038209> - CN8-K66",
-            inline = False
+            name="Trưởng ban",
+            value="Nguyễn Duy Chiến - <@633872635411038209> - CN8-K66",
+            inline=False,
         )
         embed7.add_field(
-            name = f"Thành viên",
-            value = f"- Bồ Quốc Trung - <@556463088983998505> - CN8-K67\n- Trần Gia Khánh - <@702776466265342022> - CN8-K68",
-            inline = False
+            name="Thành viên",
+            value="- Bồ Quốc Trung - <@556463088983998505> - CN8-K67\n- Trần Gia Khánh - <@702776466265342022> - CN8-K68",
+            inline=False,
         )
         embed7.set_image(
-            url = "https://scontent.fhan2-4.fna.fbcdn.net/v/t39.30808-6/357709046_3420474118213052_3229237850735346573_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=9kapCWj1neEAX-WzdJb&_nc_ht=scontent.fhan2-4.fna&oh=00_AfBdBzpVMClFSk6RgQ45mqHVNoQtWIVwhvETvZmobPV5_w&oe=64E3E97B"
+            url="https://scontent.fhan2-4.fna.fbcdn.net/v/t39.30808-6/357709046_3420474118213052_3229237850735346573_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=9kapCWj1neEAX-WzdJb&_nc_ht=scontent.fhan2-4.fna&oh=00_AfBdBzpVMClFSk6RgQ45mqHVNoQtWIVwhvETvZmobPV5_w&oe=64E3E97B"
         )
-        msg7 = await channel.send(embed = embed7)
+        msg7 = await channel.send(embed=embed7)
 
         embed8 = discord.Embed(
-            title = "Ban Tự Động Hoá (a.k.a. Bot Developers)",
-            description = Community_CORE_TEAM_MSG_6,
-            color = discord.Color.green()
+            title="Ban Tự Động Hoá (a.k.a. Bot Developers)",
+            description=Community_CORE_TEAM_MSG_6,
+            color=discord.Color.green(),
         )
         embed8.add_field(
-            name = f"Trưởng ban",
-            value = "Lê Anh Duy - <@535811480629542921> - CN8-K68",
-            inline = False
+            name="Trưởng ban",
+            value="Lê Anh Duy - <@535811480629542921> - CN8-K68",
+            inline=False,
         )
         embed8.add_field(
-            name = f"Thành viên",
-            value = f"Vũ Việt Khánh - <@519418640358047745> - CN8-K66\nPhùng Minh Tuấn Anh - <@699897753802637415> - CN8-K67",
-            inline = False
+            name="Thành viên",
+            value="Vũ Việt Khánh - <@519418640358047745> - CN8-K66\nPhùng Minh Tuấn Anh - <@699897753802637415> - CN8-K67",
+            inline=False,
         )
-        embed8.set_image(
-            url = "https://hackmd.io/_uploads/Sy19Ru3h2.png"
-        )
-        msg8 = await channel.send(embed = embed8)
-        
+        embed8.set_image(url="https://hackmd.io/_uploads/Sy19Ru3h2.png")
+        msg8 = await channel.send(embed=embed8)
+
         NAVIGATION_MSG = ""
         NAVIGATION_MSG += f"1. [Câu chuyện khởi nguồn]({msg1.jump_url})\n"
         NAVIGATION_MSG += f"2. [Sứ mệnh của Cộng đồng]({msg2.jump_url})\n"
@@ -237,82 +234,59 @@ class Guidelines(commands.Cog):
         NAVIGATION_MSG += f" - [Ban Truyền Thông]({msg7.jump_url})\n"
         NAVIGATION_MSG += f" - [Ban Tự Động Hoá]({msg8.jump_url})\n"
         embed9 = discord.Embed(
-            title = "Mục lục",
-            description = NAVIGATION_MSG,
-            color = discord.Color.greyple()
+            title="Mục lục", description=NAVIGATION_MSG, color=discord.Color.greyple()
         )
-        embed9.set_footer(
-            text = "Ấn vào link để nhảy đến content tương ứng"
-        )
-        await channel.send(embed = embed9)
+        embed9.set_footer(text="Ấn vào link để nhảy đến content tương ứng")
+        await channel.send(embed=embed9)
         await asyncio.sleep(3)
 
         # Embeds in #hướng-dẫn-verify
         channel = await ctx.guild.fetch_channel(1139158370926993499)
         embed1 = discord.Embed(
-            title = "📜 Hướng dẫn verify",
-            description = HOW_TO_VERIFY_MSG_1,
-            color = discord.Color.gold()
+            title="📜 Hướng dẫn verify",
+            description=HOW_TO_VERIFY_MSG_1,
+            color=discord.Color.gold(),
         )
 
-        embed2 = discord.Embed(
-            description = HOW_TO_VERIFY_MSG_2,
-            color = 0xcdb4db
-        )
-        embed2.set_author(
-            name = "Bước 1"
-        )
+        embed2 = discord.Embed(description=HOW_TO_VERIFY_MSG_2, color=0xCDB4DB)
+        embed2.set_author(name="Bước 1")
         embed2.set_image(
-            url = "https://media.discordapp.net/attachments/1092451759890374747/1092452461748424784/image.png"
+            url="https://media.discordapp.net/attachments/1092451759890374747/1092452461748424784/image.png"
         )
 
-        embed3 = discord.Embed(
-            description = HOW_TO_VERIFY_MSG_3,
-            color = 0xffc8dd
-        )
-        embed3.set_author(
-            name = "Bước 2"
-        )
+        embed3 = discord.Embed(description=HOW_TO_VERIFY_MSG_3, color=0xFFC8DD)
+        embed3.set_author(name="Bước 2")
         embed3.set_image(
-            url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092453040465903616/image.png"
+            url="https://cdn.discordapp.com/attachments/1092451759890374747/1092453040465903616/image.png"
         )
 
         embed4 = discord.Embed(
-            description = HOW_TO_VERIFY_MSG_4,
-            color = 0xffafcc,
+            description=HOW_TO_VERIFY_MSG_4,
+            color=0xFFAFCC,
         )
-        embed4.set_author(
-            name = "Bước 3"
-        )
+        embed4.set_author(name="Bước 3")
         embed4.set_image(
-            url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092453850121777243/image.png"
+            url="https://cdn.discordapp.com/attachments/1092451759890374747/1092453850121777243/image.png"
         )
 
-        embed5 = discord.Embed(
-            description = HOW_TO_VERIFY_MSG_5,
-            color = 0xbde0fe
-        )
-        embed5.set_author(
-            name = "Bước 4"
-        )
+        embed5 = discord.Embed(description=HOW_TO_VERIFY_MSG_5, color=0xBDE0FE)
+        embed5.set_author(name="Bước 4")
         embed5.set_image(
-            url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092454978926419988/image.png"
+            url="https://cdn.discordapp.com/attachments/1092451759890374747/1092454978926419988/image.png"
         )
-        
-        embed6 = discord.Embed(
-            description = HOW_TO_VERIFY_MSG_6,
-            color = 0xa2d2ff
-        )
-        embed6.set_author(
-            name = "Bước 5"
-        )
+
+        embed6 = discord.Embed(description=HOW_TO_VERIFY_MSG_6, color=0xA2D2FF)
+        embed6.set_author(name="Bước 5")
         embed6.set_image(
-            url = "https://cdn.discordapp.com/attachments/1092451759890374747/1092455415150809158/image.png"
+            url="https://cdn.discordapp.com/attachments/1092451759890374747/1092455415150809158/image.png"
         )
-        
-        await channel.purge(limit = 5)
-        await channel.send(embeds = [embed1, embed2, embed3, embed4, embed5, embed6])
+
+        await channel.purge(limit=5)
+        await channel.send(embeds=[embed1, embed2, embed3, embed4, embed5, embed6])
         await ctx.send(f"{Assets.green_tick} **All embeds sent**")
 
+
 async def setup(client):
-    await client.add_cog(Guidelines(client), guilds=[discord.Object(id=client.config['serverId'])])
+    await client.add_cog(
+        Guidelines(client), guilds=[discord.Object(id=client.config["serverId"])]
+    )

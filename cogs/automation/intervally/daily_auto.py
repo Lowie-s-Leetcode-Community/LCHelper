@@ -4,7 +4,7 @@ import random
 import traceback
 
 import discord
-from discord import Embed, app_commands
+from discord import app_commands
 from discord.ext import commands, tasks
 
 from cogs.cmd_interface.quiz import createEmbed
@@ -15,17 +15,21 @@ from utils.lc_utils import LC_utils
 from utils.llc_datetime import get_today
 from utils.logger import Logger
 
-iconKey = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']
+iconKey = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫"]
 quiz_bonus = 2
 test_quiz_channel_id = 1258083345133207635
-COG_START_TIMES = [
-    datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)
-]
+COG_START_TIMES = [datetime.time(hour=0, minute=5, tzinfo=datetime.timezone.utc)]
 
 REMINDER_MESSAGES = {
-    datetime.time(hour=8, minute=30, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, it's your turn to write the editorial today! Please complete it by 6pm to help other community members in need! {Assets.blob_victory}",
-    datetime.time(hour=15, minute=00, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, remember to turn in your editorial by 6PM today! {Assets.blob_maman}",
-    datetime.time(hour=18, minute=30, tzinfo=datetime.timezone.utc): f"Hi {{mention}}, please turn in your editorial immediately! If you need help, please contact Community members for help! {Assets.blob_taco}"
+    datetime.time(
+        hour=8, minute=30, tzinfo=datetime.timezone.utc
+    ): f"Hi {{mention}}, it's your turn to write the editorial today! Please complete it by 6pm to help other community members in need! {Assets.blob_victory}",
+    datetime.time(
+        hour=15, minute=00, tzinfo=datetime.timezone.utc
+    ): f"Hi {{mention}}, remember to turn in your editorial by 6PM today! {Assets.blob_maman}",
+    datetime.time(
+        hour=18, minute=30, tzinfo=datetime.timezone.utc
+    ): f"Hi {{mention}}, please turn in your editorial immediately! If you need help, please contact Community members for help! {Assets.blob_taco}",
 }
 
 
@@ -41,7 +45,9 @@ class DailyReminder(commands.Cog):
     @tasks.loop(minutes=1)
     async def reminder_task(self):
         now = datetime.datetime.now()
-        current_time = datetime.time(hour=now.hour, minute=now.minute, tzinfo=datetime.timezone.utc)
+        current_time = datetime.time(
+            hour=now.hour, minute=now.minute, tzinfo=datetime.timezone.utc
+        )
 
         if current_time not in REMINDER_MESSAGES.keys():
             return
@@ -49,30 +55,37 @@ class DailyReminder(commands.Cog):
         if not self.task_completed:
             await self.send_reminder(current_time)
 
-            if current_time == max(REMINDER_MESSAGES.keys()) and not self.task_completed:
+            if (
+                current_time == max(REMINDER_MESSAGES.keys())
+                and not self.task_completed
+            ):
                 await self.notify_experts()
 
     async def send_reminder(self, reminder_time):
         if not self.daily_thread:
             return
 
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         assignee = None
         message = REMINDER_MESSAGES.get(reminder_time)
 
         if self.assignee_id == "EXPERT":
             expert_role = discord.utils.get(guild.roles, name="Community Expert")
             if expert_role:
-                await self.daily_thread.send(message.format(mention=expert_role.mention))
+                await self.daily_thread.send(
+                    message.format(mention=expert_role.mention)
+                )
         else:
-            result = self.client.db_api.read_profile(memberDiscordId=str(self.assignee_id))
-            assignee = await self.client.fetch_user(result['discordId'])
+            result = self.client.db_api.read_profile(
+                memberDiscordId=str(self.assignee_id)
+            )
+            assignee = await self.client.fetch_user(result["discordId"])
             if assignee:
                 await self.daily_thread.send(message.format(mention=assignee.mention))
 
     async def notify_experts(self):
         expert_channel = await self.client.fetch_channel("1085446453230571520")
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         expert_role = discord.utils.get(guild.roles, name="Community Expert")
 
         if self.assignee_id and expert_channel:
@@ -83,12 +96,14 @@ class DailyReminder(commands.Cog):
                     f"Please review the work or step in if necessary, ASAP. Thank you!"
                 )
             else:
-                result = self.client.db_api.read_profile(memberDiscordId=str(self.assignee_id))
-                assignee = await self.client.fetch_user(result['discordId'])
+                result = self.client.db_api.read_profile(
+                    memberDiscordId=str(self.assignee_id)
+                )
+                assignee = await self.client.fetch_user(result["discordId"])
 
                 await expert_channel.send(
                     f"{expert_role.mention}: Houston, we've got a problem!\n\n"
-                    f"Seems like {assignee.mention} needs our help on turning in the solution for the daily problem today. " 
+                    f"Seems like {assignee.mention} needs our help on turning in the solution for the daily problem today. "
                     f"Please contact them directly to help, and assign substitution if needed!"
                 )
 
@@ -105,27 +120,23 @@ class DailyReminder(commands.Cog):
         if assignee_id == "EXPERT":
             return assignee_id
         else:
-            result = self.client.db_api.read_profile(memberDiscordId = str(assignee_id))
-            assignee = await self.client.fetch_user(result['discordId'])
+            result = self.client.db_api.read_profile(memberDiscordId=str(assignee_id))
+            assignee = await self.client.fetch_user(result["discordId"])
             if assignee:
                 return assignee_id
 
         return None
 
     async def run_score_add(self, interaction: discord.Interaction, assignee):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        difficulty_scores = {
-            'Easy': 8,
-            'Medium': 10,
-            'Hard': 12
-        }
-        score_value = difficulty_scores.get(self.problem['difficulty'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
+        difficulty_scores = {"Easy": 8, "Medium": 10, "Hard": 12}
+        score_value = difficulty_scores.get(self.problem["difficulty"])
 
         today = datetime.date.today().strftime("%B %d")
         reason = f"{today} Daily Editorial ({self.problem['difficulty']})"
 
         # Add score
-        await interaction.response.defer(thinking = True)
+        await interaction.response.defer(thinking=True)
         await self.client.db_api.update_score(str(assignee), score_value, reason)
         await interaction.followup.send(f"{Assets.green_tick} **Score added.**")
 
@@ -134,7 +145,7 @@ class DailyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.daily_reminder = DailyReminder(client)
-        if os.getenv('START_UP_TASKS') == "True":
+        if os.getenv("START_UP_TASKS") == "True":
             self.daily.start()
         self.logger = Logger(client)
         self.last_quiz = None
@@ -147,29 +158,37 @@ class DailyAutomation(commands.Cog):
     async def create_new_daily_object(self):
         # {'date': '2024-02-09', 'link': 'https://leetcode.com/problems/largest-divisible-subset/', 'title': 'Largest Divisible Subset', 'title_slug': 'largest-divisible-subset', 'id': '368'}
         daily_challenge_info = LC_utils.get_daily_challenge_info()
-        await self.client.db_api.create_or_keep_daily_object(daily_challenge_info['id'], get_today())
+        await self.client.db_api.create_or_keep_daily_object(
+            daily_challenge_info["id"], get_today()
+        )
         return daily_challenge_info
 
     async def create_daily_thread(self, daily_challenge_info):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
-        name = f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
-        thread = await channel.create_thread(name=name, type=discord.ChannelType.public_thread)
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
+        channel = await guild.fetch_channel(self.client.config["dailyThreadChannelId"])
+        name = (
+            f"[{daily_challenge_info['date']}] LeetCode P{daily_challenge_info['id']}"
+        )
+        thread = await channel.create_thread(
+            name=name, type=discord.ChannelType.public_thread
+        )
 
         daily_obj = self.client.db_api.read_latest_daily_object()
-        self.daily_reminder.problem = daily_obj['problem']
-        embed = ProblemEmbed(daily_obj['problem'])
+        self.daily_reminder.problem = daily_obj["problem"]
+        embed = ProblemEmbed(daily_obj["problem"])
 
-        display_date = daily_obj['generatedDate'].strftime("%b %d, %Y")
+        display_date = daily_obj["generatedDate"].strftime("%b %d, %Y")
         await thread.send(f"Daily Challenge - {display_date}", embed=embed)
 
         self.daily_reminder.daily_thread = thread
-        self.daily_reminder.assignee_id = await self.daily_reminder.get_assignee_id_today()
+        self.daily_reminder.assignee_id = (
+            await self.daily_reminder.get_assignee_id_today()
+        )
 
         return thread
-    
+
     async def remind_unverified(self):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         channel = await guild.fetch_channel("1090084731560927274")
         random_prompts = [
             f"{Assets.blob_victory} {Assets.blob_victory} Hãy sử dụng lệnh {Assets.link_command} để kết nối tài khoản Leetcode của mình và khám phá những tính năng độc đáo của chúng mình nhé!",
@@ -187,11 +206,15 @@ class DailyAutomation(commands.Cog):
         next_contests = LC_utils.get_next_contests_info()
         current_time = datetime.datetime.now()
         time_in_24h = current_time + datetime.timedelta(days=1)
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(self.client.config['dailyThreadChannelId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
+        channel = await guild.fetch_channel(self.client.config["dailyThreadChannelId"])
         embeds = []
         for contest in next_contests:
-            if current_time.timestamp() <= contest["timestamp"] <= time_in_24h.timestamp():
+            if (
+                current_time.timestamp()
+                <= contest["timestamp"]
+                <= time_in_24h.timestamp()
+            ):
                 embeds.append(ContestEmbed(contest))
 
         if len(embeds) == 0:
@@ -199,40 +222,44 @@ class DailyAutomation(commands.Cog):
 
         message = f"<@&{self.client.config['verifiedRoleId']}> :bangbang: :ninja: There is a contest today!"
         await channel.send(message, embeds=embeds)
-    
-    async def create_daily_quiz(self): 
-        quiz_detail = { 'difficulty' : random.choice(['Easy', 'Medium'])}
+
+    async def create_daily_quiz(self):
+        quiz_detail = {"difficulty": random.choice(["Easy", "Medium"])}
         quiz_result = self.client.db_api.read_quiz(quiz_detail)
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         log_channel = await guild.fetch_channel(test_quiz_channel_id)
-        quiz_message = await log_channel.send(embed = createEmbed(quiz_result[0], quiz_result[1]))
+        quiz_message = await log_channel.send(
+            embed=createEmbed(quiz_result[0], quiz_result[1])
+        )
         answers = quiz_result[1]
         for i in range(len(answers)):
             await quiz_message.add_reaction(iconKey[i])
         self.last_quiz = quiz_result
         self.last_quiz_message = quiz_message
-        
-    async def handle_prev_quiz_answers(self): 
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+
+    async def handle_prev_quiz_answers(self):
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         log_channel = await guild.fetch_channel(test_quiz_channel_id)
         self.correct_users.clear()
-        if (self.last_quiz == None):
+        if self.last_quiz is not None:
             await log_channel.send("There is no previous daily quiz.")
             return
-        
+
         correct_answer = self.last_quiz[0].correctAnswerId - self.last_quiz[1][0].id
         correct_emoji = iconKey[correct_answer]
         explanation = f"{correct_emoji} {self.last_quiz[1][correct_answer].answer}\n**Explanation:** {self.last_quiz[0].answerExplanation}"
-        self.last_quiz_message = await log_channel.fetch_message(self.last_quiz_message.id)
+        self.last_quiz_message = await log_channel.fetch_message(
+            self.last_quiz_message.id
+        )
 
         answered_members = set()
         for reaction in self.last_quiz_message.reactions:
             async for user in reaction.users():
-                if user == self.client.user: 
+                if user == self.client.user:
                     continue
                 if user not in answered_members and reaction.emoji != correct_emoji:
                     answered_members.add(user)
-                elif user not in self.correct_users and reaction.emoji == correct_emoji: 
+                elif user not in self.correct_users and reaction.emoji == correct_emoji:
                     self.correct_users.add(user)
         answered_members = answered_members & self.correct_users
         self.correct_users = self.correct_users - answered_members
@@ -242,21 +269,28 @@ class DailyAutomation(commands.Cog):
         await self.send_correct_users_list(log_channel, explanation)
 
     async def send_correct_users_list(self, channel, explanation):
-        embed = discord.Embed(colour=discord.Colour.dark_teal(), title="🎉 Daily Quiz - Correct Answers 🎉")
+        embed = discord.Embed(
+            colour=discord.Colour.dark_teal(),
+            title="🎉 Daily Quiz - Correct Answers 🎉",
+        )
         embed.add_field(name="Correct Answer", value=explanation, inline=False)
         if not self.correct_users:
             embed.description = "No one answered the previous daily quiz correctly!"
         else:
             x = len(self.correct_users)
-            if x == 1: 
-                embed.description = "There is only one member who answered the previous quiz correctly"
+            if x == 1:
+                embed.description = (
+                    "There is only one member who answered the previous quiz correctly"
+                )
             else:
                 embed.description = f"There are {x} members who answered the previous daily quiz correctly"
             # only display user names if the number is less than or equal to 10
             if x < 11:
                 i = 1
                 for user in self.correct_users:
-                    embed.add_field(name="", value=f"**{i}.** {user.mention}", inline=False)
+                    embed.add_field(
+                        name="", value=f"**{i}.** {user.mention}", inline=False
+                    )
                     i += 1
         embed.set_footer(text="Keep up the great work!")
         await channel.send(embed=embed)
@@ -280,33 +314,40 @@ class DailyAutomation(commands.Cog):
 
     @daily.error
     async def on_error(self):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(self.client.config['serverId'])
-        await channel.send(f"Daily initiate error:\n```py\n{traceback.format_exc()[:800]}```\nPlease re-start.")
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
+        channel = await guild.fetch_channel(self.client.config["serverId"])
+        await channel.send(
+            f"Daily initiate error:\n```py\n{traceback.format_exc()[:800]}```\nPlease re-start."
+        )
         await self.logger.on_automation_event("Daily", "error found")
 
         self.daily.restart()
 
     @commands.command()
-    @commands.has_permissions(administrator = True)
+    @commands.has_permissions(administrator=True)
     async def stop_daily(self, ctx):
         self.daily.stop()
         await ctx.send(f"{Assets.green_tick} **Daily task stopped.**")
 
     @commands.command()
-    @commands.has_permissions(administrator = True)
+    @commands.has_permissions(administrator=True)
     async def start_daily(self, ctx):
         self.daily.start()
         await ctx.send(f"{Assets.green_tick} **Daily task started.**")
 
-    @app_commands.command(name="daily_simulate", description="Simulate a daily crawl cycle.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.command(
+        name="daily_simulate", description="Simulate a daily crawl cycle."
+    )
+    @app_commands.checks.has_permissions(administrator=True)
     async def _daily_simulate(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
+        await interaction.response.defer(thinking=True)
         await self.daily()
         await interaction.followup.send(f"{Assets.green_tick} **Daily Task finished**")
 
-    @app_commands.command(name = 'turn_in_daily_editorial', description = "Turn in your editorial for the daily challenge.")
+    @app_commands.command(
+        name="turn_in_daily_editorial",
+        description="Turn in your editorial for the daily challenge.",
+    )
     async def _turn_in_daily_editorial(self, interaction: discord.Interaction):
         if self.daily_reminder.task_completed:
             await interaction.response.send_message("Solution have been accepted!")
@@ -328,8 +369,8 @@ class DailyAutomation(commands.Cog):
                 )
             return
 
-        result = self.client.db_api.read_profile(memberDiscordId = str(assignee_id))
-        assignee = await self.client.fetch_user(result['discordId'])
+        result = self.client.db_api.read_profile(memberDiscordId=str(assignee_id))
+        assignee = await self.client.fetch_user(result["discordId"])
 
         await interaction.response.defer(thinking=True)
 
@@ -342,9 +383,9 @@ class DailyAutomation(commands.Cog):
                 f"{interaction.user.mention}, you are not the assignee for today's editorial. Please wait for your turn."
             )
 
-    @app_commands.command(name = 'accept_editorial', description = "Accept the editorial")
+    @app_commands.command(name="accept_editorial", description="Accept the editorial")
     async def _accept_editorial(self, interaction: discord.Interaction):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         expert_role = discord.utils.get(guild.roles, name="Community Expert")
 
         if self.daily_reminder.task_completed:
@@ -353,7 +394,9 @@ class DailyAutomation(commands.Cog):
 
         assignee_id = self.daily_reminder.assignee_id
         if not assignee_id:
-            await interaction.response.send_message("There is no assignee found for today's editorial.")
+            await interaction.response.send_message(
+                "There is no assignee found for today's editorial."
+            )
             return
 
         if assignee_id == "EXPERT":
@@ -372,5 +415,8 @@ class DailyAutomation(commands.Cog):
         self.daily_reminder.task_completed = True
         await self.daily_reminder.run_score_add(interaction, assignee_id)
 
+
 async def setup(client):
-    await client.add_cog(DailyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
+    await client.add_cog(
+        DailyAutomation(client), guilds=[discord.Object(id=client.config["serverId"])]
+    )

@@ -1,24 +1,25 @@
-import discord
-from discord import app_commands
-from discord.ext import tasks, commands
-from utils.asset import Assets
-from utils.lc_utils import LC_utils
+import datetime
 import os
 from datetime import date
-import datetime
+
+import discord
+from discord import app_commands
+from discord.ext import commands, tasks
+
+from cogs.automation.intervally.crawl import Crawl
+from lib.embed.leaderboard_embed import LeaderboardEmbed
+from utils.asset import Assets
+from utils.lc_utils import LC_utils
 from utils.llc_datetime import LLCMonth
 from utils.logger import Logger
-from lib.embed.leaderboard_embed import LeaderboardEmbed
-from cogs.automation.intervally.crawl import Crawl
 
-COG_START_TIMES = [
-    datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)
-]
+COG_START_TIMES = [datetime.time(hour=0, minute=35, tzinfo=datetime.timezone.utc)]
+
 
 class MonthlyAutomation(commands.Cog):
     def __init__(self, client):
         self.client = client
-        if os.getenv('START_UP_TASKS') == "True":
+        if os.getenv("START_UP_TASKS") == "True":
             self.monthly.start()
         self.logger = Logger(client)
         self.crawl = Crawl(self.client)
@@ -36,9 +37,13 @@ class MonthlyAutomation(commands.Cog):
         if date.today() == LLCMonth().first_day_of_month():
             await self.logger.on_automation_event("Crawl", "submissions()")
             await self.crawl.submissions()
-            await self.logger.on_automation_event("Monthly", "set_leetcoder_of_the_month()")
+            await self.logger.on_automation_event(
+                "Monthly", "set_leetcoder_of_the_month()"
+            )
             await self.set_leetcoder_of_the_month()
-            await self.logger.on_automation_event("Monthly", "show_leaderboard_previous()")
+            await self.logger.on_automation_event(
+                "Monthly", "show_leaderboard_previous()"
+            )
             await self.show_leaderboard_previous()
         await self.logger.on_automation_event("Monthly", "update_leaderboard()")
         await self.update_leaderboard()
@@ -46,7 +51,7 @@ class MonthlyAutomation(commands.Cog):
 
     async def purge_left_members(self):
         guilds = self.client.guilds
-        guild = [g for g in guilds if g.id == int(self.client.config['serverId'])]
+        guild = [g for g in guilds if g.id == int(self.client.config["serverId"])]
         guild = guild[0]
         members = [str(member.id) for member in guild.members]
         await self.client.db_api.purge_left_members(current_users_list=members)
@@ -56,12 +61,17 @@ class MonthlyAutomation(commands.Cog):
         month = LLCMonth(previous=True)
         title = f"Congratulations to the top 10 members of {month.month_string()}! ({month.date_range()})"
         user_list = self.client.db_api.read_last_month_leaderboard()
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        log_channel = await guild.fetch_channel(self.client.config['submissionChannelId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
+        log_channel = await guild.fetch_channel(
+            self.client.config["submissionChannelId"]
+        )
         embed = LeaderboardEmbed(title, user_list, guild)
         embed.get_ranking_embed()
 
-        await log_channel.send(f"<@&{self.client.config['verifiedRoleId']}> :confetti_ball: :confetti_ball: :confetti_ball:", embed=embed)
+        await log_channel.send(
+            f"<@&{self.client.config['verifiedRoleId']}> :confetti_ball: :confetti_ball: :confetti_ball:",
+            embed=embed,
+        )
 
     # Update new monthly objects for members who participated last month
     async def update_leaderboard(self):
@@ -69,7 +79,9 @@ class MonthlyAutomation(commands.Cog):
         if len(leaderboard) > 0:
             return
         first_day_of_current_month = LLCMonth().first_day_of_month()
-        await self.client.db_api.refresh_server_scores(firstDayOfMonth=first_day_of_current_month)
+        await self.client.db_api.refresh_server_scores(
+            firstDayOfMonth=first_day_of_current_month
+        )
         return
 
     # Update the problem list, as there are new problems on the site every month
@@ -81,42 +93,45 @@ class MonthlyAutomation(commands.Cog):
         removed_problems = []
         db_ind, lc_ind = 0, 0
         while db_ind < len(db_problems_list) or lc_ind < len(lc_problem_list):
-          if db_ind >= len(db_problems_list):
-            new_problems.append(lc_problem_list[lc_ind])
-            lc_ind += 1
-          elif lc_ind >= len(lc_problem_list):
-            removed_problems.append(db_problems_list[db_ind])
-            db_ind += 1
-          else:
-            db_cur, lc_cur = db_problems_list[db_ind]['id'], int(lc_problem_list[lc_ind]['frontendQuestionId'])
-            if db_cur == lc_cur:
-              db_ind += 1
-              lc_ind += 1
-            elif db_cur < lc_cur:
-              removed_problems.append(db_problems_list[db_ind])
-              db_ind += 1
-            elif db_cur > lc_cur:
-              new_problems.append(lc_problem_list[lc_ind])
-              lc_ind += 1
-              # handling if problem changes slug?
+            if db_ind >= len(db_problems_list):
+                new_problems.append(lc_problem_list[lc_ind])
+                lc_ind += 1
+            elif lc_ind >= len(lc_problem_list):
+                removed_problems.append(db_problems_list[db_ind])
+                db_ind += 1
+            else:
+                db_cur, lc_cur = (
+                    db_problems_list[db_ind]["id"],
+                    int(lc_problem_list[lc_ind]["frontendQuestionId"]),
+                )
+                if db_cur == lc_cur:
+                    db_ind += 1
+                    lc_ind += 1
+                elif db_cur < lc_cur:
+                    removed_problems.append(db_problems_list[db_ind])
+                    db_ind += 1
+                elif db_cur > lc_cur:
+                    new_problems.append(lc_problem_list[lc_ind])
+                    lc_ind += 1
+                    # handling if problem changes slug?
         await self.client.db_api.create_problems(new_problems)
         # add warning msg for removed_problem?
         return
 
     # Set the top 5 users from leaderboard previous with highest score role "LeetCoder of the Month"
     async def set_leetcoder_of_the_month(self):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
         role = discord.utils.get(guild.roles, name="Leetcoder of the Month")
 
         # Deletes roles from users
         async for member in guild.fetch_members(limit=None):
             if role in member.roles:
                 await member.remove_roles(role)
-        
+
         # Adds roles to top 5 users
         leaderboard = self.client.db_api.read_last_month_leaderboard()
         top_members = leaderboard[:5]
-        
+
         for member in top_members:
             user = await guild.fetch_member(int(member["discordId"]))
             await user.add_roles(role)
@@ -124,32 +139,38 @@ class MonthlyAutomation(commands.Cog):
 
     @monthly.error
     async def on_error(self, exception):
-        guild = await self.client.fetch_guild(self.client.config['serverId'])
-        channel = await guild.fetch_channel(self.client.config['devErrorLogId'])
+        guild = await self.client.fetch_guild(self.client.config["serverId"])
+        channel = await guild.fetch_channel(self.client.config["devErrorLogId"])
         await channel.send(f"Monthly crawl error```py\n{exception}```"[:800])
         await self.logger.on_automation_event("Monthly", "error found")
 
         self.monthly.restart()
 
     @commands.command()
-    @commands.has_permissions(administrator = True)
+    @commands.has_permissions(administrator=True)
     async def stop_(self, ctx):
         self.monthly.stop()
         await ctx.send(f"{Assets.green_tick} **Monthly task stopped.**")
 
     @commands.command()
-    @commands.has_permissions(administrator = True)
+    @commands.has_permissions(administrator=True)
     async def start_monthly(self, ctx):
         self.monthly.start()
         await ctx.send(f"{Assets.green_tick} **Monthly task started.**")
 
-    @app_commands.command(name="monthly_simulate", description="Simulate a monthly crawl cycle.")
-    @app_commands.checks.has_permissions(administrator = True)
+    @app_commands.command(
+        name="monthly_simulate", description="Simulate a monthly crawl cycle."
+    )
+    @app_commands.checks.has_permissions(administrator=True)
     async def _monthly_simulate(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking = True)
+        await interaction.response.defer(thinking=True)
         await self.monthly()
-        await interaction.followup.send(f"{Assets.green_tick} **Monthly task finished**")
+        await interaction.followup.send(
+            f"{Assets.green_tick} **Monthly task finished**"
+        )
 
 
 async def setup(client):
-    await client.add_cog(MonthlyAutomation(client), guilds=[discord.Object(id=client.config['serverId'])])
+    await client.add_cog(
+        MonthlyAutomation(client), guilds=[discord.Object(id=client.config["serverId"])]
+    )
