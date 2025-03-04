@@ -38,7 +38,7 @@ class DailyObjectController:
         self, session: Session, id: Optional[int] = None, date: Optional[date] = None
     ):
         result = self.read_one(session=session, id=id, date=date)
-        if result is not None:
+        if result is None:
             result = self.read_latest(session=session)
         return result
 
@@ -183,7 +183,7 @@ class UserMonthlyObjectController:
             )
             result = session.execute(update_query).one().UserMonthlyObject
         elif insp.pending:
-            if result.scoreEarned is not None:
+            if result.scoreEarned is None:
                 result.scoreEarned = 0
             result.scoreEarned += scoreEarnedDelta
         return result
@@ -222,7 +222,7 @@ class UserSolvedProblemController:
         self, session: Session, userId: int, problemId: int, submissionId: int = -1
     ):
         result = self.read_one(session, userId, problemId)
-        if result is not None:
+        if result is None:
             result = self.create_one(
                 session, userId, problemId, submissionId=submissionId
             )

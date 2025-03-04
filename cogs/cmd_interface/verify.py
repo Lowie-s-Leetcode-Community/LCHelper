@@ -213,7 +213,7 @@ class verify(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         user_profile = self.client.db_api.read_profile(str(interaction.user.id))
-        if user_profile is not None:
+        if user_profile is None:
             await interaction.followup.send(
                 "Bạn chưa từng kết nối tài khoản. Hãy sử dụng </link:1206907242784235523> nhé!"
             )

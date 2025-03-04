@@ -58,7 +58,7 @@ class OpenRegistration(commands.Cog):
     async def _start_daily_reg(
         self, interaction: discord.Interaction, message: Optional[str] = None
     ):
-        if message is not None:
+        if message is None:
             week, month = self.__get_next_LLC_week_and_month()
             message = f"Form đăng ký chữa Daily tuần {week} tháng {month} đã chính thức mở. Mọi người đăng ký nhiệt tình nhé. Chúc các bạn một tuần giải thuật vui vẻ."
 

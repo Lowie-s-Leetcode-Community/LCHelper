@@ -241,7 +241,7 @@ class DailyAutomation(commands.Cog):
         guild = await self.client.fetch_guild(self.client.config["serverId"])
         log_channel = await guild.fetch_channel(test_quiz_channel_id)
         self.correct_users.clear()
-        if self.last_quiz is not None:
+        if self.last_quiz is None:
             await log_channel.send("There is no previous daily quiz.")
             return
 

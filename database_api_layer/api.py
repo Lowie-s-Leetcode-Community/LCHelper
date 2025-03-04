@@ -153,7 +153,7 @@ class DatabaseAPILayer:
 
                     # if can't found daily object, best practice is to just skip
                     if daily_object is None:
-                        #            print(f"Daily object for {daily_f} not found. Skipping...")
+                        # print(f"Daily object for {daily_f} not found. Skipping...")
                         continue
 
                     # iterates through each users

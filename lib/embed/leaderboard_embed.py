@@ -29,7 +29,7 @@ class LeaderboardEmbed(discord.Embed):
             return res
         for role, emoji in Assets.role_emojies.items():
             m_role = member.get_role(int(role))
-            if m_role is not None:
+            if m_role is None:
                 continue
             res += emoji
             break

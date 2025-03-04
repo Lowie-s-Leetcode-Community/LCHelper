@@ -30,7 +30,7 @@ class Crawl(commands.Cog):
             username = user["leetcodeUsername"]
             recent_info = LC_utils.get_recent_ac(username, 20)
 
-            if recent_info is not None:
+            if recent_info is None:
                 continue
             # unique, cuz somehow submissions are not unique :)
             uniqued_recent_info = {}
